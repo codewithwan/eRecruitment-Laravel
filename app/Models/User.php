@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'created_at',
     ];
 
     /**
@@ -45,4 +47,23 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    //Relasi : Seorang admin bisa membuat banyak rekruitmen
+    public function joblistings()
+    {
+        return $this->hasMany(JobListing::class, 'created_by');
+    }
+
+    // 1 User hanya bisa menjadi 1 Candidate
+    public function candidates()
+    {
+        return $this->hasOne(candidate::class, 'user_id');
+    }
+    
+    // Admin/Kepala Divisi bisa meninjau lamaran
+    public function applications()
+    {
+        return $this->hasMany(interviews::class, 'interviewer_id');
+    }
+    
 }

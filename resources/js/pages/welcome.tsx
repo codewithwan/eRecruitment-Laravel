@@ -2,59 +2,64 @@ import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
 
+// Add smooth scrolling behavior
+const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+};
+
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
 
     // Sample job openings
     const openPositions = [
         {
-            title: "Data Analyst",
-            department: "Analytics",
+            title: "Analis Data",
+            department: "Analitik",
             location: "Jakarta",
             requirements: [
-                "Bachelor's degree in a related field",
-                "2+ years of experience in data analysis",
-                "Proficiency in SQL and Python"
+                "Gelar sarjana di bidang terkait",
+                "Pengalaman 2+ tahun dalam analisis data",
+                "Kemampuan dalam SQL dan Python"
             ]
         },
         {
-            title: "Frontend Developer",
-            department: "Engineering",
+            title: "Pengembang Frontend",
+            department: "Teknik",
             location: "Jakarta",
             requirements: [
-                "Bachelor's degree in Computer Science or related field",
-                "3+ years of experience in frontend development",
-                "Experience with React and TypeScript"
+                "Gelar sarjana di bidang Ilmu Komputer atau bidang terkait",
+                "Pengalaman 3+ tahun dalam pengembangan frontend",
+                "Pengalaman dengan React dan TypeScript"
             ]
         },
         {
-            title: "Business Intelligence Specialist",
-            department: "Analytics",
+            title: "Spesialis Intelijen Bisnis",
+            department: "Analitik",
             location: "Bandung",
             requirements: [
-                "Bachelor's degree in a related field",
-                "3+ years of experience in business intelligence",
-                "Proficiency in BI tools like Tableau or Power BI"
+                "Gelar sarjana di bidang terkait",
+                "Pengalaman 3+ tahun dalam intelijen bisnis",
+                "Kemampuan dalam alat BI seperti Tableau atau Power BI"
             ]
         },
         {
-            title: "Backend Developer",
-            department: "Engineering",
+            title: "Pengembang Backend",
+            department: "Teknik",
             location: "Surabaya",
             requirements: [
-                "Bachelor's degree in Computer Science or related field",
-                "3+ years of experience in backend development",
-                "Experience with Node.js and Express"
+                "Gelar sarjana di bidang Ilmu Komputer atau bidang terkait",
+                "Pengalaman 3+ tahun dalam pengembangan backend",
+                "Pengalaman dengan Node.js dan Express"
             ]
         },
         {
-            title: "Project Manager",
-            department: "Management",
+            title: "Manajer Proyek",
+            department: "Manajemen",
             location: "Jakarta",
             requirements: [
-                "Bachelor's degree in Business or related field",
-                "5+ years of experience in project management",
-                "PMP certification is a plus"
+                "Gelar sarjana di bidang Bisnis atau bidang terkait",
+                "Pengalaman 5+ tahun dalam manajemen proyek",
+                "Sertifikasi PMP adalah nilai tambah"
             ]
         }
     ];
@@ -77,9 +82,9 @@ export default function Welcome() {
                                 <span className="font-semibold text-lg">PT MITRA KARYA ANALITIKA</span>
                             </div>
                             <nav className="hidden md:flex items-center space-x-8">
-                                <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">About</a>
-                                <a href="#jobs" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Jobs</a>
-                                <a href="#contact" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Contact</a>
+                                <a href="#about" onClick={() => scrollToSection('about')} className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Tentang</a>
+                                <a href="#jobs" onClick={() => scrollToSection('jobs')} className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Karir</a>
+                                <a href="#contact" onClick={() => scrollToSection('contact')} className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Kontak</a>
                             </nav>
                             <div className="flex items-center space-x-4">
                                 {auth?.user ? (
@@ -115,31 +120,29 @@ export default function Welcome() {
                     <div className="container mx-auto px-6">
                         <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
                             <div className="inline-block mb-6 p-2 bg-blue-100 rounded-xl">
-                                <span className="text-blue-600 font-medium text-sm px-3">We're Hiring</span>
+                                <span className="text-blue-600 font-medium text-sm px-3">Kami Sedang Merekrut</span>
                             </div>
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">Find Your Dream Career at Mitra Karya Analitika</h1>
-                            <p className="text-gray-600 text-lg mb-8 max-w-2xl">Join our team of data-driven professionals and help shape the future of analytics in Indonesia.</p>
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">Temukan Karir Impian Anda di Mitra Karya Analitika</h1>
+                            <p className="text-gray-600 text-lg mb-8 max-w-2xl">Bergabunglah dengan tim profesional berbasis data kami dan bantu membentuk masa depan analitik di Indonesia.</p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-6 rounded-xl shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-200 transition-all text-white">
-                                    View Open Positions
+                                    Lihat Posisi Terbuka
                                 </Button>
-                                <Button className=" hover:bg-blue-50 px-6 py-6 rounded-xl text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                                    About Us
-                                </Button>
+                                <Button className="border border-blue-300 text-white hover:bg-blue-100 px-6 py-6 rounded-xl bg-transparent text-blue-600">Hubungi Kami</Button>
                             </div>
 
                             <div className="mt-16 grid grid-cols-3 gap-4 w-full max-w-xl">
                                 <div className="rounded-lg bg-white p-4 shadow-md border border-gray-100">
                                     <div className="font-semibold text-blue-600">15+</div>
-                                    <div className="text-sm text-gray-500">Years Experience</div>
+                                    <div className="text-sm text-gray-500">Tahun Pengalaman</div>
                                 </div>
                                 <div className="rounded-lg bg-white p-4 shadow-md border border-gray-100">
                                     <div className="font-semibold text-blue-600">200+</div>
-                                    <div className="text-sm text-gray-500">Professionals</div>
+                                    <div className="text-sm text-gray-500">Profesional</div>
                                 </div>
                                 <div className="rounded-lg bg-white p-4 shadow-md border border-gray-100">
                                     <div className="font-semibold text-blue-600">50+</div>
-                                    <div className="text-sm text-gray-500">Major Clients</div>
+                                    <div className="text-sm text-gray-500">Klien Utama</div>
                                 </div>
                             </div>
                         </div>
@@ -151,10 +154,10 @@ export default function Welcome() {
                     <div className="container mx-auto px-6">
                         <div className="text-center mb-12">
                             <div className="inline-block mb-6 p-2 bg-blue-100 rounded-xl">
-                                <span className="text-blue-600 font-medium text-sm px-3">About Us</span>
+                                <span className="text-blue-600 font-medium text-sm px-3">Tentang Kami</span>
                             </div>
-                            <h2 className="text-3xl font-bold mb-4">Why Join PT MITRA KARYA ANALITIKA</h2>
-                            <p className="text-gray-600 max-w-2xl mx-auto">We offer a dynamic workplace where you can grow professionally while making a real impact.</p>
+                            <h2 className="text-3xl font-bold mb-4">Mengapa Bergabung dengan PT MITRA KARYA ANALITIKA</h2>
+                            <p className="text-gray-600 max-w-2xl mx-auto">Kami menawarkan tempat kerja yang dinamis di mana Anda dapat berkembang secara profesional sambil memberikan dampak nyata.</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -165,8 +168,8 @@ export default function Welcome() {
                                         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                                     </svg>
                                 </div>
-                                <h3 className="text-xl font-medium mb-3">Industry Leader</h3>
-                                <p className="text-gray-600">Leading data analytics company providing innovative solutions across Indonesia.</p>
+                                <h3 className="text-xl font-medium mb-3">Pemimpin Industri</h3>
+                                <p className="text-gray-600">Perusahaan analitik data terkemuka yang menyediakan solusi inovatif di seluruh Indonesia.</p>
                             </div>
 
                             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all">
@@ -178,8 +181,8 @@ export default function Welcome() {
                                         <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>
                                     </svg>
                                 </div>
-                                <h3 className="text-xl font-medium mb-3">Career Growth</h3>
-                                <p className="text-gray-600">Clear paths for advancement and professional development opportunities.</p>
+                                <h3 className="text-xl font-medium mb-3">Pertumbuhan Karir</h3>
+                                <p className="text-gray-600">Jalur yang jelas untuk kemajuan dan peluang pengembangan profesional.</p>
                             </div>
 
                             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all">
@@ -191,8 +194,8 @@ export default function Welcome() {
                                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                                     </svg>
                                 </div>
-                                <h3 className="text-xl font-medium mb-3">Collaborative Team</h3>
-                                <p className="text-gray-600">Work with talented professionals in a supportive and innovative environment.</p>
+                                <h3 className="text-xl font-medium mb-3">Tim Kolaboratif</h3>
+                                <p className="text-gray-600">Bekerja dengan profesional berbakat dalam lingkungan yang mendukung dan inovatif.</p>
                             </div>
                         </div>
                     </div>
@@ -203,10 +206,10 @@ export default function Welcome() {
                     <div className="container mx-auto px-6">
                         <div className="text-center mb-12">
                             <div className="inline-block mb-6 p-2 bg-blue-100 rounded-xl">
-                                <span className="text-blue-600 font-medium text-sm px-3">Careers</span>
+                                <span className="text-blue-600 font-medium text-sm px-3">Karir</span>
                             </div>
-                            <h2 className="text-3xl font-bold mb-4">Open Positions</h2>
-                            <p className="text-gray-600 max-w-2xl mx-auto">Join our team and be part of something special.</p>
+                            <h2 className="text-3xl font-bold mb-4">Posisi Terbuka</h2>
+                            <p className="text-gray-600 max-w-2xl mx-auto">Bergabunglah dengan tim kami dan menjadi bagian dari sesuatu yang istimewa.</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -226,14 +229,14 @@ export default function Welcome() {
                                         </ul>
                                     </div>
                                     <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-200 transition-all text-white w-full mt-4">
-                                        View details
+                                        Lihat detail
                                     </Button>
                                 </div>
                             ))}
                         </div>
 
                         <div className="mt-12 text-center">
-                            <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-6 rounded-xl shadow-md text-white">View All Positions</Button>
+                            <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-6 rounded-xl shadow-md text-white">Lihat Semua Posisi</Button>
                         </div>
                     </div>
                 </section>
@@ -242,13 +245,13 @@ export default function Welcome() {
                 <section id="contact" className="py-20">
                     <div className="container mx-auto px-6">
                         <div className="max-w-3xl mx-auto bg-blue-600 rounded-2xl p-10 text-center shadow-xl shadow-blue-200">
-                            <h2 className="text-3xl font-bold mb-4 text-white">Ready to Join Our Team?</h2>
+                            <h2 className="text-3xl font-bold mb-4 text-white">Siap Bergabung dengan Tim Kami?</h2>
                             <p className="text-blue-100 mb-8 max-w-lg mx-auto">
-                                Take the first step towards a rewarding career at PT MITRA KARYA ANALITIKA.
+                                Ambil langkah pertama menuju karir yang memuaskan di PT MITRA KARYA ANALITIKA.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                <Button className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-6 rounded-xl">Apply Now</Button>
-                                <Button className="border border-blue-300 text-white hover:bg-blue-700 px-6 py-6 rounded-xl bg-transparent">Contact Us</Button>
+                                <Button className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-6 rounded-xl">Lamar Sekarang</Button>
+                                <Button className="border border-blue-300 text-white hover:bg-blue-700 px-6 py-6 rounded-xl bg-transparent">Hubungi Kami</Button>
                             </div>
                         </div>
                     </div>
@@ -265,9 +268,9 @@ export default function Welcome() {
                                 <span className="font-semibold">PT MITRA KARYA ANALITIKA</span>
                             </div>
                             <div className="mb-6 md:mb-0 flex gap-8">
-                                <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">About</a>
-                                <a href="#jobs" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Jobs</a>
-                                <a href="#contact" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Contact</a>
+                                <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Tentang</a>
+                                <a href="#jobs" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Karir</a>
+                                <a href="#contact" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Kontak</a>
                             </div>
                             <div className="flex space-x-6">
                                 <a href="#" className="text-blue-500 hover:text-blue-700 transition-colors">
@@ -292,7 +295,7 @@ export default function Welcome() {
                             </div>
                         </div>
                         <div className="mt-8 border-t border-gray-200 pt-6 text-center">
-                            <span className="text-sm text-gray-500">© {new Date().getFullYear()} PT MITRA KARYA ANALITIKA. All rights reserved.</span>
+                            <span className="text-sm text-gray-500">© {new Date().getFullYear()} PT MITRA KARYA ANALITIKA. Semua hak dilindungi.</span>
                         </div>
                     </div>
                 </footer>

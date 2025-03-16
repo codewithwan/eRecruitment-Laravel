@@ -1,5 +1,6 @@
 <?php
 
+
 use App\Enums\UserRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

@@ -20,7 +20,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Question',
-        href: '/question',
+        href: '/dashboard/questions',
         icon: LucideFileQuestion
     },
 ];

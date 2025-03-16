@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
     ->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('dashboard');
         Route::get('/users', [UserController::class, 'userManagement'])->name('users');
+        Route::get('/questions', fn () => Inertia::render('question/question-management'))->name('question');
 });
 
 

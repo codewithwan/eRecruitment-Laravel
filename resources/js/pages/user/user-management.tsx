@@ -11,10 +11,10 @@ interface UserManagementProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    // {
-    //     title: 'Dashboard',
-    //     href: '/dashboard',
-    // },
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+    },
     {
         title: 'User Management',
         href: '/dashboard/users',

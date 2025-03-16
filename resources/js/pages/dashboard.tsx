@@ -2,7 +2,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEffect } from 'react';
 import { UserTable, type User } from '@/components/user-table';
 
 interface DashboardProps {
@@ -18,10 +17,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Dashboard(props: DashboardProps) {
     const users = props.users || [];
-
-    // Calculate the number of users with "user" role
-    const userRoleCount = users.filter(user => user.role === "user").length;
-
     const handleViewUser = (userId: number) => {
         console.log('View user from dashboard:', userId);
         // Dashboard view implementation
@@ -51,9 +46,9 @@ export default function Dashboard(props: DashboardProps) {
                             </svg>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{userRoleCount}</div>
+                            <div className="text-2xl font-bold">{users.length}</div>
                             <p className="text-xs text-muted-foreground">
-                                Users with "user" role
+                                Users with "candidate" role
                             </p>
                         </CardContent>
                     </Card>

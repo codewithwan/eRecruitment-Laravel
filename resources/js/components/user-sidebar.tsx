@@ -10,7 +10,7 @@ import AppLogo from './app-logo';
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: '/psychotest',
+        href: '/candidate',
         icon: LayoutGrid,
     },
     // {
@@ -40,7 +40,7 @@ export function UserSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/psychotest" prefetch>
+                            <Link href="/candidate" prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

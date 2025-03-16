@@ -52,12 +52,14 @@ const userData = [
 ];
 
 // Status badge colors
-const getStatusColor = (status: string) => {
+type StatusColor = "default" | "secondary" | "destructive" | "outline";
+
+const getStatusColor = (status: string): StatusColor => {
     switch (status) {
-        case "Shortlisted": return "green";
-        case "Interview": return "blue";
-        case "New": return "yellow";
-        default: return "gray";
+        case "Shortlisted": return "default";
+        case "Interview": return "secondary";
+        case "New": return "destructive";
+        default: return "outline";
     }
 };
 
@@ -115,7 +117,7 @@ export default function CandidateList() {
                             <TableCell className="text-sm">{user.position}</TableCell>
                             <TableCell className="text-sm">{user.university}</TableCell>
                             <TableCell>
-                                <Badge variant={getStatusColor(user.status) as any} className="font-normal">
+                                <Badge variant={getStatusColor(user.status)} className="font-normal">
                                     {user.status}
                                 </Badge>
                             </TableCell>
@@ -127,30 +129,30 @@ export default function CandidateList() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
                                             <div>
                                                 <h4 className="text-lg font-medium mb-4">{user.name}</h4>
-                                                
+
                                                 <div className="space-y-3 text-sm">
                                                     <div className="flex items-center gap-2">
                                                         <Mail className="size-4 text-muted-foreground" />
                                                         <span>{user.email}</span>
                                                     </div>
-                                                    
+
                                                     <div className="flex items-center gap-2">
                                                         <Phone className="size-4 text-muted-foreground" />
                                                         <span>{user.phone}</span>
                                                     </div>
-                                                    
+
                                                     <div className="flex items-center gap-2">
                                                         <GraduationCap className="size-4 text-muted-foreground" />
                                                         <span>{user.university} • {user.major} ({user.gradYear})</span>
                                                     </div>
-                                                    
+
                                                     <div className="flex items-center gap-2">
                                                         <Briefcase className="size-4 text-muted-foreground" />
                                                         <span>Applied for: {user.position}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div>
                                                 <h5 className="font-medium mb-3 text-sm">Skills</h5>
                                                 <div className="flex flex-wrap gap-1 mb-4">
@@ -160,15 +162,15 @@ export default function CandidateList() {
                                                         </Badge>
                                                     ))}
                                                 </div>
-                                                
+
                                                 <Separator className="my-4" />
-                                                
+
                                                 <div className="mt-4">
                                                     <Button variant="outline" size="sm" className="gap-2">
                                                         <ExternalLink className="size-3" />
-                                                        <a 
-                                                            href={user.portfolio} 
-                                                            target="_blank" 
+                                                        <a
+                                                            href={user.portfolio}
+                                                            target="_blank"
                                                             rel="noopener noreferrer"
                                                             onClick={(e) => e.stopPropagation()}
                                                         >

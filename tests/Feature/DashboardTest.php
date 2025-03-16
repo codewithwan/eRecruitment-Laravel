@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Enums\UserRole;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -9,10 +10,10 @@ test('guests are redirected to the login page', function () {
 });
 
 test('authenticated users can visit the dashboard', function () {
-    // Create a user with admin role to ensure they have proper permissions
+    // Create a user with HR role to ensure they have proper permissions
     $user = User::factory()->create([
-        'email_verified_at' => now(),   // Make sure the user is verified
-        'role'              => 'admin', // Explicitly set role to admin
+        'email_verified_at' => now(),  
+        'role'              => UserRole::HR->value, 
     ]);
 
     $this->actingAs($user);
@@ -23,14 +24,14 @@ test('authenticated users can visit the dashboard', function () {
 });
 
 // Updated test for regular users to match actual application behavior
-test('regular users are redirected when visiting dashboard', function () {
+test('regular users are forbidden from accessing dashboard', function () {
     $regularUser = User::factory()->create([
         'email_verified_at' => now(),
-        'role'              => 'user',
+        'role'              => UserRole::CANDIDATE->value, 
     ]);
 
     $this->actingAs($regularUser);
 
-    // Since we're getting a 302 redirect, let's expect that instead of 200 OK
-    $this->get('/dashboard')->assertStatus(302);
+    // Regular users (CANDIDATE role) should get a 403 Forbidden when trying to access /dashboard
+    $this->get('/dashboard')->assertStatus(403);
 });

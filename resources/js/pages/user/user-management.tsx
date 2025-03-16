@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { UserTable, type User } from '@/components/user-table';
 import { Button } from '@/components/ui/button';
 
@@ -17,18 +17,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     // },
     {
         title: 'User Management',
-        href: '/users',
+        href: '/dashboard/users',
     }
 ];
 
 export default function UserManagement(props: UserManagementProps) {
     // Use useMemo to stabilize the users array reference
     const users = useMemo(() => props.users || [], [props.users]);
-
-    useEffect(() => {
-        console.log('Users data received:', users);
-        console.log('Users count:', users.length);
-    }, [users]);
 
     const handleViewUser = (userId: number) => {
         console.log('View user:', userId);

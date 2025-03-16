@@ -24,7 +24,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function UserManagement(props: UserManagementProps) {
     // Use useMemo to stabilize the users array reference
     const users = useMemo(() => props.users || [], [props.users]);
-
     const handleViewUser = (userId: number) => {
         console.log('View user:', userId);
     };

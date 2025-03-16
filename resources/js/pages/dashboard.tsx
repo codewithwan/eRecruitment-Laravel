@@ -17,7 +17,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Dashboard(props: DashboardProps) {
     const users = props.users || [];
-
     const handleViewUser = (userId: number) => {
         console.log('View user from dashboard:', userId);
         // Dashboard view implementation

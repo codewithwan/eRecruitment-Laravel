@@ -13,60 +13,69 @@ export default function Welcome() {
     // Sample job openings
     const openPositions = [
         {
-            title: "Analis Data",
-            department: "Analitik",
-            location: "Jakarta",
+            title: "BUSINESS EXECUTIVE",
+            department: "Marketing",
+            location: "Semarang",
             requirements: [
-                "Gelar sarjana di bidang terkait",
-                "Pengalaman 2+ tahun dalam analisis data",
-                "Kemampuan dalam SQL dan Python"
+                "Laki-laki atau perempuan",
+                "SMK Analis Kimia, D3 Analis Kimia atau relevan",
+                "Berpengalaman di bidang marketing minimal 1 tahun",
+                "Komunikatif, Cekatan, Jujur, teliti dan bersedia mobile working"
             ]
         },
         {
-            title: "Pengembang Frontend",
+            title: "PRODUCT SPECIALIST ENVIRONMENTAL",
             department: "Teknik",
-            location: "Jakarta",
+            location: "Semarang",
             requirements: [
-                "Gelar sarjana di bidang Ilmu Komputer atau bidang terkait",
-                "Pengalaman 3+ tahun dalam pengembangan frontend",
-                "Pengalaman dengan React dan TypeScript"
+                "Laki-laki atau perempuan",
+                "S1 Teknik Lingkungan atau relevan",
+                "Berpengalaman di environmental, memiliki kemampuan komunikasi yang baik",
+                "Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working"
             ]
         },
         {
-            title: "Spesialis Intelijen Bisnis",
-            department: "Analitik",
+            title: "STAFF ACCOUNTING INTERN",
+            department: "Akuntansi",
             location: "Bandung",
             requirements: [
-                "Gelar sarjana di bidang terkait",
-                "Pengalaman 3+ tahun dalam intelijen bisnis",
-                "Kemampuan dalam alat BI seperti Tableau atau Power BI"
+                "Laki-laki atau perempuan",
+                "Sekolah Menengah Kejuruan jurusan Akuntansi atau setara",
+                "Cekatan, Jujur, dan mau belajar"
+            ],
+            benefits: [
+                "Uang Saku",
+                "Sertifikat",
+                "Ilmu yang bermanfaat dan relasi"
             ]
         },
         {
-            title: "Pengembang Backend",
+            title: "BUSINESS EXECUTIVE HSE",
+            department: "Kesehatan",
+            location: "Semarang",
+            requirements: [
+                "D3/S1 Analis Kesehatan, atau relevan",
+                "Memiliki kemampuan komunikasi yang baik",
+                "Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working",
+                "Diutamakan memiliki pengalaman di bidang marketing atau sebagai user di Laboratorium"
+            ]
+        },
+        {
+            title: "TEKNISI KALIBRASI",
             department: "Teknik",
-            location: "Surabaya",
+            location: "Semarang",
             requirements: [
-                "Gelar sarjana di bidang Ilmu Komputer atau bidang terkait",
-                "Pengalaman 3+ tahun dalam pengembangan backend",
-                "Pengalaman dengan Node.js dan Express"
-            ]
-        },
-        {
-            title: "Manajer Proyek",
-            department: "Manajemen",
-            location: "Jakarta",
-            requirements: [
-                "Gelar sarjana di bidang Bisnis atau bidang terkait",
-                "Pengalaman 5+ tahun dalam manajemen proyek",
-                "Sertifikasi PMP adalah nilai tambah"
+                "Minimal D3 Teknik Elektro, Teknik Mesin atau Relevan",
+                "Memiliki kemampuan komunikasi yang baik",
+                "Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working",
+                "Jujur, Ulet dan Proaktif"
             ]
         }
     ];
 
     return (
         <>
-            <Head title="PT MITRA KARYA ANALITIKA">
+            <Head title="Welcome">
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=outfit:300,400,500,600" rel="stylesheet" />
             </Head>
@@ -226,6 +235,9 @@ export default function Welcome() {
                                             {job.requirements.map((requirement, reqIndex) => (
                                                 <li key={reqIndex}>{requirement}</li>
                                             ))}
+                                            {job.benefits && job.benefits.length > 0 && (
+                                                <li className=''>Benefit: {job.benefits.join(', ')}</li>
+                                            )}
                                         </ul>
                                     </div>
                                     <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-200 transition-all text-white w-full mt-4">

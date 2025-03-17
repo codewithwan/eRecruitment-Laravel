@@ -11,10 +11,10 @@ class UserController extends Controller
     public function index()
     {
 
-        $users = User::where('role', UserRole::CANDIDATE->value)
-            ->select('id', 'name', 'email', 'role', 'created_at')
-            ->get();
-
+        // $users = User::where('role', UserRole::CANDIDATE->value)
+        //     ->select('id', 'name', 'email', 'role', 'created_at')
+        //     ->get();
+        $users = User::all();
 
         return Inertia::render('dashboard', ['users' => $users]);
     }

@@ -1,5 +1,4 @@
 import AppLayout from '@/layouts/app-layout';
-import UserLayout from '@/layouts/user-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 

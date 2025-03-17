@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
         Route::get('/questions', fn () => Inertia::render('question/question-management'))->name('question');
 });
 
+
 // User route
 Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
     ->prefix('candidate')

@@ -26,7 +26,6 @@ export default function UserManagement(props: UserManagementProps) {
     const users = props.users || [];
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
     const handleViewUser = (userId: number) => {
         const user = users.find(user => user.id === userId);
         if (user) {

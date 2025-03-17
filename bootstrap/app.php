@@ -44,4 +44,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 ]);
             }
         });
+
+        // Handle 404 (Not Found)
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Halaman tidak ditemukan.'
+                ], 404);
+            }
+
+            return Inertia::render('errors/404', [
+                'error' => 'Page Not Found',
+                'message' => 'Sorry, the page you are looking for could not be found.'
+            ]);
+        });
     })->create();

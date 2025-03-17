@@ -37,7 +37,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     return (
         <AuthLayout title="Selamat Datang" description="Masuk ke akun Anda untuk melanjutkan">
-            <Head title="Masuk - eRecruitment" />
+            <Head title="Masuk eRecruitment" />
 
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">

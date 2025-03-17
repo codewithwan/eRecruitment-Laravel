@@ -2,19 +2,20 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { UserTable, type User } from '@/components/user-table';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface UserManagementProps {
     users?: User[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    // {
-    //     title: 'Dashboard',
-    //     href: '/dashboard',
-    // },
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+    },
     {
         title: 'User Management',
         href: '/dashboard/users',
@@ -22,10 +23,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function UserManagement(props: UserManagementProps) {
-    // Use useMemo to stabilize the users array reference
-    const users = useMemo(() => props.users || [], [props.users]);
+    const users = props.users || [];
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const handleViewUser = (userId: number) => {
-        console.log('View user:', userId);
+        const user = users.find(user => user.id === userId);
+        if (user) {
+            setSelectedUser(user);
+            setIsViewDialogOpen(true);
+        }
     };
 
     const handleEditUser = (userId: number) => {
@@ -36,6 +42,10 @@ export default function UserManagement(props: UserManagementProps) {
         console.log('Delete user:', userId);
     };
 
+    const handleAddUser = () => {
+        console.log('Add user');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="User Management" />
@@ -43,7 +53,7 @@ export default function UserManagement(props: UserManagementProps) {
                 <div>
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-2xl font-semibold">User Management</h2>
-                        <Button className='px-10 mx-10'>Add User</Button>
+                        <Button className='px-10 mx-10' onClick={handleAddUser}>Add User</Button>
                     </div>
                     <Card>
                         <CardHeader>
@@ -63,6 +73,47 @@ export default function UserManagement(props: UserManagementProps) {
                     </Card>
                 </div>
             </div>
+
+            {/* User Detail Dialog */}
+            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>User Details</DialogTitle>
+                        <DialogDescription>
+                            Detailed information about the selected user.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedUser && (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="font-medium">Name:</div>
+                                <div className="col-span-2">{selectedUser.name}</div>
+
+                                <div className="font-medium">Email:</div>
+                                <div className="col-span-2">{selectedUser.email}</div>
+
+                                <div className="font-medium">Role:</div>
+                                <div className="col-span-2">{selectedUser.role}</div>
+
+                                {selectedUser.created_at && (
+                                    <>
+                                        <div className="font-medium">Joined:</div>
+                                        <div className="col-span-2">{new Date(selectedUser.created_at).toLocaleDateString()}</div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter className="sm:justify-end">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsViewDialogOpen(false)}
+                        >
+                            Close
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

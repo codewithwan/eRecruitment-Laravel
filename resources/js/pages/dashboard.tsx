@@ -3,6 +3,9 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserTable, type User } from '@/components/user-table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 interface DashboardProps {
     users?: User[];
@@ -17,9 +20,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Dashboard(props: DashboardProps) {
     const users = props.users || [];
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const handleViewUser = (userId: number) => {
-        console.log('View user from dashboard:', userId);
-        // Dashboard view implementation
+        const user = users.find(user => user.id === userId);
+        if (user) {
+            setSelectedUser(user);
+            setIsViewDialogOpen(true);
+        }
     };
 
     const handleEditUser = (userId: number) => {
@@ -75,6 +83,47 @@ export default function Dashboard(props: DashboardProps) {
                     </Card>
                 </div>
             </div>
+
+            {/* User Detail Dialog */}
+            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>User Details</DialogTitle>
+                        <DialogDescription>
+                            Detailed information about the selected user.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedUser && (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="font-medium">Name:</div>
+                                <div className="col-span-2">{selectedUser.name}</div>
+                                
+                                <div className="font-medium">Email:</div>
+                                <div className="col-span-2">{selectedUser.email}</div>
+                                
+                                <div className="font-medium">Role:</div>
+                                <div className="col-span-2">{selectedUser.role}</div>
+                                
+                                {selectedUser.created_at && (
+                                    <>
+                                        <div className="font-medium">Joined:</div>
+                                        <div className="col-span-2">{new Date(selectedUser.created_at).toLocaleDateString()}</div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter className="sm:justify-end">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setIsViewDialogOpen(false)}
+                        >
+                            Close
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

@@ -4,25 +4,20 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Github, User, LayoutGrid, FileQuestion, LucideFileQuestion } from 'lucide-react';
+import { Github, LayoutGrid } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: '/dashboard',
+        href: '/candidate',
         icon: LayoutGrid,
     },
-    {
-        title: 'Users',
-        href: '/dashboard/users',
-        icon: User,
-    },
-    {
-        title: 'Question',
-        href: '/dashboard/questions',
-        icon: LucideFileQuestion
-    },
+    // {
+    //     title: 'Users',
+    //     href: '/dashboard/users',
+    //     icon: User,
+    // },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -38,14 +33,14 @@ const footerNavItems: NavItem[] = [
     // },
 ];
 
-export function AppSidebar() {
+export function UserSidebar() {
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch>
+                            <Link href="/candidate" prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

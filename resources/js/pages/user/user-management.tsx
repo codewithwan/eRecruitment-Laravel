@@ -2,12 +2,12 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserTable, type User } from '@/components/user-table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { UserTable, type User } from '@/components/user-table';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-interface DashboardProps {
+interface UserManagementProps {
     users?: User[];
 }
 
@@ -16,9 +16,13 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
     },
+    {
+        title: 'User Management',
+        href: '/dashboard/users',
+    }
 ];
 
-export default function Dashboard(props: DashboardProps) {
+export default function UserManagement(props: UserManagementProps) {
     const users = props.users || [];
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -32,49 +36,35 @@ export default function Dashboard(props: DashboardProps) {
     };
 
     const handleEditUser = (userId: number) => {
-        console.log('Edit user from dashboard:', userId);
-        // Dashboard edit implementation
+        console.log('Edit user:', userId);
     };
 
     const handleDeleteUser = (userId: number) => {
-        console.log('Delete user from dashboard:', userId);
-        // Dashboard delete implementation
+        console.log('Delete user:', userId);
+    };
+
+    const handleAddUser = () => {
+        console.log('Add user');
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
+            <Head title="User Management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
-                {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Regular Users</CardTitle>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{users.length}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Users with "candidate" role
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Users Table Section */}
-                <div className="pt-2">
-                    <h2 className="text-2xl font-semibold mb-4">User Management</h2>
+                <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-semibold">User Management</h2>
+                        <Button className='px-10 mx-10' onClick={handleAddUser}>Add User</Button>
+                    </div>
                     <Card>
                         <CardHeader>
                             <CardTitle>Users List</CardTitle>
                             <CardDescription>
-                                List of all registered users in the system.
+                                Manage all users in the system
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <UserTable 
+                            <UserTable
                                 users={users}
                                 onView={handleViewUser}
                                 onEdit={handleEditUser}
@@ -99,13 +89,13 @@ export default function Dashboard(props: DashboardProps) {
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="font-medium">Name:</div>
                                 <div className="col-span-2">{selectedUser.name}</div>
-                                
+
                                 <div className="font-medium">Email:</div>
                                 <div className="col-span-2">{selectedUser.email}</div>
-                                
+
                                 <div className="font-medium">Role:</div>
                                 <div className="col-span-2">{selectedUser.role}</div>
-                                
+
                                 {selectedUser.created_at && (
                                     <>
                                         <div className="font-medium">Joined:</div>
@@ -116,8 +106,8 @@ export default function Dashboard(props: DashboardProps) {
                         </div>
                     )}
                     <DialogFooter className="sm:justify-end">
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setIsViewDialogOpen(false)}
                         >
                             Close

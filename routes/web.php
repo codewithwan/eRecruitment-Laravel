@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
         Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
     });
 
+
 // User route
 Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
     ->prefix('candidate')

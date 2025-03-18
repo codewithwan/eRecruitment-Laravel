@@ -4,8 +4,7 @@ Sistem Rekrutmen berbasis website yang dikembangkan menggunakan **Laravel 12** d
 
 ## ✨ Fitur Utama
 
-### 🎯 Untuk Kandidat
-
+### 🎯 Untuk Kandidat 
 - Melihat daftar lowongan kerja
 - Mengisi data diri secara online
 - Mengikuti tes atau wawancara daring

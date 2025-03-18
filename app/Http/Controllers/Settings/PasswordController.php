@@ -1,11 +1,12 @@
 <?php
-
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -18,10 +19,23 @@ class PasswordController extends Controller
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('settings/password', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => $request->session()->get('status'),
-        ]);
+        $authUser = Auth::user();
+
+        if ($authUser->role == UserRole::HR->value) {
+            return Inertia::render('admin/settings/password', [
+                'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+                'status'          => $request->session()->get('status'),
+            ]);
+        } else {
+            return Inertia::render('candidate/settings/password', [
+                'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+                'status'          => $request->session()->get('status'),
+            ]);
+        }
+        // return Inertia::render('admin/settings/password', [
+        //     'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+        //     'status' => $request->session()->get('status'),
+        // ]);
     }
 
     /**
@@ -31,7 +45,7 @@ class PasswordController extends Controller
     {
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
+            'password'         => ['required', Password::defaults(), 'confirmed'],
         ]);
 
         $request->user()->update([

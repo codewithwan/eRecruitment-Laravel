@@ -23,7 +23,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Questions(props: QuestionProps) {
+export default function Questions() {
     // const questions = props.questions || [];
 
     return (

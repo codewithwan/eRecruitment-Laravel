@@ -22,7 +22,7 @@ class QuestionController extends Controller
             ->pluck('answer', 'question_id')
             ->toArray();
 
-        return Inertia::render('candidate/Question', [
+        return Inertia::render('candidate/question', [
             'questions' => $questions,
             'userAnswers' => $userAnswers
         ]);

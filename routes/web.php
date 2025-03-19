@@ -31,6 +31,8 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
         Route::get('/', [CandidateController::class, 'info'])->name('candidate');
         Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
         Route::post('/questions/answer', [QuestionController::class, 'storeAnswer'])->name('questions.answer');
+        // Add route for question view/test page
+        Route::get('/question', [QuestionController::class, 'show'])->name('question');
         // Remove the redundant route
         // Route::get('/info', [CandidateController::class, 'info'])->name('candidate');
 });

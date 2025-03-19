@@ -3,7 +3,6 @@
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\QuestionController;
 use App\Enums\UserRole;
-use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Auth;

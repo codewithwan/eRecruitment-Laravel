@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -54,4 +55,11 @@ class User extends Authenticatable
             'role'              => UserRole::class,
         ];
     }
+
+    public function answers(): HasMany
+    {
+        return $this->hasMany(Answer::class);
+    }
 }
+
+  

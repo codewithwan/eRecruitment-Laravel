@@ -41,10 +41,12 @@ export default function UserManagement(props: UserManagementProps) {
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-    const [newUser, setNewUser] = useState({ name: '', email: '',password : '', role: '' });
+    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: '' });
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [userIdToDelete, setUserIdToDelete] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [editUser, setEditUser] = useState<Partial<User>>({ name: '', email: '', role: '' });
 
     const handleViewUser = (userId: number) => {
         const user = users.find(user => user.id === userId);
@@ -55,7 +57,40 @@ export default function UserManagement(props: UserManagementProps) {
     };
 
     const handleEditUser = (userId: number) => {
-        console.log('Edit user:', userId);
+        const user = users.find(user => user.id === userId);
+        if (user) {
+            setEditUser({
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            });
+            setIsEditDialogOpen(true);
+        }
+    };
+
+    const handleEditUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setEditUser(prevState => ({ ...prevState, [name]: value }));
+    };
+
+    const handleUpdateUser = async () => {
+        if (!editUser.id) return;
+        
+        setIsLoading(true);
+        try {
+            const response = await axios.put(`/dashboard/users/${editUser.id}`, editUser);
+            setUserList(prevUsers => 
+                prevUsers.map(user => 
+                    user.id === editUser.id ? { ...user, ...response.data.user } : user
+                )
+            );
+            setIsEditDialogOpen(false);
+        } catch (error) {
+            console.error('Error updating user:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleDeleteUser = (userId: number) => {
@@ -170,6 +205,49 @@ export default function UserManagement(props: UserManagementProps) {
                         <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
                         <Button onClick={handleCreateUser} disabled={isLoading}>
                             {isLoading ? 'Creating...' : 'Create'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit User Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Edit User</DialogTitle>
+                        <DialogDescription>
+                            Update user information.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div>
+                            <Label htmlFor="edit-name">Name</Label>
+                            <Input id="edit-name" name="name" value={editUser.name} onChange={handleEditUserChange} />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-email">Email</Label>
+                            <Input id="edit-email" name="email" value={editUser.email} onChange={handleEditUserChange} />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-role">Role</Label>
+                            <Select value={editUser.role} onValueChange={(value) => setEditUser(prevState => ({ ...prevState, role: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {roles.map(role => (
+                                        <SelectItem key={role.value} value={role.value}>
+                                            {role.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter className="sm:justify-end">
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleUpdateUser} disabled={isLoading}>
+                            {isLoading ? 'Updating...' : 'Update'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -15,4 +15,9 @@ class CandidateController extends Controller
         // Log::info($AuthUser);
         return Inertia::render('candidate/candidate-dashboard', ['users' => $AuthUser]);
     }
+
+    public function store()
+    {
+        return Inertia::render('candidate/profile/candidate-profile');
+    }
 }

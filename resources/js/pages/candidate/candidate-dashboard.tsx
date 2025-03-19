@@ -149,7 +149,7 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                             </h3>
 
                             <div className="relative border-l-2 border-gray-200 pl-4 sm:pl-8 space-y-4 sm:space-y-8 ml-2 sm:ml-4">
-                                {currentCandidate.stages.map((stage, idx) => (
+                                {currentCandidate.stages.map((stage) => (
                                     <div key={stage.id} className="relative">
                                         {/* Dot di timeline */}
                                         <div className={`absolute left-[-1.5rem] sm:left-[-2.5rem] top-6 p-1 rounded-full

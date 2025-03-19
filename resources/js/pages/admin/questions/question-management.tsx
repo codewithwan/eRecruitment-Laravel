@@ -1,7 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { useEffect } from 'react';
 
 interface QuestionProps {
     questions?: Question[];
@@ -25,12 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Questions(props: QuestionProps) {
-    const questions = props.questions || [];
-
-    useEffect(() => {
-        console.log('Questions:', questions);
-    }
-    , [questions]);
+    // const questions = props.questions || [];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

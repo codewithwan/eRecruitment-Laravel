@@ -1,7 +1,6 @@
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
-import { useEffect } from 'react';
 
 interface WelcomeProps {
     vacancies: JobOpening[];

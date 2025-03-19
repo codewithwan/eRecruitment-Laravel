@@ -60,6 +60,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Answer::class);
     }
-}
 
-  
+    public function candidate()
+    {
+        return $this->hasOne(Candidate::class, 'user_id');
+    }
+}

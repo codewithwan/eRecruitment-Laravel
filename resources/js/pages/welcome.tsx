@@ -14,7 +14,6 @@ interface JobOpening {
     benefits?: string[];
 }
 
-// Add smooth scrolling behavior
 const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 };
@@ -170,7 +169,7 @@ export default function Welcome(props: WelcomeProps) {
                             <h2 className="text-3xl font-bold mb-4">Posisi Terbuka</h2>
                             <p className="text-gray-600 max-w-2xl mx-auto">Bergabunglah dengan tim kami dan menjadi bagian dari sesuatu yang istimewa.</p>
                         </div>
-
+                        
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {vacancies.map((job, index) => (
                                 <div key={index} className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all flex flex-col justify-between">
@@ -197,9 +196,9 @@ export default function Welcome(props: WelcomeProps) {
                             ))}
                         </div>
 
-                        <div className="mt-12 text-center">
+                        {/* <div className="mt-12 text-center">
                             <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-6 rounded-xl shadow-md text-white">Lihat Semua Posisi</Button>
-                        </div>
+                        </div> */}
                     </div>
                 </section>
 

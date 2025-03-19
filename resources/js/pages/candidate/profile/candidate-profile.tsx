@@ -7,9 +7,13 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Dashboard Candidate',
         href: '/candidate',
     },
+    {
+        title: 'Candidate Profile',
+        href: '/candidate/profile',
+    },
 ];
 
-export default function CandidatePsychotest() {
+export default function CandidateProfile() {
 
     return (
         <UserLayout breadcrumbs={breadcrumbs}>

@@ -1,12 +1,11 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use App\Models\Vacancies;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class VacanciesController extends Controller
 {
@@ -14,7 +13,7 @@ class VacanciesController extends Controller
     {
         $vacancies = Vacancies::all();
         return Inertia::render('welcome', [
-            'vacancies' => $vacancies	
+            'vacancies' => $vacancies,
         ]);
     }
 
@@ -24,66 +23,66 @@ class VacanciesController extends Controller
         Log::info($vacancies);
 
         return Inertia::render('admin/jobs/jobs-management', [
-            'vacancies' => $vacancies 
+            'vacancies' => $vacancies,
         ]);
     }
 
     public function create(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'department' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
+            'title'        => 'required|string|max:255',
+            'department'   => 'required|string|max:255',
+            'location'     => 'required|string|max:255',
             'requirements' => 'required|array',
-            'benefits' => 'nullable|array',
+            'benefits'     => 'nullable|array',
         ]);
-        
+
         $user_id = Auth::user()->id;
-        $job = Vacancies::create([
-            'user_id' => $user_id,
-            'title' => $validated['title'],
-            'department' => $validated['department'],
-            'location' => $validated['location'],
+        $job     = Vacancies::create([
+            'user_id'      => $user_id,
+            'title'        => $validated['title'],
+            'department'   => $validated['department'],
+            'location'     => $validated['location'],
             'requirements' => $validated['requirements'],
-            'benefits' => $validated['benefits'] ?? [],
+            'benefits'     => $validated['benefits'] ?? [],
         ]);
 
         return response()->json([
             'message' => 'Job created successfully',
-            'job' => $job
+            'job'     => $job,
         ], 201);
     }
 
     public function update(Request $request, Vacancies $job)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'department' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
+            'title'        => 'required|string|max:255',
+            'department'   => 'required|string|max:255',
+            'location'     => 'required|string|max:255',
             'requirements' => 'required|array',
-            'benefits' => 'nullable|array',
+            'benefits'     => 'nullable|array',
         ]);
 
         $job->update([
-            'title' => $validated['title'],
-            'department' => $validated['department'],
-            'location' => $validated['location'],
+            'title'        => $validated['title'],
+            'department'   => $validated['department'],
+            'location'     => $validated['location'],
             'requirements' => $validated['requirements'],
-            'benefits' => $validated['benefits'] ?? [],
+            'benefits'     => $validated['benefits'] ?? [],
         ]);
 
         return response()->json([
             'message' => 'Job updated successfully',
-            'job' => $job
+            'job'     => $job,
         ]);
     }
 
     public function destroy(Vacancies $job)
     {
         $job->delete();
-        
+
         return response()->json([
-            'message' => 'Job deleted successfully'
+            'message' => 'Job deleted successfully',
         ]);
     }
 }

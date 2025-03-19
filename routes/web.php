@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CandidateController;
+use App\Http\Controllers\QuestionController;
 use App\Enums\UserRole;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;

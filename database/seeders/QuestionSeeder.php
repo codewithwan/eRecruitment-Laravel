@@ -8,6 +8,7 @@ use App\Models\Question;
 
 class QuestionSeeder extends Seeder
 {
+
     /**
      * Run the database seeds.
      */
@@ -15,74 +16,49 @@ class QuestionSeeder extends Seeder
     {
         $questions = [
             [
-                'question' => '',
+                'statement_number' => 1,
                 'options' => [
                     "A. Saya cenderung membiarkan kesalahan kecil terjadi jika saya merasa itu tidak akan berdampak besar pada pekerjaan.",
                     "B. Saya selalu menegur bawahan saya atas kesalahan kecil untuk memastikan mereka tidak mengulanginya."
-                ]
+                ],
+                'category' => 'leadership_style',
+                'is_active' => true
             ],
             [
-                'question' => '',
+                'statement_number' => 2,
                 'options' => [
-                    "A. Saya lebih suka menyelesaikan tugas saya sendiri daripada harus bergantung pada orang lain.",
-                    "B. Saya lebih suka bekerja dalam tim dan berbagi tanggung jawab dengan rekan kerja."
-                ]
+                    "A. Saya lebih suka mengambil keputusan setelah berdiskusi dengan tim.",
+                    "B. Saya lebih suka mengambil keputusan sendiri untuk efisiensi waktu."
+                ],
+                'category' => 'decision_making',
+                'is_active' => true
             ],
             [
-                'question' => '',
+                'statement_number' => 3,
                 'options' => [
-                    "A. Jika ada keputusan sulit yang harus diambil, saya lebih suka menunggu hingga ada kepastian yang lebih jelas.",
-                    "B. Saya lebih suka mengambil keputusan segera meskipun dengan informasi yang terbatas."
-                ]
+                    "A. Saya lebih mementingkan hasil akhir daripada proses.",
+                    "B. Saya sangat memperhatikan proses dan detail dalam setiap pekerjaan."
+                ],
+                'category' => 'work_style',
+                'is_active' => true
             ],
             [
-                'question' => '',
+                'statement_number' => 4,
                 'options' => [
-                    "A. Ketika menghadapi konflik di tempat kerja, saya cenderung menghindari konfrontasi langsung dan mencari solusi yang lebih diplomatis.",
-                    "B. Saya lebih suka menghadapi konflik secara langsung dan menyelesaikannya secepat mungkin."
-                ]
+                    "A. Saya lebih suka bekerja dengan deadline yang fleksibel.",
+                    "B. Saya lebih produktif ketika ada deadline yang ketat."
+                ],
+                'category' => 'time_management',
+                'is_active' => true
             ],
             [
-                'question' => '',
+                'statement_number' => 5,
                 'options' => [
-                    "A. Saya merasa nyaman ketika diberikan tugas dengan arahan yang jelas dan spesifik.",
-                    "B. Saya lebih suka bekerja dengan fleksibilitas dan mencari solusi sendiri tanpa banyak arahan."
-                ]
-            ],
-            [
-                'question' => '',
-                'options' => [
-                    "A. Saya percaya bahwa aturan di tempat kerja harus diterapkan secara ketat tanpa pengecualian.",
-                    "B. Saya percaya bahwa dalam beberapa situasi, aturan dapat sedikit disesuaikan untuk kepentingan bersama."
-                ]
-            ],
-            [
-                'question' => '',
-                'options' => [
-                    "A. Jika ada rekan kerja yang terus-menerus berperilaku kurang profesional, saya akan membicarakannya dengan atasan.",
-                    "B. Saya akan mencoba menyelesaikan masalah dengan rekan kerja tersebut secara pribadi sebelum melibatkan atasan."
-                ]
-            ],
-            [
-                'question' => '',
-                'options' => [
-                    "A. Saya merasa lebih nyaman bekerja dengan rutinitas yang terstruktur dan dapat diprediksi.",
-                    "B. Saya lebih suka bekerja dengan variasi tugas yang menantang dan tidak monoton."
-                ]
-            ],
-            [
-                'question' => '',
-                'options' => [
-                    "A. Jika saya memiliki ide yang berbeda dengan mayoritas tim, saya cenderung menyesuaikan diri demi menghindari konflik.",
-                    "B. Saya tetap menyampaikan ide saya meskipun berbeda dengan mayoritas, karena saya percaya itu bisa bermanfaat."
-                ]
-            ],
-            [
-                'question' => '',
-                'options' => [
-                    "A. Saat menghadapi masalah dalam pekerjaan, saya lebih suka mencari solusi sendiri sebelum meminta bantuan orang lain.",
-                    "B. Saya lebih suka berdiskusi dengan orang lain terlebih dahulu untuk mencari solusi terbaik."
-                ]
+                    "A. Saya lebih suka mencari solusi yang sudah terbukti berhasil.",
+                    "B. Saya senang mencoba pendekatan baru meskipun berisiko."
+                ],
+                'category' => 'innovation',
+                'is_active' => true
             ]
         ];
 
@@ -91,3 +67,4 @@ class QuestionSeeder extends Seeder
         }
     }
 }
+

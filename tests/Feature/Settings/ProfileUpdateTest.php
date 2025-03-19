@@ -1,11 +1,12 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Models\User;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
-test('profile page is displayed', function () {
-    $user = User::factory()->create();
+test('profile page is displayed for HR role', function () {
+    $user = User::factory()->create(['role' => UserRole::HR]);
 
     $response = $this
         ->actingAs($user)

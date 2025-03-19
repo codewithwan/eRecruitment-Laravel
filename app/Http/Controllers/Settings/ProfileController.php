@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Settings;
 
 use App\Enums\UserRole;
@@ -9,6 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,9 +18,18 @@ class ProfileController extends Controller
      * Show the user's profile settings page.
      */
     public function edit(Request $request): Response
-    {   
+    {
         $authUser = Auth::user();
-        if($authUser->role == UserRole::HR->value){
+        // Log::info('Auth ID:', ['id' => Auth::id()]);
+        // Log::info('Database role:', ['role' => $authUser->role]);
+        // Log::info('Enum HR value:', ['value' => UserRole::HR->value]);
+
+        // Log::info($authUser);
+        // return Inertia::render('admin/settings/profile', [
+        //     'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+        //     'status'          => $request->session()->get('status'),
+        // ]);
+        if ($authUser->role->value == UserRole::HR->value) {
             return Inertia::render('admin/settings/profile', [
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
                 'status' => $request->session()->get('status'),

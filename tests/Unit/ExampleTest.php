@@ -1,5 +1,5 @@
 <?php
 
-test('that true is true', function () {
+test('that nganu is nganu', function () {
     expect(true)->toBeTrue();
 });

@@ -4,13 +4,12 @@ use App\Enums\UserRole;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+Route::get('/', [VacanciesController::class, 'index'])->name('home');
 
 // Admin route
 Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
@@ -23,7 +22,16 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
             ->group(function () {
                 Route::get('/', [UserController::class, 'store'])->name('info');
                 Route::post('/', [UserController::class, 'create'])->name('create');
+                Route::put('/{user}', [UserController::class, 'update'])->name('update');
                 Route::delete('/{user}', [UserController::class, 'destroy'])->name('remove');
+            });
+        Route::prefix('jobs')
+            ->name('jobs.')
+            ->group(function () {
+                Route::get('/', [VacanciesController::class, 'store'])->name('info');
+                Route::post('/', [VacanciesController::class, 'create'])->name('create');
+                Route::put('/{job}', [VacanciesController::class, 'update'])->name('update');
+                Route::delete('/{job}', [VacanciesController::class, 'destroy'])->name('delete');
             });
         Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
     });
@@ -35,6 +43,7 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
     ->name('user.')
     ->group(function () {
         Route::get('/', [CandidateController::class, 'index'])->name('info');
+        Route::get('/profile', [CandidateController::class, 'store'])->name('profile');
     });
 
 // Redirect based on role

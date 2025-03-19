@@ -25,7 +25,7 @@ class RoleMiddleware
         
 
         if ($userRole->value !== $role) {
-            abort(403, 'Unauthorized action.');
+            abort(404, 'Not Found.');
         }
         return $next($request);
     }

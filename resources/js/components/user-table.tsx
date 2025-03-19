@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Eye, Trash } from 'lucide-react';
+import { EyeIcon, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 // User interface definition
@@ -21,8 +21,8 @@ interface UserTableProps {
     onDelete?: (userId: number) => void;
 }
 
-export function UserTable({ 
-    users, 
+export function UserTable({
+    users,
     onView = (id) => console.log('View user:', id),
     onEdit = (id) => console.log('Edit user:', id),
     onDelete = (id) => console.log('Delete user:', id)
@@ -65,13 +65,13 @@ export function UserTable({
                                 </TableCell>
                                 <TableCell className="text-right space-x-2">
                                     <Button variant="ghost" size="icon" onClick={() => onView(user.id)}>
-                                        <Eye className="h-4 w-4" />
+                                        <EyeIcon className="h-4 w-4" />
                                     </Button>
                                     <Button variant="ghost" size="icon" onClick={() => onEdit(user.id)}>
-                                        <Edit className="h-4 w-4 text-blue-500" />
+                                        <Pencil className="h-4 w-4" />
                                     </Button>
                                     <Button variant="ghost" size="icon" onClick={() => onDelete(user.id)}>
-                                        <Trash className="h-4 w-4 text-red-500" />
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </TableCell>
                             </TableRow>

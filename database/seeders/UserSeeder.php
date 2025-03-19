@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
         ]);
 
         // Create regular users
-        User::factory(5)->create([
+        User::factory(3)->create([
             'role' => UserRole::CANDIDATE,
         ]);
     }

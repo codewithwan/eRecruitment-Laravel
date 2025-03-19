@@ -22,7 +22,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CandidatePsychotest(props: CandidateInfoProps) {
+export default function CandidateDashboard(props: CandidateInfoProps) {
     // console.log('Props users:', props.users); // Log the props.users value
     const users = Array.isArray(props.users) ? props.users : props.users ? [props.users] : [];
 

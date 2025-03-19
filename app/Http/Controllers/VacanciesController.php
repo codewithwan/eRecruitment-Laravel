@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Vacancies;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class VacanciesController extends Controller
@@ -36,8 +37,10 @@ class VacanciesController extends Controller
             'requirements' => 'required|array',
             'benefits' => 'nullable|array',
         ]);
-
+        
+        $user_id = Auth::user()->id;
         $job = Vacancies::create([
+            'user_id' => $user_id,
             'title' => $validated['title'],
             'department' => $validated['department'],
             'location' => $validated['location'],

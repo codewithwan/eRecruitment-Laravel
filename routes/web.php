@@ -1,13 +1,11 @@
 <?php
 
 use App\Enums\UserRole;
-use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 
@@ -36,16 +34,6 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
         Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
     });
 
-
-// User route
-Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
-    ->prefix('candidate')
-    ->name('user.')
-    ->group(function () {
-        Route::get('/', [CandidateController::class, 'index'])->name('info');
-        Route::get('/profile', [CandidateController::class, 'store'])->name('profile');
-    });
-
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     return Auth::user()->role === UserRole::HR
@@ -55,3 +43,4 @@ Route::middleware(['auth', 'verified'])->get('/redirect', function () {
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/candidate.php';

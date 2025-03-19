@@ -123,8 +123,10 @@ export default function Jobs(props: JobProps) {
                 requirements: newJob.requirements.split('\n').filter(req => req.trim() !== ''),
                 benefits: newJob.benefits ? newJob.benefits.split('\n').filter(ben => ben.trim() !== '') : null
             };
-            
+            console.log("formattedData", formattedData);
             const response = await axios.post('/dashboard/jobs', formattedData);
+            console.log("response", response);
+            console.log("response", response.status);
             setJobsList(prevJobs => [...prevJobs, response.data.job]);
             setIsCreateDialogOpen(false);
             setNewJob({

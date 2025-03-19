@@ -2,76 +2,26 @@ import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
 
+interface WelcomeProps {
+    vacancies: JobOpening[];
+}
+
+interface JobOpening {
+    title: string;
+    department: string;
+    location: string;
+    requirements: string[];
+    benefits?: string[];
+}
+
 // Add smooth scrolling behavior
 const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 };
 
-export default function Welcome() {
+export default function Welcome(props: WelcomeProps) {
+    const { vacancies } = props;
     const { auth } = usePage<SharedData>().props;
-
-    // Sample job openings
-    const openPositions = [
-        {
-            title: "BUSINESS EXECUTIVE",
-            department: "Marketing",
-            location: "Semarang",
-            requirements: [
-                "Laki-laki atau perempuan",
-                "SMK Analis Kimia, D3 Analis Kimia atau relevan",
-                "Berpengalaman di bidang marketing minimal 1 tahun",
-                "Komunikatif, Cekatan, Jujur, teliti dan bersedia mobile working"
-            ]
-        },
-        {
-            title: "PRODUCT SPECIALIST ENVIRONMENTAL",
-            department: "Teknik",
-            location: "Semarang",
-            requirements: [
-                "Laki-laki atau perempuan",
-                "S1 Teknik Lingkungan atau relevan",
-                "Berpengalaman di environmental, memiliki kemampuan komunikasi yang baik",
-                "Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working"
-            ]
-        },
-        {
-            title: "STAFF ACCOUNTING INTERN",
-            department: "Akuntansi",
-            location: "Bandung",
-            requirements: [
-                "Laki-laki atau perempuan",
-                "Sekolah Menengah Kejuruan jurusan Akuntansi atau setara",
-                "Cekatan, Jujur, dan mau belajar"
-            ],
-            benefits: [
-                "Uang Saku",
-                "Sertifikat",
-                "Ilmu yang bermanfaat dan relasi"
-            ]
-        },
-        {
-            title: "BUSINESS EXECUTIVE HSE",
-            department: "Kesehatan",
-            location: "Semarang",
-            requirements: [
-                "D3/S1 Analis Kesehatan, atau relevan",
-                "Memiliki kemampuan komunikasi yang baik",
-                "Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working",
-                "Diutamakan memiliki pengalaman di bidang marketing atau sebagai user di Laboratorium"
-            ]
-        },
-        {
-            title: "TEKNISI KALIBRASI",
-            department: "Teknik",
-            location: "Semarang",
-            requirements: [
-                "Minimal D3 Teknik Elektro, Teknik Mesin atau Relevan",
-                "Memiliki kemampuan komunikasi yang baik",
-                "Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working",
-                "Jujur, Ulet dan Proaktif"
-            ]
-        }
-    ];
 
     return (
         <>
@@ -222,7 +172,7 @@ export default function Welcome() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {openPositions.map((job, index) => (
+                            {vacancies.map((job, index) => (
                                 <div key={index} className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all flex flex-col justify-between">
                                     <div>
                                         <h3 className="font-semibold text-xl mb-2 text-blue-900">{job.title}</h3>

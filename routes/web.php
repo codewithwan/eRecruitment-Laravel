@@ -1,14 +1,14 @@
 <?php
 
+use App\Http\Controllers\CandidateController;
+use App\Http\Controllers\QuestionController;
 use App\Enums\UserRole;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+Route::get('/', [VacanciesController::class, 'index'])->name('home');
 
 // Admin route
 Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
@@ -16,25 +16,32 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
     ->name('admin.')
     ->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('dashboard');
-        Route::get('/users', [UserController::class, 'userManagement'])->name('users');
-        Route::get('/questions', fn () => Inertia::render('question/question-management'))->name('question');
-});
-
-
-// User route
-Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
-    ->prefix('candidate')
-    ->name('user.')
-    ->group(function () {
-        Route::get('/', fn () => Inertia::render('psychotest'))->name('psychotest');
-});
+        Route::prefix('users')
+            ->name('users.')
+            ->group(function () {
+                Route::get('/', [UserController::class, 'store'])->name('info');
+                Route::post('/', [UserController::class, 'create'])->name('create');
+                Route::put('/{user}', [UserController::class, 'update'])->name('update');
+                Route::delete('/{user}', [UserController::class, 'destroy'])->name('remove');
+            });
+        Route::prefix('jobs')
+            ->name('jobs.')
+            ->group(function () {
+                Route::get('/', [VacanciesController::class, 'store'])->name('info');
+                Route::post('/', [VacanciesController::class, 'create'])->name('create');
+                Route::put('/{job}', [VacanciesController::class, 'update'])->name('update');
+                Route::delete('/{job}', [VacanciesController::class, 'destroy'])->name('delete');
+            });
+        Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
+    });
 
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     return Auth::user()->role === UserRole::HR
-        ? redirect()->route('admin.dashboard')
-        : redirect()->route('user.psychotest');
+    ? redirect()->route('admin.dashboard')
+    : redirect()->route('user.info');
 })->name('dashboard');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/candidate.php';

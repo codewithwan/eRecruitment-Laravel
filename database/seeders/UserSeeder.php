@@ -14,24 +14,24 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user
+        // Create custom HR user
         User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
+            'name' => 'HR User',
+            'email' => 'hr@gmail.com',
             'password' => Hash::make('password'),
             'role' => UserRole::HR,
         ]);
 
-        // Create HR user
+        // Create custom Candidate user
         User::factory()->create([
-            'name' => 'HR User',
-            'email' => 'hr@example.com',
+            'name' => 'Candidate User',
+            'email' => 'candidate@gmail.com',
             'password' => Hash::make('password'),
-            'role' => UserRole::HR,
+            'role' => UserRole::CANDIDATE,
         ]);
 
         // Create regular users
-        User::factory(5)->create([
+        User::factory(3)->create([
             'role' => UserRole::CANDIDATE,
         ]);
     }

@@ -4,12 +4,12 @@ import { Head } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Test Psikotes',
+        title: 'Dashboard Candidate',
         href: '/candidate',
     },
 ];
 
-export default function Psychotest() {
+export default function CandidatePsychotest() {
 
     return (
         <UserLayout breadcrumbs={breadcrumbs}>

@@ -40,7 +40,6 @@ class JobsController extends Controller
             }
             
             $user_id = Auth::id();
-            // Create new candidate record
             Candidate::create([
                 'user_id' => $user_id,
                 'vacancy_id' => $id,

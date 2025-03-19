@@ -21,7 +21,7 @@ class PasswordController extends Controller
     {
         $authUser = Auth::user();
 
-        if ($authUser->role == UserRole::HR->value) {
+        if ($authUser->role->value == UserRole::HR->value) {
             return Inertia::render('admin/settings/password', [
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
                 'status'          => $request->session()->get('status'),

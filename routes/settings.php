@@ -18,7 +18,7 @@ Route::middleware('auth')->prefix('settings')->group(function () {
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
 
     Route::get('appearance', function () {
-        if(Auth::user()->role == UserRole::HR->value){
+        if(Auth::user()->role->value==UserRole::HR->value){
             return Inertia::render('admin/settings/appearance');
         }else{
             return Inertia::render('candidate/settings/appearance');

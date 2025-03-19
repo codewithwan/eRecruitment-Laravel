@@ -1,4 +1,3 @@
-import UserLayout from '@/layouts/user-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
@@ -13,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, ChevronLeft, ChevronRight, Flag, Check, AlertCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const breadcrumbs: BreadcrumbItem[] = [

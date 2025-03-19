@@ -28,7 +28,7 @@ class QuestionController extends Controller
         ]);
     }
 
-    public function storeAnswer(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'question_id' => 'required|exists:questions,id',

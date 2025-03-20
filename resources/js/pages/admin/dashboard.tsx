@@ -2,15 +2,14 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserTable, type User } from '@/components/user-table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { type User } from '@/components/user-table';
 import { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardProps {
     users?: User[];
     traffic?: Record<string, number>;
+    job_applied?: Record<string, number>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -23,8 +22,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Dashboard(props: DashboardProps) {
     const users = props.users || [];
     const traffic = props.traffic || {};
-    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const job_applied = props.job_applied || {};
 
     // Generate last 7 days array
     const getLast7Days = () => {
@@ -52,23 +50,17 @@ export default function Dashboard(props: DashboardProps) {
         };
     });
 
-    const handleViewUser = (userId: number) => {
-        const user = users.find(user => user.id === userId);
-        if (user) {
-            setSelectedUser(user);
-            setIsViewDialogOpen(true);
-        }
-    };
+    const jobAppliedTraffic = getLast7Days().map(day => {
+        const matchingDate = Object.entries(job_applied).find(
+            ([date]) => date.split('T')[0] === day.fullDate
+        );
 
-    const handleEditUser = (userId: number) => {
-        console.log('Edit user from dashboard:', userId);
-        // Dashboard edit implementation
-    };
-
-    const handleDeleteUser = (userId: number) => {
-        console.log('Delete user from dashboard:', userId);
-        // Dashboard delete implementation
-    };
+        // Return data with jobs count (or 0 if no data)
+        return {
+            date: day.formatted,
+            users: matchingDate ? matchingDate[1] : 0
+        };
+    });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -108,11 +100,28 @@ export default function Dashboard(props: DashboardProps) {
                             </p>
                         </CardContent>
                     </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Jobs Applied</CardTitle>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">
+                                {Object.values(job_applied).reduce((sum, count) => sum + count, 0)}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Total jobs applied over time
+                            </p>
+                        </CardContent>
+                    </Card>
                 </div>
 
-                {/* Traffic Chart - In its own row */}
-                <div className="pt-2 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="col-span-2 grid gap-4">
+                {/* Traffic Charts - Side by side */}
+                <div className="pt-2 grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                    {/* First Chart - User Registration */}
+                    <Card className="grid gap-4">
                         <CardHeader>
                             <CardTitle>User Registration Traffic</CardTitle>
                             <CardDescription>
@@ -135,8 +144,46 @@ export default function Dashboard(props: DashboardProps) {
                                             <Area
                                                 type="monotone"
                                                 dataKey="users"
-                                                stroke="hsl(var(--primary))"
-                                                fill="hsl(var(--primary) / 0.2)"
+                                                stroke="#82ca9d"
+                                                fill="#82ca9d50"
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <div className="h-64 flex items-center justify-center border rounded-md">
+                                    <p className="text-muted-foreground">No traffic data available</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Second Chart - Jobs Applied */}
+                    <Card className="grid gap-4">
+                        <CardHeader>
+                            <CardTitle>Jobs Application Trend</CardTitle>
+                            <CardDescription>
+                                Job application activity over the last 7 days
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {jobAppliedTraffic.length > 0 ? (
+                                <div className="h-64">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart
+                                            data={jobAppliedTraffic}
+                                            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="date" />
+                                            <YAxis />
+                                            <Tooltip />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="users"
+                                                name="Jobs"
+                                                stroke="#0E9FD8FF"
+                                                fill="#033BD650"
                                             />
                                         </AreaChart>
                                     </ResponsiveContainer>
@@ -151,7 +198,7 @@ export default function Dashboard(props: DashboardProps) {
                 </div>
 
                 {/* Users Table Section */}
-                <div className="pt-2">
+                {/* <div className="pt-2">
                     <h2 className="text-2xl font-semibold mb-4">User Management</h2>
                     <Card>
                         <CardHeader>
@@ -169,49 +216,8 @@ export default function Dashboard(props: DashboardProps) {
                             />
                         </CardContent>
                     </Card>
-                </div>
+                </div> */}
             </div>
-
-            {/* User Detail Dialog */}
-            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>User Details</DialogTitle>
-                        <DialogDescription>
-                            Detailed information about the selected user.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {selectedUser && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="font-medium">Name:</div>
-                                <div className="col-span-2">{selectedUser.name}</div>
-
-                                <div className="font-medium">Email:</div>
-                                <div className="col-span-2">{selectedUser.email}</div>
-
-                                <div className="font-medium">Role:</div>
-                                <div className="col-span-2">{selectedUser.role}</div>
-
-                                {selectedUser.created_at && (
-                                    <>
-                                        <div className="font-medium">Joined:</div>
-                                        <div className="col-span-2">{new Date(selectedUser.created_at).toLocaleDateString()}</div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                    <DialogFooter className="sm:justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsViewDialogOpen(false)}
-                        >
-                            Close
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </AppLayout>
     );
 }

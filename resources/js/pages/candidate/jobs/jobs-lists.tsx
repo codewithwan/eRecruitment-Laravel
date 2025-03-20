@@ -21,6 +21,7 @@ interface JobListsProps {
         name: string;
         email: string;
     };
+    appliedVacancyIds: number[];
     flash?: {
         success?: string;
         error?: string;
@@ -42,27 +43,30 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/candidate',
     },
     {
-        title: 'Job Lists',
+        title: 'Job Opportunities',
         href: '/candidate/jobs',
     },
 ];
 
 export default function JobLists(props: JobListsProps) {
-    const { vacancies, user, flash } = props;
+    const { vacancies, user, flash, appliedVacancyIds } = props;
     const [selectedJob, setSelectedJob] = useState<JobOpening | null>(vacancies.length > 0 ? vacancies[0] : null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const { post, processing } = useForm();
 
-
     // Show toast notifications for success or error messages
     if (flash?.success) {
-        toast("Application submitted successfully");
+        toast.success("Application submitted successfully");
     }
 
     if (flash?.error) {
-        toast("An error occurred while submitting your application");
+        toast.error(flash.error);
     }
+    
+    const hasApplied = (jobId: number): boolean => {
+        return appliedVacancyIds.includes(jobId);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -95,7 +99,12 @@ export default function JobLists(props: JobListsProps) {
                                     className={`p-4 border-b border-gray-100 cursor-pointer transition-all hover:bg-blue-50 ${selectedJob?.id === job.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
                                     onClick={() => setSelectedJob(job)}
                                 >
-                                    <h4 className="font-medium text-blue-900">{job.title}</h4>
+                                    <div className="flex justify-between">
+                                        <h4 className="font-medium text-blue-900">{job.title}</h4>
+                                        {hasApplied(job.id) && (
+                                            <span className="bg-green-100 text-green-600 text-xs px-2 py-1 rounded">Applied</span>
+                                        )}
+                                    </div>
                                     <div className="flex items-center text-sm text-gray-500 mt-2">
                                         <span>{job.department}</span>
                                         <span className="mx-2">•</span>
@@ -141,8 +150,11 @@ export default function JobLists(props: JobListsProps) {
 
                                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                     <DialogTrigger asChild>
-                                        <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg text-white w-full md:w-auto mt-4">
-                                            Apply for this position
+                                        <Button 
+                                            className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg text-white w-full md:w-auto mt-4"
+                                            disabled={hasApplied(selectedJob.id)}
+                                        >
+                                            {hasApplied(selectedJob.id) ? 'Already Applied' : 'Apply for this position'}
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent className="sm:max-w-[500px]">
@@ -170,6 +182,12 @@ export default function JobLists(props: JobListsProps) {
                                         </form>
                                     </DialogContent>
                                 </Dialog>
+                                
+                                {hasApplied(selectedJob.id) && (
+                                    <p className="mt-4 text-green-600 text-sm">
+                                        You have already applied for this position. We'll update you on your application status.
+                                    </p>
+                                )}
                             </div>
                         ) : (
                             <div className="flex items-center justify-center h-64 text-gray-500">

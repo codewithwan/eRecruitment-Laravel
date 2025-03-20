@@ -5,6 +5,7 @@ enum RecruitmentStageStatus: string {
     case SCHEDULED = 'Terjadwalkan';
     case COMPLETED = 'Selesai';
     case IN_PROGRESS = 'Dalam Proses';
+    case FAILED = 'Gagal';
 
     public function label(): string
     {
@@ -12,6 +13,7 @@ enum RecruitmentStageStatus: string {
             self::SCHEDULED => 'Scheduled',
             self::COMPLETED => 'Completed',
             self::IN_PROGRESS => 'In Progress',
+            self::FAILED => 'Failed',
         };
     }
 

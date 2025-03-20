@@ -17,9 +17,19 @@ class JobsController extends Controller
     public function index()
     {   
         $vacancies = Vacancies::all();
+        
+        // Get the list of vacancy IDs that the user has already applied to
+        $appliedVacancyIds = [];
+        if (Auth::check()) {
+            $appliedVacancyIds = Candidate::where('user_id', Auth::id())
+                ->pluck('vacancy_id')
+                ->toArray();
+        }
+        
         return Inertia::render('candidate/jobs/jobs-lists', [
             'vacancies' => $vacancies,
-            'user' => Auth::user()
+            'user' => Auth::user(),
+            'appliedVacancyIds' => $appliedVacancyIds
         ]);
     }
 
@@ -60,5 +70,10 @@ class JobsController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'An error occurred while submitting your application. Please try again.');
         }
+    }
+
+    public function show()
+    {
+        return Inertia::render('candidate/chats/candidate-chat');
     }
 }

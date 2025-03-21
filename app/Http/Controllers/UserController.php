@@ -1,11 +1,15 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Enums\RecruitmentStage as EnumsRecruitmentStage;
 use App\Enums\UserRole;
+use App\Models\RecruitmentStage;
+
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -18,7 +22,14 @@ class UserController extends Controller
             return $users->count();
         });
 
-        return Inertia::render('admin/dashboard', ['users' => $users, 'traffic' => $traffic]);
+        $job_applications = RecruitmentStage::where('stage_name', EnumsRecruitmentStage::ADMINISTRATIVE_SELECTION->value)->get();
+        $job_applied = $job_applications->groupBy(function($job_applications) {
+            return $job_applications->created_at->format('Y-m-d');
+        })->map(function($job_applications) {
+            return $job_applications->count();
+        });
+
+        return Inertia::render('admin/dashboard', ['users' => $users, 'traffic' => $traffic, "job_applied" => $job_applied]);
     }
 
     public function store()

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Vacancies;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -18,7 +19,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
         ]);
         $this->call([
-            QuestionSeeder::class
+            Vacancies::class
         ]);
     }
 }

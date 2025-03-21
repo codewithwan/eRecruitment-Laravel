@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Github, User, LayoutGrid, SearchIcon, LucideFileQuestion } from 'lucide-react';
+import { Github, User, LayoutGrid, SearchIcon, LucideFileQuestion, File } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -17,6 +17,11 @@ const mainNavItems: NavItem[] = [
         title: 'Users',
         href: '/dashboard/users',
         icon: User,
+    },
+    {
+        title: 'Candidates',
+        href: '/dashboard/candidates',
+        icon: File,
     },
     {
         title: 'Jobs Hiring',

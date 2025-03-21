@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
                 Route::delete('/{job}', [VacanciesController::class, 'destroy'])->name('delete');
             });
         Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
+        Route::get('/candidates', [CandidateController::class, 'show'])->name('caandidates');
     });
 
 // Redirect based on role

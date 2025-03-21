@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -13,12 +12,12 @@ class Vacancies extends Model
         'location',
         'requirements',
         'benefits',
-        'user_id'
+        'user_id',
     ];
 
     protected $casts = [
         'requirements' => 'array',
-        'benefits' => 'array'
+        'benefits'     => 'array',
     ];
 
     /**
@@ -27,5 +26,10 @@ class Vacancies extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function candidates()
+    {
+        return $this->hasMany(Candidate::class, 'vacancy_id');
     }
 }

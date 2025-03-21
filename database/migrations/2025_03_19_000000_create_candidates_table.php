@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateCandidatesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('candidates', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('position_applied')->nullable();
+            $table->string('resume_path')->nullable();
+            $table->string('status')->default('applied');
+            $table->timestamp('application_date')->nullable();
             $table->timestamps();
         });
     }
@@ -24,4 +29,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('candidates');
     }
-};
+}

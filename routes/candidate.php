@@ -11,4 +11,8 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
     ->group(function () {
         Route::get('/', [CandidateController::class, 'index'])->name('info');
         Route::get('/profile', [CandidateController::class, 'store'])->name('profile');
+        
+        // Psychometric test routes
+        Route::get('/tests/{testId}/start', [CandidateController::class, 'startTest'])->name('tests.start');
+        Route::post('/tests/{testId}/submit', [CandidateController::class, 'submitTest'])->name('tests.submit');
     });

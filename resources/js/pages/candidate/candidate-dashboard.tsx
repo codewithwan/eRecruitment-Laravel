@@ -10,9 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Check, FileCheck, BriefcaseBusiness, CheckCircle2, Clock3, XCircle, CalendarDays, Clock, FileText } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-
 interface CandidateInfoProps {
     users?: User[];
+    candidateTests?: CandidateTest[];
 }
 
 interface User {
@@ -22,6 +22,15 @@ interface User {
     role: string;
     email_verified_at: string | null;
     created_at: string;
+}
+
+interface CandidateTest {
+    id: number;
+    test_type: string;
+    scheduled_date: string;
+    scheduled_time: string;
+    duration: string;
+    instructions: string;
 }
 
 // Breadcrumbs config
@@ -66,15 +75,20 @@ const currentCandidate = {
 
 export default function CandidateDashboard(props: CandidateInfoProps) {
     const users = Array.isArray(props.users) ? props.users : props.users ? [props.users] : [];
+    const candidateTests = props.candidateTests || [];
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [selectedTest, setSelectedTest] = useState<CandidateTest | null>(null);
 
-    const handleStartTest = () => {
+    const handleStartTest = (test: CandidateTest) => {
+        setSelectedTest(test);
         setShowConfirmDialog(true);
     };
 
     const confirmStartTest = () => {
         setShowConfirmDialog(false);
-        router.visit('/candidate/questions');
+        if (selectedTest) {
+            router.visit(`/candidate/tests/${selectedTest.id}/start`);
+        }
     };
 
     const preparationRef = useRef<HTMLDivElement>(null);
@@ -94,7 +108,7 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                     <DialogHeader>
                         <DialogTitle>Konfirmasi Mulai Tes</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin memulai tes psikotes sekarang? Harap diperhatikan:
+                            Apakah Anda yakin ingin memulai tes {selectedTest?.test_type} sekarang? Harap diperhatikan:
                             <ul className="mt-2 list-disc list-inside text-sm text-gray-600">
                                 <li>Anda tidak dapat meninggalkan tab ini selama tes berlangsung.</li>
                                 <li>Pastikan koneksi internet Anda stabil.</li>
@@ -122,11 +136,11 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                                     <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-2 sm:border-4 border-white shadow-sm">
                                         <AvatarImage src={currentCandidate.avatar} alt={currentCandidate.name} />
                                         <AvatarFallback className="text-lg sm:text-xl">
-                                            {users[0].name.split(' ').map(n => n[0]).join('')}
+                                            {users[0]?.name.split(' ').map(n => n[0]).join('')}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 text-center md:text-left">
-                                        <h2 className="text-xl sm:text-2xl font-bold mb-1">{users[0].name}</h2>
+                                        <h2 className="text-xl sm:text-2xl font-bold mb-1">{users[0]?.name}</h2>
                                         <p className="text-gray-600 mb-2 sm:mb-3">Kandidat {currentCandidate.position}</p>
                                         <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                                             <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs sm:text-sm">
@@ -149,134 +163,222 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                             </h3>
 
                             <div className="relative border-l-2 border-gray-200 pl-4 sm:pl-8 space-y-4 sm:space-y-8 ml-2 sm:ml-4">
-                                {currentCandidate.stages.map((stage) => (
-                                    <div key={stage.id} className="relative">
-                                        {/* Dot di timeline */}
-                                        <div className={`absolute left-[-1.5rem] sm:left-[-2.5rem] top-6 p-1 rounded-full
-                  ${stage.status === 'completed' ? 'bg-green-100 text-green-600' :
-                                                stage.status === 'scheduled' ? 'bg-blue-100 text-blue-600' :
-                                                    'bg-gray-100 text-gray-400'
-                                            }`
-                                        }>
-                                            {stage.status === 'completed' ? (
+                                {/* If we have candidate tests, show them as stages. Otherwise fall back to the dummy data */}
+                                {candidateTests.length > 0 ? (
+                                    <>
+                                        <div className="relative">
+                                            <div className="absolute left-[-1.5rem] sm:left-[-2.5rem] top-6 p-1 rounded-full bg-green-100 text-green-600">
                                                 <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                                            ) : stage.status === 'scheduled' ? (
-                                                <Clock3 className="h-4 w-4 sm:h-5 sm:w-5" />
-                                            ) : (
-                                                <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-                                            )}
+                                            </div>
+                                            <Card className="border-l-4 border-l-green-500">
+                                                <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
+                                                        <CardTitle className="text-base sm:text-lg">Seleksi Administrasi</CardTitle>
+                                                        <Badge className="self-start sm:self-auto bg-green-500 text-white">
+                                                            Selesai
+                                                        </Badge>
+                                                    </div>
+                                                    <CardDescription className="text-xs sm:text-sm">
+                                                        Telah selesai
+                                                    </CardDescription>
+                                                </CardHeader>
+                                            </Card>
                                         </div>
-
-                                        {/* Card stage */}
-                                        <Card className={`border-l-4 
-                  ${stage.status === 'completed' ? 'border-l-green-500' :
-                                                stage.status === 'scheduled' ? 'border-l-blue-500' :
-                                                    'border-l-gray-300'
-                                            }`
-                                        }>
-                                            <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-                                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
-                                                    <CardTitle className="text-base sm:text-lg">{stage.name}</CardTitle>
-                                                    <Badge className={`self-start sm:self-auto
-                        ${stage.status === 'completed' ? 'bg-green-500 text-white' : ''}
-                        ${stage.status === 'scheduled' ? 'bg-blue-500 text-white' : ''}
-                        ${stage.status === 'waiting' ? 'bg-gray-400 text-white' : ''}
-                      `}>
-                                                        {stage.status === 'completed' ? 'Selesai' :
-                                                            stage.status === 'scheduled' ? 'Terjadwalkan' :
-                                                                'Menunggu'}
-                                                    </Badge>
+                                        
+                                        {candidateTests.map((test, index) => (
+                                            <div key={test.id} className="relative">
+                                                <div className="absolute left-[-1.5rem] sm:left-[-2.5rem] top-6 p-1 rounded-full bg-blue-100 text-blue-600">
+                                                    <Clock3 className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 </div>
-                                                <CardDescription className="text-xs sm:text-sm">
-                                                    {stage.status === 'completed' ?
-                                                        `Telah selesai pada ${stage.date}` :
-                                                        stage.status === 'scheduled' ?
-                                                            `Dijadwalkan pada ${stage.date}, ${stage.time}` :
-                                                            'Menunggu penyelesaian tahap sebelumnya'}
-                                                </CardDescription>
-                                            </CardHeader>
-
-                                            {/* Content khusus untuk stage scheduled */}
-                                            {stage.status === 'scheduled' && (
-                                                <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-                                                    {/* Detail informasi tes */}
-                                                    <div className="space-y-3 bg-blue-50 p-3 sm:p-4 rounded-md">
-                                                        <h4 className="font-semibold text-blue-800 text-sm sm:text-base">Detail Tes Psikotes:</h4>
-                                                        <div className="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm">
-                                                            <div className="flex items-start gap-2">
-                                                                <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-medium">Tanggal & Waktu</p>
-                                                                    <p className="text-gray-600">{stage.date}, {stage.time}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-start gap-2">
-                                                                <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-medium">Durasi</p>
-                                                                    <p className="text-gray-600">{stage.duration}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-start gap-2 sm:col-span-2">
-                                                                <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-medium">Jenis Tes</p>
-                                                                    <p className="text-gray-600">{stage.testType}</p>
-                                                                </div>
-                                                            </div>
-                                                            {stage.location && (
-                                                                <div className="flex items-start gap-2 sm:col-span-2">
-                                                                    <svg className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                    </svg>
+                                                <Card className="border-l-4 border-l-blue-500">
+                                                    <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
+                                                            <CardTitle className="text-base sm:text-lg">Tes Psikotes: {test.test_type}</CardTitle>
+                                                            <Badge className="self-start sm:self-auto bg-blue-500 text-white">
+                                                                Terjadwalkan
+                                                            </Badge>
+                                                        </div>
+                                                        <CardDescription className="text-xs sm:text-sm">
+                                                            Dijadwalkan pada {test.scheduled_date}, {test.scheduled_time}
+                                                        </CardDescription>
+                                                    </CardHeader>
+                                                    <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                                                        <div className="space-y-3 bg-blue-50 p-3 sm:p-4 rounded-md">
+                                                            <h4 className="font-semibold text-blue-800 text-sm sm:text-base">Detail Tes Psikotes:</h4>
+                                                            <div className="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                                                                <div className="flex items-start gap-2">
+                                                                    <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
                                                                     <div>
-                                                                        <p className="font-medium">Lokasi</p>
-                                                                        <p className="text-gray-600">{stage.location}</p>
+                                                                        <p className="font-medium">Tanggal & Waktu</p>
+                                                                        <p className="text-gray-600">{test.scheduled_date}, {test.scheduled_time}</p>
                                                                     </div>
                                                                 </div>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Notes dan pesan */}
-                                                        {stage.notes && (
-                                                            <div className="mt-3">
-                                                                <p className="font-medium text-blue-800 text-xs sm:text-sm">Catatan:</p>
-                                                                <p className="text-xs sm:text-sm text-gray-600">{stage.notes}</p>
+                                                                <div className="flex items-start gap-2">
+                                                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">Durasi</p>
+                                                                        <p className="text-gray-600">{test.duration}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-start gap-2 sm:col-span-2">
+                                                                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">Jenis Tes</p>
+                                                                        <p className="text-gray-600">{test.test_type}</p>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                        )}
 
-                                                        <div className="bg-white p-2 sm:p-3 rounded-md mt-3 border border-blue-100">
-                                                            <p className="text-xs sm:text-sm font-medium text-blue-800">Tips untuk Tes Psikotes:</p>
-                                                            <ul className="text-xs sm:text-sm text-gray-600 mt-1 space-y-1 pl-4 sm:pl-5 list-disc">
-                                                                <li>Istirahatlah yang cukup malam sebelum tes</li>
-                                                                <li>Jangan lupa sarapan untuk menjaga energi Anda</li>
-                                                                <li>Jawab dengan jujur dan sesuai dengan kepribadian Anda</li>
-                                                                <li>Kelola waktu dengan baik</li>
-                                                                <li>Tetap tenang dan percaya diri</li>
-                                                            </ul>
+                                                            {test.instructions && (
+                                                                <div className="mt-3">
+                                                                    <p className="font-medium text-blue-800 text-xs sm:text-sm">Instruksi:</p>
+                                                                    <p className="text-xs sm:text-sm text-gray-600">{test.instructions}</p>
+                                                                </div>
+                                                            )}
+                                                            
                                                             <div className="flex justify-end mt-3 sm:mt-4">
                                                                 <Button
-                                                                    onClick={scrollToPreparation}
-                                                                    variant="outline"
-                                                                    className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-blue-700 border-blue-500 hover:bg-blue-50 py-1 h-auto sm:h-9"
+                                                                    onClick={() => handleStartTest(test)}
+                                                                    className="gap-2"
                                                                 >
-                                                                    Lanjut ke Persiapan Tes
-                                                                    <ArrowDownCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                                    Mulai Tes
                                                                 </Button>
                                                             </div>
                                                         </div>
+                                                    </CardContent>
+                                                </Card>
+                                            </div>
+                                        ))}
+                                    </>
+                                ) : (
+                                    // Original dummy data stages
+                                    currentCandidate.stages.map((stage) => (
+                                        <div key={stage.id} className="relative">
+                                            {/* Dot di timeline */}
+                                            <div className={`absolute left-[-1.5rem] sm:left-[-2.5rem] top-6 p-1 rounded-full
+                                                ${stage.status === 'completed' ? 'bg-green-100 text-green-600' :
+                                                 stage.status === 'scheduled' ? 'bg-blue-100 text-blue-600' :
+                                                 'bg-gray-100 text-gray-400'}`
+                                            }>
+                                                {stage.status === 'completed' ? (
+                                                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                ) : stage.status === 'scheduled' ? (
+                                                    <Clock3 className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                ) : (
+                                                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                )}
+                                            </div>
 
-                                                        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-2 sm:p-3 rounded-md mt-2">
-                                                            <p className="font-medium text-xs sm:text-sm">Pesan dari Tim Rekrutmen:</p>
-                                                            <p className="text-xs sm:text-sm mt-1 overflow-hidden text-ellipsis">"Kami senang Anda telah mencapai tahap ini dalam proses rekrutmen. Percayalah pada kemampuan Anda dan tunjukkan potensi terbaik Anda. Semoga sukses!"</p>
-                                                        </div>
+                                            {/* Card stage */}
+                                            <Card className={`border-l-4 
+                                                ${stage.status === 'completed' ? 'border-l-green-500' :
+                                                 stage.status === 'scheduled' ? 'border-l-blue-500' :
+                                                 'border-l-gray-300'}`
+                                            }>
+                                                <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
+                                                        <CardTitle className="text-base sm:text-lg">{stage.name}</CardTitle>
+                                                        <Badge className={`self-start sm:self-auto
+                                                            ${stage.status === 'completed' ? 'bg-green-500 text-white' : ''}
+                                                            ${stage.status === 'scheduled' ? 'bg-blue-500 text-white' : ''}
+                                                            ${stage.status === 'waiting' ? 'bg-gray-400 text-white' : ''}`
+                                                        }>
+                                                            {stage.status === 'completed' ? 'Selesai' :
+                                                             stage.status === 'scheduled' ? 'Terjadwalkan' :
+                                                             'Menunggu'}
+                                                        </Badge>
                                                     </div>
-                                                </CardContent>
-                                            )}
-                                        </Card>
-                                    </div>
-                                ))}
+                                                    <CardDescription className="text-xs sm:text-sm">
+                                                        {stage.status === 'completed' ?
+                                                         `Telah selesai pada ${stage.date}` :
+                                                         stage.status === 'scheduled' ?
+                                                         `Dijadwalkan pada ${stage.date}, ${stage.time}` :
+                                                         'Menunggu penyelesaian tahap sebelumnya'}
+                                                    </CardDescription>
+                                                </CardHeader>
+
+                                                {/* Content khusus untuk stage scheduled */}
+                                                {stage.status === 'scheduled' && (
+                                                    <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                                                        {/* Detail informasi tes */}
+                                                        <div className="space-y-3 bg-blue-50 p-3 sm:p-4 rounded-md">
+                                                            <h4 className="font-semibold text-blue-800 text-sm sm:text-base">Detail Tes Psikotes:</h4>
+                                                            <div className="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                                                                <div className="flex items-start gap-2">
+                                                                    <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">Tanggal & Waktu</p>
+                                                                        <p className="text-gray-600">{stage.date}, {stage.time}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-start gap-2">
+                                                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">Durasi</p>
+                                                                        <p className="text-gray-600">{stage.duration}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-start gap-2 sm:col-span-2">
+                                                                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">Jenis Tes</p>
+                                                                        <p className="text-gray-600">{stage.testType}</p>
+                                                                    </div>
+                                                                </div>
+                                                                {stage.location && (
+                                                                    <div className="flex items-start gap-2 sm:col-span-2">
+                                                                        <svg className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        </svg>
+                                                                        <div>
+                                                                            <p className="font-medium">Lokasi</p>
+                                                                            <p className="text-gray-600">{stage.location}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Notes dan pesan */}
+                                                            {stage.notes && (
+                                                                <div className="mt-3">
+                                                                    <p className="font-medium text-blue-800 text-xs sm:text-sm">Catatan:</p>
+                                                                    <p className="text-xs sm:text-sm text-gray-600">{stage.notes}</p>
+                                                                </div>
+                                                            )}
+
+                                                            <div className="bg-white p-2 sm:p-3 rounded-md mt-3 border border-blue-100">
+                                                                <p className="text-xs sm:text-sm font-medium text-blue-800">Tips untuk Tes Psikotes:</p>
+                                                                <ul className="text-xs sm:text-sm text-gray-600 mt-1 space-y-1 pl-4 sm:pl-5 list-disc">
+                                                                    <li>Istirahatlah yang cukup malam sebelum tes</li>
+                                                                    <li>Jangan lupa sarapan untuk menjaga energi Anda</li>
+                                                                    <li>Jawab dengan jujur dan sesuai dengan kepribadian Anda</li>
+                                                                    <li>Kelola waktu dengan baik</li>
+                                                                    <li>Tetap tenang dan percaya diri</li>
+                                                                </ul>
+                                                                <div className="flex justify-end mt-3 sm:mt-4">
+                                                                    <Button
+                                                                        onClick={scrollToPreparation}
+                                                                        variant="outline"
+                                                                        className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-blue-700 border-blue-500 hover:bg-blue-50 py-1 h-auto sm:h-9"
+                                                                    >
+                                                                        Lanjut ke Persiapan Tes
+                                                                        <ArrowDownCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-2 sm:p-3 rounded-md mt-2">
+                                                                <p className="font-medium text-xs sm:text-sm">Pesan dari Tim Rekrutmen:</p>
+                                                                <p className="text-xs sm:text-sm mt-1 overflow-hidden text-ellipsis">"Kami senang Anda telah mencapai tahap ini dalam proses rekrutmen. Percayalah pada kemampuan Anda dan tunjukkan potensi terbaik Anda. Semoga sukses!"</p>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                )}
+                                            </Card>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
 
@@ -348,7 +450,7 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                                 </div>
                             </CardContent>
                             <CardFooter className="px-4 sm:px-6 py-4 sm:py-6">
-                                <Button className="w-full" onClick={handleStartTest}>
+                                <Button className="w-full" onClick={() => candidateTests.length > 0 && handleStartTest(candidateTests[0])}>
                                     Mulai Mengerjakan
                                 </Button>
                             </CardFooter>

@@ -60,6 +60,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Answer::class);
     }
+
+    /**
+     * Get the candidate associated with the user.
+     */
+    public function candidate()
+    {
+        return $this->hasOne(Candidate::class);
+    }
 }
 
-  
+

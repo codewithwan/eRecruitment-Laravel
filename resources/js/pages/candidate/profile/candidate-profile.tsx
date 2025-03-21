@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { PlusCircle, Upload, Edit } from "lucide-react";
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -22,7 +21,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function CandidateProfile() {
     // Mock data - in a real app this would come from props or an API
-    const [profile, setProfile] = useState({
+    const [profile] = useState({
         personalInfo: {
             name: 'codewithwan',
             email: 'codewithwan@gmail.com',

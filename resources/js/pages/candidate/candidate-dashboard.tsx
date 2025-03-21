@@ -1,14 +1,15 @@
 import UserLayout from '@/layouts/user-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Check, FileCheck, BriefcaseBusiness, XCircle } from 'lucide-react';
-import { useRef, useState } from 'react';
+// import { useRef, useState } from 'react';
 import RecruitmentStageCard from '@/components/recruitment-stage-card';
+import { useState } from 'react';
 
 interface CandidateInfoProps {
     users?: User[];
@@ -74,23 +75,23 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
     const users = Array.isArray(props.users) ? props.users : props.users ? [props.users] : [];
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-    const handleStartTest = () => {
-        setShowConfirmDialog(true);
-    };
+    // const handleStartTest = () => {
+    //     setShowConfirmDialog(true);
+    // };
 
     const confirmStartTest = () => {
         setShowConfirmDialog(false);
         router.visit('/candidate/questions');
     };
 
-    const preparationRef = useRef<HTMLDivElement>(null);
-    const scrollToPreparation = () => {
-        if (preparationRef.current) {
-            preparationRef.current.scrollIntoView({
-                behavior: 'smooth',
-            });
-        }
-    };
+    // const preparationRef = useRef<HTMLDivElement>(null);     
+    // const scrollToPreparation = () => {
+    //     if (preparationRef.current) {
+    //         preparationRef.current.scrollIntoView({
+    //             behavior: 'smooth',
+    //         });
+    //     }
+    // };
 
     // Check if the user has passed the administrative selection stage
     const hasPassedAdmin = currentCandidate.stages.find(stage => stage.id === 1)?.status === 'completed';

@@ -6,7 +6,7 @@ use App\Models\Candidate;
 use App\Models\CandidateTest;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use App\Models\Candidate;
+// use App\Models\Candidate;
 use App\Models\RecruitmentStage;
 use App\Models\Vacancies;
 use App\Enums\RecruitmentStage as RecruitmentStageEnum;

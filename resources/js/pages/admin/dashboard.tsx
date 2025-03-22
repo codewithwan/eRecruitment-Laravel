@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { type User } from '@/components/user-table';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { FileCheck2 } from 'lucide-react';
 
 interface DashboardProps {
     users?: User[];

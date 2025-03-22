@@ -13,6 +13,7 @@ import { useState } from 'react';
 
 interface CandidateInfoProps {
     users?: User[];
+    candidateTests?: CandidateTest[];
 }
 
 interface User {
@@ -22,6 +23,15 @@ interface User {
     role: string;
     email_verified_at: string | null;
     created_at: string;
+}
+
+interface CandidateTest {
+    id: number;
+    test_type: string;
+    scheduled_date: string;
+    scheduled_time: string;
+    duration: string;
+    instructions: string;
 }
 
 // Breadcrumbs config
@@ -73,7 +83,9 @@ const currentCandidate = {
 
 export default function CandidateDashboard(props: CandidateInfoProps) {
     const users = Array.isArray(props.users) ? props.users : props.users ? [props.users] : [];
+    const candidateTests = props.candidateTests || [];
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [selectedTest, setSelectedTest] = useState<CandidateTest | null>(null);
 
     // const handleStartTest = () => {
     //     setShowConfirmDialog(true);
@@ -81,7 +93,9 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
 
     const confirmStartTest = () => {
         setShowConfirmDialog(false);
-        router.visit('/candidate/questions');
+        if (selectedTest) {
+            router.visit(`/candidate/tests/${selectedTest.id}/start`);
+        }
     };
 
     // const preparationRef = useRef<HTMLDivElement>(null);     
@@ -104,7 +118,7 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                     <DialogHeader>
                         <DialogTitle>Konfirmasi Mulai Tes</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin memulai tes psikotes sekarang? Harap diperhatikan:
+                            Apakah Anda yakin ingin memulai tes {selectedTest?.test_type} sekarang? Harap diperhatikan:
                             <ul className="mt-2 list-disc list-inside text-sm text-gray-600">
                                 <li>Anda tidak dapat meninggalkan tab ini selama tes berlangsung.</li>
                                 <li>Pastikan koneksi internet Anda stabil.</li>
@@ -132,11 +146,11 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                                     <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-2 sm:border-4 border-white shadow-sm">
                                         <AvatarImage src={currentCandidate.avatar} alt={currentCandidate.name} />
                                         <AvatarFallback className="text-lg sm:text-xl">
-                                            {users[0].name.split(' ').map(n => n[0]).join('')}
+                                            {users[0]?.name.split(' ').map(n => n[0]).join('')}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 text-center md:text-left">
-                                        <h2 className="text-xl sm:text-2xl font-bold mb-1">{users[0].name}</h2>
+                                        <h2 className="text-xl sm:text-2xl font-bold mb-1">{users[0]?.name}</h2>
                                         <p className="text-gray-600 mb-2 sm:mb-3">Kandidat {currentCandidate.position}</p>
                                         <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                                             <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs sm:text-sm">

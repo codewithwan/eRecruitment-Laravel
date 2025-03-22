@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->integer('statement_number');
-            $table->json('options');
-            $table->string('category')->nullable();
-            $table->integer('difficulty_level')->default(1); 
+            $table->text('question')->nullable(); // Make question nullable
+            $table->json('options'); // Keep options required
+            $table->string('test_type');
+            $table->string('duration');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

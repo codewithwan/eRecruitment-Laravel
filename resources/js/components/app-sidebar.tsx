@@ -33,6 +33,11 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard/questions',
         icon: LucideFileQuestion
     },
+    {
+        title: 'Candidate Tests',
+        href: '/dashboard/candidate-tests',
+        icon: FileCheck2
+    },
 ];
 
 const footerNavItems: NavItem[] = [

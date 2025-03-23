@@ -6,7 +6,7 @@ use App\Http\Controllers\JobsController;
 use Illuminate\Support\Facades\Route;
 
 // User route
-Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
+Route::middleware(['auth', 'verified', 'role:'.UserRole::CANDIDATE->value])
     ->prefix('candidate')
     ->name('user.')
     ->group(function () {
@@ -16,7 +16,6 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
             ->name('jobs.')
             ->group(function () {
                 Route::get('/', [JobsController::class, 'index'])->name('index');
-                Route::get('/chat', [JobsController::class, 'show'])->name('chat');
                 Route::post('/{id}/apply', [JobsController::class, 'apply'])->name('apply');
             });
     });

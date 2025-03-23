@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Settings;
 
 use App\Enums\UserRole;
@@ -24,12 +25,12 @@ class PasswordController extends Controller
         if ($authUser->role->value == UserRole::HR->value) {
             return Inertia::render('admin/settings/password', [
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-                'status'          => $request->session()->get('status'),
+                'status' => $request->session()->get('status'),
             ]);
         } else {
             return Inertia::render('candidate/settings/password', [
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-                'status'          => $request->session()->get('status'),
+                'status' => $request->session()->get('status'),
             ]);
         }
         // return Inertia::render('admin/settings/password', [
@@ -45,7 +46,7 @@ class PasswordController extends Controller
     {
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password'         => ['required', Password::defaults(), 'confirmed'],
+            'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
         $request->user()->update([

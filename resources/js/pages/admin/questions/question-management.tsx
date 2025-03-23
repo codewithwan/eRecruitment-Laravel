@@ -1,16 +1,32 @@
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { Clock } from 'lucide-react';
 
-// interface QuestionProps {
-//     questions?: Question[];
-// }
+interface Question {
+    id: number;
+    question: string;
+    options: string[];
+    test_type: string;
+    duration: string;
+    created_at: string;
+}
 
-// interface Question {
-//     id: number;
-//     question: string;
-//     options: Array<string>;
-// }
+interface Test {
+    id: number;
+    title: string;
+    description: string;
+    time_limit: string;
+    question_count: number;
+    test_type: string;
+    questions: Question[];
+}
+
+interface TestsProps {
+    tests?: Test[];
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -23,19 +39,83 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Questions() {
-    // const questions = props.questions || [];
+export default function QuestionManagement(props: TestsProps) {
+    const tests = props.tests || [];
+
+    const sampleTests = [
+        {
+            id: 1,
+            title: 'Tes Kepribadian MBTI',
+            description: 'Tes untuk mengukur preferensi psikologis Anda dalam bagaimana Anda membuat keputusan dan berinteraksi dengan dunia.',
+            time_limit: '45 menit',
+            question_count: 100,
+            test_type: 'Personality Assessment',
+            questions: [],
+        },
+        {
+            id: 2,
+            title: 'Tes Kepemimpinan',
+            description: 'Tes untuk mengukur gaya kepemimpinan dan kemampuan memimpin dalam berbagai situasi.',
+            time_limit: '30 menit',
+            question_count: 50,
+            test_type: 'Leadership Assessment',
+            questions: [],
+        },
+        {
+            id: 3,
+            title: 'Tes Etika Kerja',
+            description: 'Tes untuk mengukur sikap dan perilaku Anda dalam lingkungan kerja profesional.',
+            time_limit: '25 menit',
+            question_count: 40,
+            test_type: 'Work Ethic Assessment',
+            questions: [],
+        },
+    ];
+
+    const displayTests = tests.length > 0 ? tests : sampleTests;
+
+    const handleAddTest = () => {
+        console.log('Add new test');
+        router.visit('/dashboard/questions/add-questions');
+    };
+
+    const handleEditTest = (id: string) => {
+        console.log(`Edit test with ID: ${id}`);
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Question" />
+            <Head title="Test management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
-                {/* Analytics Overview Section */}
-                <div>
-                    <h2 className="text-2xl font-semibold mb-4">Question</h2>
-                    <div className="grid auto-rows-min gap-4 md:grid-cols-2">
-                        <h1>Question</h1>
-                    </div>
+                <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold">Jobs Management</h2>
+                    <Button className="mx-10 px-10" onClick={handleAddTest}>
+                        Add Job
+                    </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {displayTests.map((test) => (
+                        <Card key={test.id} className="shadow-sm">
+                            <CardHeader>
+                                <CardTitle>{test.title}</CardTitle>
+                                <div className="mt-2 flex items-center text-sm text-gray-500">
+                                    <Clock className="mr-1 h-4 w-4" />
+                                    <span>
+                                        {test.time_limit} | {test.question_count} soal
+                                    </span>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-gray-700">{test.description}</p>
+                            </CardContent>
+                            <CardFooter className="flex justify-end">
+                                <Button variant="outline" onClick={() => handleEditTest(test.id.toString())}>
+                                    Edit Tes
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    ))}
                 </div>
             </div>
         </AppLayout>

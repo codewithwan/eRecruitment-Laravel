@@ -1,7 +1,7 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface PositionAnalyticsChartProps {
-    data: { name: string, applicants: number, views: number }[];
+    data: { name: string; applicants: number; views: number }[];
 }
 
 export default function PositionAnalyticsChart({ data }: PositionAnalyticsChartProps) {

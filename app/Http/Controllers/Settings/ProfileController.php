@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Settings;
 
 use App\Enums\UserRole;
@@ -34,7 +35,7 @@ class ProfileController extends Controller
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
                 'status' => $request->session()->get('status'),
             ]);
-        }else{
+        } else {
             return Inertia::render('candidate/settings/password', [
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
                 'status' => $request->session()->get('status'),

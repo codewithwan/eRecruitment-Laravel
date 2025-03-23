@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ class Vacancies extends Model
 
     protected $casts = [
         'requirements' => 'array',
-        'benefits'     => 'array',
+        'benefits' => 'array',
     ];
 
     /**

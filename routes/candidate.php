@@ -16,9 +16,6 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
             ->name('jobs.')
             ->group(function () {
                 Route::get('/', [JobsController::class, 'index'])->name('index');
-                Route::get('/chat', [JobsController::class, 'show'])->name('chat');
                 Route::post('/{id}/apply', [JobsController::class, 'apply'])->name('apply');
-                Route::get('/tests/{testId}/start', [CandidateController::class, 'startTest'])->name('tests.start');
-                Route::post('/tests/{testId}/submit', [CandidateController::class, 'submitTest'])->name('tests.submit');
             });
     });

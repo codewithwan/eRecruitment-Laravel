@@ -64,12 +64,6 @@ export default function NotFound({ error = 'Page Not Found', message = null }) {
             >
               Go to Homepage
             </Button>
-            <Button 
-              onClick={() => router.visit('/dashboard')}
-              className="w-full sm:w-auto"
-            >
-              Return to Dashboard
-            </Button>
           </div>
         </div>
         

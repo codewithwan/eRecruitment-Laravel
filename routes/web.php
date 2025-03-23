@@ -1,50 +1,12 @@
 <?php
 
-use App\Http\Controllers\CandidateController;
-use App\Http\Controllers\QuestionController;
 use App\Enums\UserRole;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CandidateTestController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
-
-// Admin route
-Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
-    ->prefix('dashboard')
-    ->name('admin.')
-    ->group(function () {
-        Route::get('/', [UserController::class, 'index'])->name('dashboard');
-        Route::prefix('users')
-            ->name('users.')
-            ->group(function () {
-                Route::get('/', [UserController::class, 'store'])->name('info');
-                Route::post('/', [UserController::class, 'create'])->name('create');
-                Route::put('/{user}', [UserController::class, 'update'])->name('update');
-                Route::delete('/{user}', [UserController::class, 'destroy'])->name('remove');
-            });
-        Route::prefix('jobs')
-            ->name('jobs.')
-            ->group(function () {
-                Route::get('/', [VacanciesController::class, 'store'])->name('info');
-                Route::post('/', [VacanciesController::class, 'create'])->name('create');
-                Route::put('/{job}', [VacanciesController::class, 'update'])->name('update');
-                Route::delete('/{job}', [VacanciesController::class, 'destroy'])->name('delete');
-            });
-        Route::get('/questions', [QuestionController::class, 'index'])->name('questions');
-        Route::get('/add-questions', [QuestionController::class, 'createForm'])->name('questions.create');
-        Route::post('/questions', [QuestionController::class, 'store'])->name('questions.store');
-        Route::get('/questions/{testType}/edit', [QuestionController::class, 'editForm'])->name('questions.edit');
-        Route::put('/questions/{testType}', [QuestionController::class, 'update'])->name('questions.update');
-        
-        // Candidate Test Management Routes
-        Route::get('/candidate-tests', [CandidateTestController::class, 'index'])->name('candidate-tests');
-        Route::get('/candidate-tests/create', [CandidateTestController::class, 'create'])->name('candidate-tests.create');
-        Route::post('/candidate-tests', [CandidateTestController::class, 'store'])->name('candidate-tests.store');
-        Route::get('/candidate-tests/{id}', [CandidateTestController::class, 'show'])->name('candidate-tests.show');
-    });
 
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
@@ -56,3 +18,4 @@ Route::middleware(['auth', 'verified'])->get('/redirect', function () {
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/candidate.php';
+require __DIR__ . '/admin.php';

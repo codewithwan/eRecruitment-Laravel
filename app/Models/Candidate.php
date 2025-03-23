@@ -1,17 +1,28 @@
 <?php
-
 namespace App\Models;
 
+use App\Enums\CandidatesStage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Candidate extends Model
 {
-    protected $fillable = ['user_id', 'vacancy_id', 'applied_at'];
+    use HasFactory;
 
-    public function user()
+    protected $fillable = [
+        'user_id',
+        'vacancy_id',
+        'applied_at',
+        'status',
+    ];
+
+    protected $casts = [
+        'applied_at' => 'datetime',
+        'status'     => CandidatesStage::class,
+    ];
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -19,10 +30,5 @@ class Candidate extends Model
     public function vacancy()
     {
         return $this->belongsTo(Vacancies::class, 'vacancy_id');
-    }
-
-    public function stages()
-    {
-        return $this->hasMany(RecruitmentStage::class);
     }
 }

@@ -64,12 +64,6 @@ export default function ServerError({ error = 'Server Error', message = null }) 
             >
               Try Again
             </Button>
-            <Button 
-              onClick={() => router.visit('/dashboard')}
-              className="w-full sm:w-auto"
-            >
-              Return to Dashboard
-            </Button>
           </div>
         </div>
         

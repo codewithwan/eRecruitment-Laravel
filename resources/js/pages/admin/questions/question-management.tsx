@@ -1,9 +1,9 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Plus, Pencil } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Clock, Plus } from "lucide-react";
 
 interface Question {
     id: number;
@@ -39,10 +39,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Tests(props: TestsProps) {
+export default function QuestionManagement(props: TestsProps) {
     const tests = props.tests || [];
-    
-    // Sample data for testing if no props are provided
+
     const sampleTests = [
         {
             id: 1,
@@ -74,28 +73,23 @@ export default function Tests(props: TestsProps) {
     ];
 
     const displayTests = tests.length > 0 ? tests : sampleTests;
-    
-    const handleAddTestClick = () => {
-        window.location.href = route('admin.questions.create');
-        // Or if route() helper isn't available:
-        // window.location.href = '/dashboard/add-questions';
+
+    const handleAddTest = () => {
+        console.log("Add new test");
+        router.visit('/dashboard/questions/add-questions');
     };
 
     const handleEditTest = (id: string) => {
-        window.location.href = route('admin.questions.edit', id);
-        // Or if route() helper isn't available:
-        // window.location.href = `/dashboard/questions/${id}/edit`;
+        console.log(`Edit test with ID: ${id}`);
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Psychometric Tests" />
+            <Head title="Test management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-semibold">Kelola Tes Psikotes</h2>
-                    <Button onClick={handleAddTestClick} className="gap-2">
-                        <Plus className="h-4 w-4" /> Tambah Tes
-                    </Button>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-semibold">Jobs Management</h2>
+                    <Button className='px-10 mx-10' onClick={handleAddTest}>Add Job</Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -112,8 +106,8 @@ export default function Tests(props: TestsProps) {
                                 <p className="text-gray-700">{test.description}</p>
                             </CardContent>
                             <CardFooter className="flex justify-end">
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={() => handleEditTest(test.id.toString())}
                                 >
                                     Edit Tes
@@ -122,15 +116,7 @@ export default function Tests(props: TestsProps) {
                         </Card>
                     ))}
                 </div>
-
-                {displayTests.length === 0 && (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500 mb-4">Belum ada tes psikotes yang tersimpan.</p>
-                        <Button onClick={handleAddTestClick} className="gap-2">
-                            <Plus className="h-4 w-4" /> Tambah Tes
-                        </Button>
-                    </div>
-                )}
+                
             </div>
         </AppLayout>
     );

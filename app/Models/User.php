@@ -55,12 +55,6 @@ class User extends Authenticatable
             'role'              => UserRole::class,
         ];
     }
-
-    public function answers(): HasMany
-    {
-        return $this->hasMany(Answer::class);
-    }
-
     public function candidate()
     {
         return $this->hasOne(Candidate::class, 'user_id');

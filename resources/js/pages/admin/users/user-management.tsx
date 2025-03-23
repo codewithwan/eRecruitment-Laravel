@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserTable, type User } from '@/components/user-table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,8 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import axios from 'axios';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 
+interface PaginationData {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+}
+
 interface UserManagementProps {
     users?: User[];
+    pagination?: PaginationData;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -36,17 +44,72 @@ const roles = [
 ];
 
 export default function UserManagement(props: UserManagementProps) {
-    const users = props.users || [];
-    const [userList, setUserList] = useState(users);
+    const initialUsers = props.users || [];
+    const initialPagination = props.pagination || {
+        total: initialUsers.length,
+        per_page: 10,
+        current_page: 1,
+        last_page: Math.ceil(initialUsers.length / 10)
+    };
+    
+    const [users, setUsers] = useState(initialUsers);
+    const [pagination, setPagination] = useState(initialPagination);
+    const [isLoading, setIsLoading] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: '' });
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [userIdToDelete, setUserIdToDelete] = useState<number | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editUser, setEditUser] = useState<Partial<User>>({ name: '', email: '', role: '' });
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
+        const perPage = urlParams.get('per_page') ? parseInt(urlParams.get('per_page')!) : 10;
+        
+        if (page !== pagination.current_page || perPage !== pagination.per_page) {
+            fetchUsers(page, perPage);
+        }
+    }, []);
+
+    const fetchUsers = async (page = 1, perPage = pagination.per_page) => {
+        setIsLoading(true);
+        try {
+            // Update URL without full page refresh
+            updateUrlParams(page, perPage);
+            
+            const response = await axios.get('/dashboard/users/list', {
+                params: {
+                    page,
+                    per_page: perPage
+                }
+            });
+            setUsers(response.data.users);
+            setPagination(response.data.pagination);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Function to update URL parameters without page refresh
+    const updateUrlParams = (page: number, perPage: number) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page.toString());
+        url.searchParams.set('per_page', perPage.toString());
+        window.history.pushState({}, '', url.toString());
+    };
+
+    const handlePageChange = (page: number) => {
+        fetchUsers(page, pagination.per_page);
+    };
+
+    const handlePerPageChange = (perPage: number) => {
+        fetchUsers(1, perPage);
+    };
 
     const handleViewUser = (userId: number) => {
         const user = users.find(user => user.id === userId);
@@ -79,12 +142,8 @@ export default function UserManagement(props: UserManagementProps) {
         
         setIsLoading(true);
         try {
-            const response = await axios.put(`/dashboard/users/${editUser.id}`, editUser);
-            setUserList(prevUsers => 
-                prevUsers.map(user => 
-                    user.id === editUser.id ? { ...user, ...response.data.user } : user
-                )
-            );
+            fetchUsers(pagination.current_page, pagination.per_page);
+            
             setIsEditDialogOpen(false);
         } catch (error) {
             console.error('Error updating user:', error);
@@ -103,7 +162,8 @@ export default function UserManagement(props: UserManagementProps) {
 
         try {
             await axios.delete(`/dashboard/users/${userIdToDelete}`);
-            setUserList(prevUsers => prevUsers.filter(user => user.id !== userIdToDelete));
+            // After successful deletion, refresh the current page
+            fetchUsers(pagination.current_page, pagination.per_page);
         } catch (error) {
             console.error('Error deleting user:', error);
         } finally {
@@ -124,8 +184,9 @@ export default function UserManagement(props: UserManagementProps) {
     const handleCreateUser = async () => {
         setIsLoading(true);
         try {
-            const response = await axios.post('/dashboard/users', newUser);
-            setUserList(prevUsers => [...prevUsers, response.data.user]);
+            await axios.post('/dashboard/users', newUser);
+            // After creating a user, refresh the current page
+            fetchUsers(pagination.current_page, pagination.per_page);
             setIsCreateDialogOpen(false);
             setNewUser({ name: '', email: '', password: '', role: '' });
         } catch (error) {
@@ -153,10 +214,14 @@ export default function UserManagement(props: UserManagementProps) {
                         </CardHeader>
                         <CardContent>
                             <UserTable
-                                users={userList}
+                                users={users}
+                                pagination={pagination}
                                 onView={handleViewUser}
                                 onEdit={handleEditUser}
                                 onDelete={handleDeleteUser}
+                                onPageChange={handlePageChange}
+                                onPerPageChange={handlePerPageChange}
+                                isLoading={isLoading}
                             />
                         </CardContent>
                     </Card>

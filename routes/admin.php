@@ -7,7 +7,7 @@ use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Route;
 
 // Admin route
-Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
+Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
     ->prefix('dashboard')
     ->name('admin.')
     ->group(function () {

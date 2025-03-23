@@ -2,14 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Enums\UserRole;
 use App\Enums\CandidatesStage;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\User;
+use App\Enums\UserRole;
 use App\Models\Candidate;
+use App\Models\User;
 use App\Models\Vacancies;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class CandidateSeeder extends Seeder
 {
@@ -20,10 +19,10 @@ class CandidateSeeder extends Seeder
     {
         // Get all candidate users
         $candidateUsers = User::where('role', UserRole::CANDIDATE->value)->get();
-        
+
         // Get available vacancies (assuming you have some vacancies already seeded)
         $vacancies = Vacancies::all();
-        
+
         if ($vacancies->isEmpty() || $candidateUsers->isEmpty()) {
             // If no vacancies or candidates exist, skip
             return;
@@ -39,27 +38,27 @@ class CandidateSeeder extends Seeder
             6 => 6,   // 6 days ago: 6 applications
             7 => 9,   // 7 days ago: 9 applications
         ];
-        
+
         // Create applications based on day distribution
         $userIndex = 0;
-        
+
         foreach ($dayDistribution as $daysAgo => $applicationsCount) {
             $date = Carbon::now()->subDays($daysAgo);
-            
+
             for ($i = 0; $i < $applicationsCount; $i++) {
                 // Get a user (cycling through available users)
                 $user = $candidateUsers[$userIndex % count($candidateUsers)];
                 $userIndex++;
-                
+
                 // Get a random vacancy
                 $vacancy = $vacancies->random();
-                
+
                 // Create the application with timestamp from the specific day
                 Candidate::create([
                     'user_id' => $user->id,
                     'vacancy_id' => $vacancy->id,
                     'applied_at' => $date->copy()->addHours(rand(8, 20))->addMinutes(rand(0, 59)), // Random time between 8 AM and 8 PM
-                    'status' => CandidatesStage::ADMINISTRATIVE_SELECTION->value, 
+                    'status' => CandidatesStage::ADMINISTRATIVE_SELECTION->value,
                 ]);
             }
         }

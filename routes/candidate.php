@@ -6,7 +6,7 @@ use App\Http\Controllers\JobsController;
 use Illuminate\Support\Facades\Route;
 
 // User route
-Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
+Route::middleware(['auth', 'verified', 'role:'.UserRole::CANDIDATE->value])
     ->prefix('candidate')
     ->name('user.')
     ->group(function () {

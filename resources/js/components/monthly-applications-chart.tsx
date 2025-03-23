@@ -1,7 +1,7 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface MonthlyApplicationsChartProps {
-    data: { name: string, applications: number }[];
+    data: { name: string; applications: number }[];
 }
 
 export default function MonthlyApplicationsChart({ data }: MonthlyApplicationsChartProps) {

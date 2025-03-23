@@ -21,8 +21,8 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Job Opportunities',
         href: '/candidate/jobs',
-        icon: Search, 
-    }
+        icon: Search,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

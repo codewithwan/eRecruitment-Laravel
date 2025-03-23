@@ -1,7 +1,7 @@
+import { Card } from '@/components/ui/card';
 import UserLayout from '@/layouts/user-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Card } from '@/components/ui/card';
 
 interface CandidateInfoProps {
     users?: User | User[];
@@ -25,12 +25,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function CandidateDashboard(props: CandidateInfoProps) {
     // Initialize user state directly from props
-    const user = Array.isArray(props.users) && props.users.length > 0 
-        ? props.users[0] 
-        : !Array.isArray(props.users) && props.users 
-            ? props.users 
-            : null;
-    
+    const user =
+        Array.isArray(props.users) && props.users.length > 0 ? props.users[0] : !Array.isArray(props.users) && props.users ? props.users : null;
+
     return (
         <div className="space-y-8">
             <UserLayout breadcrumbs={breadcrumbs}>
@@ -38,7 +35,7 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                 <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-2 sm:p-4">
                     <Card className="shadow-md">
                         <div className="p-6">
-                            <h2 className="text-xl font-semibold mb-6">Candidate Information</h2>
+                            <h2 className="mb-6 text-xl font-semibold">Candidate Information</h2>
                             {user ? (
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-2 border-r pr-4">
@@ -63,9 +60,7 @@ export default function CandidateDashboard(props: CandidateInfoProps) {
                                         <div className="flex flex-col">
                                             <span className="text-sm text-gray-500">Email Verified</span>
                                             <span className="font-medium">
-                                                {user.email_verified_at ? 
-                                                    new Date(user.email_verified_at).toLocaleDateString() : 
-                                                    'Not verified'}
+                                                {user.email_verified_at ? new Date(user.email_verified_at).toLocaleDateString() : 'Not verified'}
                                             </span>
                                         </div>
                                         <div className="flex flex-col">

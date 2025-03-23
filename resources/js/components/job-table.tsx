@@ -36,7 +36,9 @@ export function JobTable({ jobs, onView, onEdit, onDelete }: JobTableProps) {
             <TableBody>
                 {jobs.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center">No jobs found</TableCell>
+                        <TableCell colSpan={5} className="text-center">
+                            No jobs found
+                        </TableCell>
                     </TableRow>
                 ) : (
                     jobs.map((job) => (
@@ -45,7 +47,7 @@ export function JobTable({ jobs, onView, onEdit, onDelete }: JobTableProps) {
                             <TableCell>{job.title}</TableCell>
                             <TableCell>{job.department}</TableCell>
                             <TableCell>{job.location}</TableCell>
-                            <TableCell className="text-right space-x-2">
+                            <TableCell className="space-x-2 text-right">
                                 <Button variant="ghost" size="icon" onClick={() => onView(job.id)}>
                                     <EyeIcon className="h-4 w-4" />
                                 </Button>

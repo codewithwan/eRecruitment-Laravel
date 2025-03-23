@@ -1,16 +1,25 @@
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState, useEffect } from 'react';
-import { UserTable, type User } from '@/components/user-table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserTable, type User } from '@/components/user-table';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { useEffect, useState } from 'react';
 
 interface PaginationData {
     total: number;
@@ -32,7 +41,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'User Management',
         href: '/dashboard/users',
-    }
+    },
 ];
 
 const roles = [
@@ -49,9 +58,9 @@ export default function UserManagement(props: UserManagementProps) {
         total: initialUsers.length,
         per_page: 10,
         current_page: 1,
-        last_page: Math.ceil(initialUsers.length / 10)
+        last_page: Math.ceil(initialUsers.length / 10),
     };
-    
+
     const [users, setUsers] = useState(initialUsers);
     const [pagination, setPagination] = useState(initialPagination);
     const [isLoading, setIsLoading] = useState(false);
@@ -68,7 +77,7 @@ export default function UserManagement(props: UserManagementProps) {
         const urlParams = new URLSearchParams(window.location.search);
         const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
         const perPage = urlParams.get('per_page') ? parseInt(urlParams.get('per_page')!) : 10;
-        
+
         if (page !== pagination.current_page || perPage !== pagination.per_page) {
             fetchUsers(page, perPage);
         }
@@ -79,12 +88,12 @@ export default function UserManagement(props: UserManagementProps) {
         try {
             // Update URL without full page refresh
             updateUrlParams(page, perPage);
-            
+
             const response = await axios.get('/dashboard/users/list', {
                 params: {
                     page,
-                    per_page: perPage
-                }
+                    per_page: perPage,
+                },
             });
             setUsers(response.data.users);
             setPagination(response.data.pagination);
@@ -112,7 +121,7 @@ export default function UserManagement(props: UserManagementProps) {
     };
 
     const handleViewUser = (userId: number) => {
-        const user = users.find(user => user.id === userId);
+        const user = users.find((user) => user.id === userId);
         if (user) {
             setSelectedUser(user);
             setIsViewDialogOpen(true);
@@ -120,7 +129,7 @@ export default function UserManagement(props: UserManagementProps) {
     };
 
     const handleEditUser = (userId: number) => {
-        const user = users.find(user => user.id === userId);
+        const user = users.find((user) => user.id === userId);
         if (user) {
             setEditUser({
                 id: user.id,
@@ -134,16 +143,16 @@ export default function UserManagement(props: UserManagementProps) {
 
     const handleEditUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setEditUser(prevState => ({ ...prevState, [name]: value }));
+        setEditUser((prevState) => ({ ...prevState, [name]: value }));
     };
 
     const handleUpdateUser = async () => {
         if (!editUser.id) return;
-        
+
         setIsLoading(true);
         try {
             fetchUsers(pagination.current_page, pagination.per_page);
-            
+
             setIsEditDialogOpen(false);
         } catch (error) {
             console.error('Error updating user:', error);
@@ -178,7 +187,7 @@ export default function UserManagement(props: UserManagementProps) {
 
     const handleCreateUserChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setNewUser(prevState => ({ ...prevState, [name]: value }));
+        setNewUser((prevState) => ({ ...prevState, [name]: value }));
     };
 
     const handleCreateUser = async () => {
@@ -201,16 +210,16 @@ export default function UserManagement(props: UserManagementProps) {
             <Head title="User Management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">User Management</h2>
-                        <Button className='px-10 mx-10' onClick={handleAddUser}>Add User</Button>
+                        <Button className="mx-10 px-10" onClick={handleAddUser}>
+                            Add User
+                        </Button>
                     </div>
                     <Card>
                         <CardHeader>
                             <CardTitle>Users List</CardTitle>
-                            <CardDescription>
-                                Manage all users in the system
-                            </CardDescription>
+                            <CardDescription>Manage all users in the system</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <UserTable
@@ -233,9 +242,7 @@ export default function UserManagement(props: UserManagementProps) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Create User</DialogTitle>
-                        <DialogDescription>
-                            Fill in the details to create a new user.
-                        </DialogDescription>
+                        <DialogDescription>Fill in the details to create a new user.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
@@ -252,12 +259,12 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
                         <div>
                             <Label htmlFor="role">Role</Label>
-                            <Select value={newUser.role} onValueChange={(value) => setNewUser(prevState => ({ ...prevState, role: value }))}>
+                            <Select value={newUser.role} onValueChange={(value) => setNewUser((prevState) => ({ ...prevState, role: value }))}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {roles.map(role => (
+                                    {roles.map((role) => (
                                         <SelectItem key={role.value} value={role.value}>
                                             {role.label}
                                         </SelectItem>
@@ -267,7 +274,9 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleCreateUser} disabled={isLoading}>
                             {isLoading ? 'Creating...' : 'Create'}
                         </Button>
@@ -280,9 +289,7 @@ export default function UserManagement(props: UserManagementProps) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Edit User</DialogTitle>
-                        <DialogDescription>
-                            Update user information.
-                        </DialogDescription>
+                        <DialogDescription>Update user information.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
@@ -295,12 +302,12 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
                         <div>
                             <Label htmlFor="edit-role">Role</Label>
-                            <Select value={editUser.role} onValueChange={(value) => setEditUser(prevState => ({ ...prevState, role: value }))}>
+                            <Select value={editUser.role} onValueChange={(value) => setEditUser((prevState) => ({ ...prevState, role: value }))}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {roles.map(role => (
+                                    {roles.map((role) => (
                                         <SelectItem key={role.value} value={role.value}>
                                             {role.label}
                                         </SelectItem>
@@ -310,7 +317,9 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleUpdateUser} disabled={isLoading}>
                             {isLoading ? 'Updating...' : 'Update'}
                         </Button>
@@ -323,9 +332,7 @@ export default function UserManagement(props: UserManagementProps) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>User Details</DialogTitle>
-                        <DialogDescription>
-                            Detailed information about the selected user.
-                        </DialogDescription>
+                        <DialogDescription>Detailed information about the selected user.</DialogDescription>
                     </DialogHeader>
                     {selectedUser && (
                         <div className="space-y-4">
@@ -349,10 +356,7 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
                     )}
                     <DialogFooter className="sm:justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsViewDialogOpen(false)}
-                        >
+                        <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
                             Close
                         </Button>
                     </DialogFooter>
@@ -364,9 +368,7 @@ export default function UserManagement(props: UserManagementProps) {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to delete this user? This action cannot be undone.
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>Are you sure you want to delete this user? This action cannot be undone.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>

@@ -21,7 +21,7 @@ return new class extends Migration
                 UserRole::HR->value,
                 UserRole::HEAD_HR->value,
                 UserRole::HEAD_DEV->value,
-                UserRole::SUPER_ADMIN->value
+                UserRole::SUPER_ADMIN->value,
             ])->default(UserRole::CANDIDATE->value);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

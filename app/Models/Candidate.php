@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Enums\CandidatesStage;
@@ -19,7 +20,7 @@ class Candidate extends Model
 
     protected $casts = [
         'applied_at' => 'datetime',
-        'status'     => CandidatesStage::class,
+        'status' => CandidatesStage::class,
     ];
 
     public function user(): BelongsTo

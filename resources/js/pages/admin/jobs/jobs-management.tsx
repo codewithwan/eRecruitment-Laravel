@@ -1,16 +1,25 @@
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState } from 'react';
+import { JobTable, type Job } from '@/components/job-table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
-import { JobTable, type Job } from '@/components/job-table';
+import { useState } from 'react';
 
 interface JobProps {
     vacancies: Job[];
@@ -37,16 +46,16 @@ export default function Jobs(props: JobProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // New job form state
     const [newJob, setNewJob] = useState({
         title: '',
         department: '',
         location: '',
         requirements: '',
-        benefits: ''
+        benefits: '',
     });
-    
+
     // Edit job form state
     const [editJob, setEditJob] = useState({
         id: 0,
@@ -54,11 +63,11 @@ export default function Jobs(props: JobProps) {
         department: '',
         location: '',
         requirements: '',
-        benefits: ''
+        benefits: '',
     });
 
     const handleViewJob = (jobId: number) => {
-        const job = jobsList.find(job => job.id === jobId);
+        const job = jobsList.find((job) => job.id === jobId);
         if (job) {
             setSelectedJob(job);
             setIsViewDialogOpen(true);
@@ -66,7 +75,7 @@ export default function Jobs(props: JobProps) {
     };
 
     const handleEditJob = (jobId: number) => {
-        const job = jobsList.find(job => job.id === jobId);
+        const job = jobsList.find((job) => job.id === jobId);
         if (job) {
             setEditJob({
                 id: job.id,
@@ -74,7 +83,7 @@ export default function Jobs(props: JobProps) {
                 department: job.department,
                 location: job.location,
                 requirements: job.requirements.join('\n'),
-                benefits: job.benefits ? job.benefits.join('\n') : ''
+                benefits: job.benefits ? job.benefits.join('\n') : '',
             });
             setIsEditDialogOpen(true);
         }
@@ -91,7 +100,7 @@ export default function Jobs(props: JobProps) {
         setIsLoading(true);
         try {
             await axios.delete(`/dashboard/jobs/${jobIdToDelete}`);
-            setJobsList(prevJobs => prevJobs.filter(job => job.id !== jobIdToDelete));
+            setJobsList((prevJobs) => prevJobs.filter((job) => job.id !== jobIdToDelete));
         } catch (error) {
             console.error('Error deleting job:', error);
         } finally {
@@ -107,12 +116,12 @@ export default function Jobs(props: JobProps) {
 
     const handleCreateJobChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setNewJob(prevState => ({ ...prevState, [name]: value }));
+        setNewJob((prevState) => ({ ...prevState, [name]: value }));
     };
 
     const handleEditJobChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setEditJob(prevState => ({ ...prevState, [name]: value }));
+        setEditJob((prevState) => ({ ...prevState, [name]: value }));
     };
 
     const handleCreateJob = async () => {
@@ -120,21 +129,21 @@ export default function Jobs(props: JobProps) {
         try {
             const formattedData = {
                 ...newJob,
-                requirements: newJob.requirements.split('\n').filter(req => req.trim() !== ''),
-                benefits: newJob.benefits ? newJob.benefits.split('\n').filter(ben => ben.trim() !== '') : null
+                requirements: newJob.requirements.split('\n').filter((req) => req.trim() !== ''),
+                benefits: newJob.benefits ? newJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : null,
             };
-            console.log("formattedData", formattedData);
+            console.log('formattedData', formattedData);
             const response = await axios.post('/dashboard/jobs', formattedData);
-            console.log("response", response);
-            console.log("response", response.status);
-            setJobsList(prevJobs => [...prevJobs, response.data.job]);
+            console.log('response', response);
+            console.log('response', response.status);
+            setJobsList((prevJobs) => [...prevJobs, response.data.job]);
             setIsCreateDialogOpen(false);
             setNewJob({
                 title: '',
                 department: '',
                 location: '',
                 requirements: '',
-                benefits: ''
+                benefits: '',
             });
         } catch (error) {
             console.error('Error creating job:', error);
@@ -148,16 +157,14 @@ export default function Jobs(props: JobProps) {
         try {
             const formattedData = {
                 ...editJob,
-                requirements: editJob.requirements.split('\n').filter(req => req.trim() !== ''),
-                benefits: editJob.benefits ? editJob.benefits.split('\n').filter(ben => ben.trim() !== '') : null
+                requirements: editJob.requirements.split('\n').filter((req) => req.trim() !== ''),
+                benefits: editJob.benefits ? editJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : null,
             };
-            
+
             const response = await axios.put(`/dashboard/jobs/${editJob.id}`, formattedData);
             const updatedJob = response.data.job;
-            
-            setJobsList(prevJobs => 
-                prevJobs.map(job => job.id === editJob.id ? updatedJob : job)
-            );
+
+            setJobsList((prevJobs) => prevJobs.map((job) => (job.id === editJob.id ? updatedJob : job)));
             setIsEditDialogOpen(false);
         } catch (error) {
             console.error('Error updating job:', error);
@@ -171,24 +178,19 @@ export default function Jobs(props: JobProps) {
             <Head title="Jobs Management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">Jobs Management</h2>
-                        <Button className='px-10 mx-10' onClick={handleAddJob}>Add Job</Button>
+                        <Button className="mx-10 px-10" onClick={handleAddJob}>
+                            Add Job
+                        </Button>
                     </div>
                     <Card>
                         <CardHeader>
                             <CardTitle>Jobs List</CardTitle>
-                            <CardDescription>
-                                Manage all job openings in the system
-                            </CardDescription>
+                            <CardDescription>Manage all job openings in the system</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <JobTable
-                                jobs={jobsList}
-                                onView={handleViewJob}
-                                onEdit={handleEditJob}
-                                onDelete={handleDeleteJob}
-                            />
+                            <JobTable jobs={jobsList} onView={handleViewJob} onEdit={handleEditJob} onDelete={handleDeleteJob} />
                         </CardContent>
                     </Card>
                 </div>
@@ -199,9 +201,7 @@ export default function Jobs(props: JobProps) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Create Job</DialogTitle>
-                        <DialogDescription>
-                            Fill in the details to create a new job opening.
-                        </DialogDescription>
+                        <DialogDescription>Fill in the details to create a new job opening.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
@@ -218,27 +218,17 @@ export default function Jobs(props: JobProps) {
                         </div>
                         <div>
                             <Label htmlFor="requirements">Requirements (one per line)</Label>
-                            <Textarea 
-                                id="requirements" 
-                                name="requirements" 
-                                value={newJob.requirements} 
-                                onChange={handleCreateJobChange} 
-                                rows={4}
-                            />
+                            <Textarea id="requirements" name="requirements" value={newJob.requirements} onChange={handleCreateJobChange} rows={4} />
                         </div>
                         <div>
                             <Label htmlFor="benefits">Benefits (one per line, optional)</Label>
-                            <Textarea 
-                                id="benefits" 
-                                name="benefits" 
-                                value={newJob.benefits} 
-                                onChange={handleCreateJobChange} 
-                                rows={4}
-                            />
+                            <Textarea id="benefits" name="benefits" value={newJob.benefits} onChange={handleCreateJobChange} rows={4} />
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleCreateJob} disabled={isLoading}>
                             {isLoading ? 'Creating...' : 'Create'}
                         </Button>
@@ -251,9 +241,7 @@ export default function Jobs(props: JobProps) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Edit Job</DialogTitle>
-                        <DialogDescription>
-                            Update the job opening details.
-                        </DialogDescription>
+                        <DialogDescription>Update the job opening details.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
@@ -270,27 +258,23 @@ export default function Jobs(props: JobProps) {
                         </div>
                         <div>
                             <Label htmlFor="edit-requirements">Requirements (one per line)</Label>
-                            <Textarea 
-                                id="edit-requirements" 
-                                name="requirements" 
-                                value={editJob.requirements} 
-                                onChange={handleEditJobChange} 
+                            <Textarea
+                                id="edit-requirements"
+                                name="requirements"
+                                value={editJob.requirements}
+                                onChange={handleEditJobChange}
                                 rows={4}
                             />
                         </div>
                         <div>
                             <Label htmlFor="edit-benefits">Benefits (one per line, optional)</Label>
-                            <Textarea 
-                                id="edit-benefits" 
-                                name="benefits" 
-                                value={editJob.benefits} 
-                                onChange={handleEditJobChange} 
-                                rows={4}
-                            />
+                            <Textarea id="edit-benefits" name="benefits" value={editJob.benefits} onChange={handleEditJobChange} rows={4} />
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleUpdateJob} disabled={isLoading}>
                             {isLoading ? 'Updating...' : 'Update'}
                         </Button>
@@ -303,9 +287,7 @@ export default function Jobs(props: JobProps) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Job Details</DialogTitle>
-                        <DialogDescription>
-                            Detailed information about the selected job opening.
-                        </DialogDescription>
+                        <DialogDescription>Detailed information about the selected job opening.</DialogDescription>
                     </DialogHeader>
                     {selectedJob && (
                         <div className="space-y-4">
@@ -318,7 +300,7 @@ export default function Jobs(props: JobProps) {
 
                                 <div className="font-medium">Location:</div>
                                 <div className="col-span-2">{selectedJob.location}</div>
-                                
+
                                 <div className="font-medium">Requirements:</div>
                                 <div className="col-span-2">
                                     <ul className="list-disc pl-5">
@@ -347,10 +329,7 @@ export default function Jobs(props: JobProps) {
                         </div>
                     )}
                     <DialogFooter className="sm:justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsViewDialogOpen(false)}
-                        >
+                        <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
                             Close
                         </Button>
                     </DialogFooter>
@@ -362,9 +341,7 @@ export default function Jobs(props: JobProps) {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to delete this job? This action cannot be undone.
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>Are you sure you want to delete this job? This action cannot be undone.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>

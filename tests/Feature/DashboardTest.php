@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\User;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -11,8 +11,8 @@ test('guests are redirected to the login page', function () {
 
 test('authenticated users can visit the dashboard', function () {
     $user = User::factory()->create([
-        'email_verified_at' => now(),  
-        'role'              => UserRole::HR->value, 
+        'email_verified_at' => now(),
+        'role' => UserRole::HR->value,
     ]);
 
     $this->actingAs($user);
@@ -24,11 +24,10 @@ test('authenticated users can visit the dashboard', function () {
 test('candidate only show candidate page', function () {
     $regularUser = User::factory()->create([
         'email_verified_at' => now(),
-        'role'              => UserRole::CANDIDATE->value, 
+        'role' => UserRole::CANDIDATE->value,
     ]);
 
     $this->actingAs($regularUser);
 
     $this->get('/candidate')->assertStatus(200);
 });
-

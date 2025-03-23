@@ -11,9 +11,9 @@ class CreateCandidatesTable extends Migration
     {
         Schema::create('candidates', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
-            $table->foreignId('vacancy_id')->constrained('vacancies')->onDelete('cascade'); 
-            $table->date('applied_at'); 
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('vacancy_id')->constrained('vacancies')->onDelete('cascade');
+            $table->date('applied_at');
             $table->enum('status', CandidatesStage::values())->default(CandidatesStage::ADMINISTRATIVE_SELECTION->value);
             $table->timestamps();
         });

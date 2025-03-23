@@ -32,7 +32,7 @@ export default function CandidateLists() {
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 {/* Analytics Overview Section */}
                 <div>
-                    <h2 className="text-2xl font-semibold mb-4">Candidate Lists</h2>
+                    <h2 className="mb-4 text-2xl font-semibold">Candidate Lists</h2>
                     <div className="grid auto-rows-min gap-4 md:grid-cols-2">
                         <h1>Lists</h1>
                     </div>

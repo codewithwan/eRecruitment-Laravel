@@ -1,17 +1,16 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";;
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FormLabel } from "@/components/ui/form";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormLabel } from '@/components/ui/form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import AppLayout from "@/layouts/app-layout";
-import { Head, router } from "@inertiajs/react"; // Add Head component
-
+import { Head, router } from '@inertiajs/react'; // Add Head component
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { useState } from 'react';
 interface Candidate {
     id: number;
     name: string;
@@ -39,18 +38,18 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const durations = ["10 menit", "20 menit", "30 menit", "45 menit", "60 menit"];
+const durations = ['10 menit', '20 menit', '30 menit', '45 menit', '60 menit'];
 
 export default function AssignTest({ candidates, testTypes }: AssignTestProps) {
-    const [selectedCandidate, setSelectedCandidate] = useState("");
-    const [selectedTestType, setSelectedTestType] = useState("");
-    const [selectedDuration, setSelectedDuration] = useState("");
-    const [instructions, setInstructions] = useState("");
+    const [selectedCandidate, setSelectedCandidate] = useState('');
+    const [selectedTestType, setSelectedTestType] = useState('');
+    const [selectedDuration, setSelectedDuration] = useState('');
+    const [instructions, setInstructions] = useState('');
     const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
 
     const handleSubmit = () => {
         if (!selectedCandidate || !selectedTestType || !selectedDuration || !scheduledDate) {
-            alert("Please fill all required fields");
+            alert('Please fill all required fields');
             return;
         }
 
@@ -67,7 +66,9 @@ export default function AssignTest({ candidates, testTypes }: AssignTestProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Assign Test" /> {/* Add page title */}
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4"> {/* Add consistent container styling */}
+            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
+                {' '}
+                {/* Add consistent container styling */}
                 <div className="mx-auto py-6" style={{ width: '80%' }}>
                     <Card>
                         <CardHeader>
@@ -98,7 +99,9 @@ export default function AssignTest({ candidates, testTypes }: AssignTestProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {testTypes.map((type, index) => (
-                                            <SelectItem key={index} value={type}>{type}</SelectItem>
+                                            <SelectItem key={index} value={type}>
+                                                {type}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -113,7 +116,9 @@ export default function AssignTest({ candidates, testTypes }: AssignTestProps) {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {durations.map((duration, index) => (
-                                                <SelectItem key={index} value={duration}>{duration}</SelectItem>
+                                                <SelectItem key={index} value={duration}>
+                                                    {duration}
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -123,21 +128,13 @@ export default function AssignTest({ candidates, testTypes }: AssignTestProps) {
                                     <FormLabel>Scheduled Date</FormLabel>
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                className="w-full justify-start text-left"
-                                            >
+                                            <Button variant="outline" className="w-full justify-start text-left">
                                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {scheduledDate ? format(scheduledDate, "PPP") : "Select a date"}
+                                                {scheduledDate ? format(scheduledDate, 'PPP') : 'Select a date'}
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-0">
-                                            <Calendar
-                                                mode="single"
-                                                selected={scheduledDate}
-                                                onSelect={setScheduledDate}
-                                                initialFocus
-                                            />
+                                            <Calendar mode="single" selected={scheduledDate} onSelect={setScheduledDate} initialFocus />
                                         </PopoverContent>
                                     </Popover>
                                 </div>

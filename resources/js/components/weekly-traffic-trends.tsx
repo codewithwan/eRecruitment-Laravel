@@ -1,4 +1,4 @@
-import { ResponsiveContainer, LineChart, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
+import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface WeeklyTrafficTrendsProps {
     position: string;
@@ -20,33 +20,17 @@ const generateWeeklyData = (positionId: number) => {
 export default function WeeklyTrafficTrends({ position, positionId }: WeeklyTrafficTrendsProps) {
     return (
         <div className="p-2">
-            <h4 className="font-medium mb-2">Weekly Traffic Trends for {position}</h4>
+            <h4 className="mb-2 font-medium">Weekly Traffic Trends for {position}</h4>
             <div className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                        data={generateWeeklyData(positionId)}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
+                    <LineChart data={generateWeeklyData(positionId)} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                         <XAxis dataKey="week" />
                         <YAxis yAxisId="left" />
                         <YAxis yAxisId="right" orientation="right" />
                         <Tooltip />
                         <Legend />
-                        <Line
-                            yAxisId="left"
-                            type="monotone"
-                            dataKey="applicants"
-                            stroke="#8884d8"
-                            activeDot={{ r: 8 }}
-                            strokeWidth={2}
-                        />
-                        <Line
-                            yAxisId="right"
-                            type="monotone"
-                            dataKey="views"
-                            stroke="#82ca9d"
-                            strokeWidth={2}
-                        />
+                        <Line yAxisId="left" type="monotone" dataKey="applicants" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
+                        <Line yAxisId="right" type="monotone" dataKey="views" stroke="#82ca9d" strokeWidth={2} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>

@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import AppLayout from "@/layouts/app-layout";
-import { router } from "@inertiajs/react";
+import { router } from '@inertiajs/react';
+import { Plus, Trash } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface Question {
     id: number;
@@ -38,15 +38,17 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const durations = ["10 Menit", "20 Menit", "30 Menit", "40 Menit"];
+const durations = ['10 Menit', '20 Menit', '30 Menit', '40 Menit'];
 
 const EditQuestionPanel = ({ testType, duration, questions }: EditQuestionProps) => {
-    const [editableQuestions, setEditableQuestions] = useState<Array<{
-        id?: number;
-        question: string;
-        options: string[];
-        correctAnswer?: string;
-    }>>([]);
+    const [editableQuestions, setEditableQuestions] = useState<
+        Array<{
+            id?: number;
+            question: string;
+            options: string[];
+            correctAnswer?: string;
+        }>
+    >([]);
     const [selectedTestType, setSelectedTestType] = useState(testType);
     const [selectedDuration, setSelectedDuration] = useState(duration);
 
@@ -54,18 +56,18 @@ const EditQuestionPanel = ({ testType, duration, questions }: EditQuestionProps)
     useEffect(() => {
         if (questions && questions.length) {
             setEditableQuestions(
-                questions.map(q => ({
+                questions.map((q) => ({
                     id: q.id,
                     question: q.question,
-                    options: q.options || [""],
-                    correctAnswer: ""
-                }))
+                    options: q.options || [''],
+                    correctAnswer: '',
+                })),
             );
         }
     }, [questions]);
 
     const handleAddQuestion = () => {
-        setEditableQuestions([...editableQuestions, { question: "", options: [""], correctAnswer: "" }]);
+        setEditableQuestions([...editableQuestions, { question: '', options: [''], correctAnswer: '' }]);
     };
 
     const handleRemoveQuestion = (index: number) => {
@@ -81,7 +83,7 @@ const EditQuestionPanel = ({ testType, duration, questions }: EditQuestionProps)
 
     const handleAddOption = (qIndex: number) => {
         const newQuestions = [...editableQuestions];
-        newQuestions[qIndex].options.push("");
+        newQuestions[qIndex].options.push('');
         setEditableQuestions(newQuestions);
     };
 
@@ -100,17 +102,15 @@ const EditQuestionPanel = ({ testType, duration, questions }: EditQuestionProps)
     const handleSubmit = () => {
         // Validate required fields
         if (!selectedTestType || !selectedDuration) {
-            alert("Please select test type and duration");
+            alert('Please select test type and duration');
             return;
         }
 
         // Validate that all options are filled
-        const hasEmptyOptions = editableQuestions.some(q => 
-            q.options.some(opt => opt.trim() === "")
-        );
+        const hasEmptyOptions = editableQuestions.some((q) => q.options.some((opt) => opt.trim() === ''));
 
         if (hasEmptyOptions) {
-            alert("Please fill all options");
+            alert('Please fill all options');
             return;
         }
 
@@ -130,8 +130,8 @@ const EditQuestionPanel = ({ testType, duration, questions }: EditQuestionProps)
                         <CardTitle className="text-2xl">Edit Soal Psikotes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex gap-4 mb-6">
-                            <Input 
+                        <div className="mb-6 flex gap-4">
+                            <Input
                                 value={selectedTestType}
                                 onChange={(e) => setSelectedTestType(e.target.value)}
                                 className="w-1/2"
@@ -143,14 +143,16 @@ const EditQuestionPanel = ({ testType, duration, questions }: EditQuestionProps)
                                 </SelectTrigger>
                                 <SelectContent>
                                     {durations.map((dur, index) => (
-                                        <SelectItem key={index} value={dur}>{dur}</SelectItem>
+                                        <SelectItem key={index} value={dur}>
+                                            {dur}
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
                         {editableQuestions.map((q, qIndex) => (
                             <div key={qIndex} className="mb-6 border-b pb-4">
-                                <div className="flex justify-between items-center mb-4">
+                                <div className="mb-4 flex items-center justify-between">
                                     <h3 className="text-lg font-semibold">Soal {qIndex + 1}</h3>
                                     <Button variant="ghost" size="sm" onClick={() => handleRemoveQuestion(qIndex)}>
                                         <Trash className="h-4 w-4" />
@@ -163,7 +165,7 @@ const EditQuestionPanel = ({ testType, duration, questions }: EditQuestionProps)
                                     className="mb-4"
                                 />
                                 {q.options.map((option, oIndex) => (
-                                    <div key={oIndex} className="flex items-center gap-2 mb-2">
+                                    <div key={oIndex} className="mb-2 flex items-center gap-2">
                                         <Input
                                             placeholder={`Pilihan ${oIndex + 1}`}
                                             value={option}

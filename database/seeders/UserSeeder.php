@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 class UserSeeder extends Seeder
 {
@@ -35,7 +35,7 @@ class UserSeeder extends Seeder
         User::factory(3)->create([
             'role' => UserRole::CANDIDATE,
         ]);
-        
+
         // Create random users with created_at timestamps from the last 7 days
         $dayDistribution = [
             1 => 8,  // Yesterday: 8 users
@@ -46,10 +46,10 @@ class UserSeeder extends Seeder
             6 => 4,  // 6 days ago: 4 users
             7 => 6,  // 7 days ago: 6 users
         ];
-        
+
         foreach ($dayDistribution as $daysAgo => $count) {
             $date = Carbon::now()->subDays($daysAgo);
-            
+
             User::factory($count)->create([
                 'role' => UserRole::CANDIDATE,
                 'created_at' => $date->copy()->addHours(rand(0, 23))->addMinutes(rand(0, 59)),

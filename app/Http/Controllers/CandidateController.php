@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
@@ -9,6 +10,7 @@ class CandidateController extends Controller
     public function index()
     {
         $user = Auth::user();
+
         return Inertia::render('candidate/candidate-dashboard', [
             'users' => $user,
         ]);

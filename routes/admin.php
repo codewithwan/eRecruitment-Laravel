@@ -57,10 +57,10 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
                 Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('remove');
                 
                 // Add debug route
-                Route::get('/debug/{assessment}', function(Assessment $assessment) {
-                    return response()->json([
-                        'assessment' => $assessment->load('questions')
-                    ]);
-                })->name('questions.debug');
+                // Route::get('/debug/{assessment}', function(Assessment $assessment) {
+                //     return response()->json([
+                //         'assessment' => $assessment->load('questions')
+                //     ]);
+                // })->name('questions.debug');
             });
     });

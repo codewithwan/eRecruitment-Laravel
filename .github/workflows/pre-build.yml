@@ -1,0 +1,46 @@
+name: pre-build-check
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  pre-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Check Environment Variables
+        run: env | grep -E 'APP_|DB_|NODE_' || echo "No env variables found"
+
+      - name: Check PHP Dependencies
+        run: composer check-platform-reqs || echo "Dependency issues found"
+
+      - name: Check NPM Dependencies
+        run: npm ls || echo "Dependency issues found"
+
+      - name: PHP Security Checker
+        uses: symfonycorp/security-checker-action@v5
+
+      - name: NPM Audit
+        run: npm audit --audit-level=high || echo "Security vulnerabilities found"

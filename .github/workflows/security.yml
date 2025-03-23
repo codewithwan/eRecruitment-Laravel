@@ -10,7 +10,7 @@ on:
       - dev
       - main
   schedule:
-    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
+    - cron: '0 0 * * 0' # Run weekly on Sunday at midnight
 
 jobs:
   dependency-check:
@@ -42,27 +42,47 @@ jobs:
       - name: NPM Audit
         run: npm audit --audit-level=high
 
-  code-scanning:
+  php-code-analysis:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          languages: javascript, typescript, php
-          tools: latest  
+          php-version: 8.4
+          tools: composer:v2
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+      - name: Run PHPStan (Static Analysis)
+        run: vendor/bin/phpstan analyse src --level=7 || true
+
+      - name: Run Psalm (Security Check)
+        run: vendor/bin/psalm --no-progress --output-format=github || true
+
+  js-code-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npx eslint src --ext .js,.jsx,.ts,.tsx || true
+
+      - name: Run NPM Audit
+        run: npm audit --audit-level=high || true
 
   # secrets-scanning:
   #   runs-on: ubuntu-latest

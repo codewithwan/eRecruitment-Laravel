@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacanciesController;
+use App\Http\Controllers\AssessmentController;
 use Illuminate\Support\Facades\Route;
 
 // Admin route
@@ -42,7 +43,16 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
             ->group(function () {
                 Route::get('/', [QuestionController::class, 'store'])->name('info');
                 Route::get('/add-questions', [QuestionController::class, 'create'])->name('create');
-                Route::put('/{question}', [QuestionController::class, 'update'])->name('update');
+                Route::get('/edit/{assessment}', [QuestionController::class, 'edit'])->name('edit');
+                Route::post('/', [AssessmentController::class, 'store'])->name('store');
+                Route::put('/{assessment}', [QuestionController::class, 'update'])->name('update');
                 Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('remove');
+                
+                // Add debug route
+                Route::get('/debug/{assessment}', function(Assessment $assessment) {
+                    return response()->json([
+                        'assessment' => $assessment->load('questions')
+                    ]);
+                })->name('questions.debug');
             });
     });

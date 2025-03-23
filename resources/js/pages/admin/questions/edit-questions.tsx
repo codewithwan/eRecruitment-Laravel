@@ -25,7 +25,6 @@ interface Question {
     question: string;
     options: string[];
     assessment_id: number;
-    correctAnswer?: string;
 }
 
 interface Assessment {
@@ -85,10 +84,16 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         }
     }, [title, description, selectedTestType, selectedDuration, questions, assessment]);
 
-    // Handle browser navigation events
+    // Handle browser navigation events - dimodifikasi untuk mencegah false positive
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (isFormDirty) {
+            // Hanya trigger warning jika:
+            // 1. Ada perubahan yang belum disimpan
+            // 2. User tidak sedang fokus pada input field
+            // 3. User benar-benar mencoba meninggalkan halaman
+            if (isFormDirty && 
+                !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '') &&
+                window.location.pathname !== window.location.pathname) {
                 e.preventDefault();
                 e.returnValue = '';
                 return '';
@@ -99,13 +104,25 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [isFormDirty]);
 
-    // Intercept Inertia navigation
+    // Intercept Inertia navigation - hanya untuk navigasi antar halaman
     useEffect(() => {
         const handleInertiaBeforeNavigate = (event: CustomEvent<{ visit: { url: string; completed: boolean } }>) => {
-            if (isFormDirty && !event.detail.visit.completed) {
-                event.preventDefault();
-                setPendingNavigation(event.detail.visit.url);
-                setShowNavigationWarning(true);
+            // Hanya trigger jika:
+            // 1. Ada perubahan yang belum disimpan
+            // 2. Navigasi belum selesai
+            // 3. URL tujuan berbeda dengan URL saat ini
+            // 4. URL tujuan bukan bagian dari URL saat ini
+            const currentPath = window.location.pathname;
+            const targetPath = event.detail.visit.url;
+            
+            if (isFormDirty && 
+                !event.detail.visit.completed && 
+                currentPath !== targetPath &&
+                !currentPath.includes(targetPath) &&
+                !targetPath.includes(currentPath)) {
+                    event.preventDefault();
+                    setPendingNavigation(targetPath);
+                    setShowNavigationWarning(true);
             }
         };
 
@@ -113,13 +130,25 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         return () => document.removeEventListener('inertia:before', handleInertiaBeforeNavigate as EventListener);
     }, [isFormDirty]);
 
+    // Map assessment questions to the expected structure when loading
+    useEffect(() => {
+        if (assessment.questions) {
+            const mappedQuestions = assessment.questions.map(q => ({
+                id: q.id,
+                question: q.question || '', // Make sure this matches the db field name
+                options: Array.isArray(q.options) ? q.options : [],
+                assessment_id: q.assessment_id,
+            }));
+            setQuestions(mappedQuestions);
+        }
+    }, [assessment]);
+
     const handleAddQuestion = () => {
         setQuestions([...questions, { 
             id: Date.now(), // temporary ID for new questions
             question: '', 
             options: [''], 
             assessment_id: assessment.id,
-            correctAnswer: ''
         }]);
     };
 
@@ -166,23 +195,21 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
     };
 
     const saveForm = () => {
-        console.log('Saving form data', {
-            title,
-            description,
-            testType: selectedTestType,
-            duration: selectedDuration,
-            questions,
-        });
+        // Filter out empty questions and format data
+        const preparedQuestions = questions
+            .filter(q => q.question.trim() !== '' || q.options.some(opt => opt.trim() !== ''))
+            .map(q => ({
+                question_text: q.question,
+                options: q.options.filter(opt => opt.trim() !== ''),
+                assessment_id: assessment.id
+            }));
 
-        // Filter out empty questions and ensure only valid questions are sent
-        const validQuestions = questions.filter((q) => q.options.some((opt) => opt.trim() !== ''));
-        
         router.put(`/dashboard/questions/${assessment.id}`, {
             title,
             description,
             test_type: selectedTestType,
             duration: selectedDuration,
-            questions: JSON.stringify(validQuestions), // Convert to JSON string
+            questions: JSON.stringify(preparedQuestions),
         }, {
             onSuccess: () => {
                 setIsFormDirty(false);
@@ -190,7 +217,7 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
             },
             onError: (errors) => {
                 console.error('Update failed:', errors);
-                alert('Failed to save changes. Please check the form and try again.');
+                alert('Failed to save changes. Please try again.');
             }
         });
     };

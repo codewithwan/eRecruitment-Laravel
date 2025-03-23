@@ -6,6 +6,8 @@ use App\Models\Assessment;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class QuestionController extends Controller
 {
@@ -35,54 +37,53 @@ class QuestionController extends Controller
 
     public function update(Request $request, Assessment $assessment)
     {
-        // Remove the JSON validation since we're sending a stringified array
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'test_type' => 'required|string|max:255',
-            'duration' => 'required|string',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // Update assessment data
-        $assessment->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'test_type' => $request->test_type,
-            'duration' => $request->duration,
-        ]);
+            // Update assessment details
+            $assessment->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'test_type' => $request->test_type,
+                'duration' => $request->duration,
+            ]);
 
-        // Process questions - decode if it's a JSON string, otherwise use as is
-        $questions = is_string($request->questions) ? json_decode($request->questions, true) : $request->questions;
-        
-        // Delete existing questions that are not in the updated list
-        $existingIds = collect($questions)->pluck('id')->filter(function($id) {
-            return !is_string($id) && !empty($id); // Filter out temporary IDs
-        })->toArray();
-        
-        // Delete questions not present in the submitted data
-        $assessment->questions()->whereNotIn('id', $existingIds)->delete();
-        
-        // Update or create questions
-        foreach ($questions as $questionData) {
-            // New questions will have string IDs (timestamps) or be empty
-            $isNew = is_string($questionData['id']) || empty($questionData['id']);
-            
-            if ($isNew) {
-                // Create new question
-                Question::create([
-                    'assessment_id' => $assessment->id,
-                    'question_text' => $questionData['question'],
-                    'options' => $questionData['options'],
-                ]);
-            } else {
-                // Update existing question
-                Question::where('id', $questionData['id'])->update([
-                    'question_text' => $questionData['question'],
-                    'options' => $questionData['options'],
-                ]);
+            // Parse questions from JSON string
+            $questions = json_decode($request->questions, true);
+
+            // Remove existing questions
+            $assessment->questions()->delete();
+
+            // Create new questions
+            foreach ($questions as $questionData) {
+                if (!empty($questionData['options'])) {
+                    Question::create([
+                        'assessment_id' => $assessment->id,
+                        'question_text' => $questionData['question_text'],
+                        'options' => $questionData['options'],
+                    ]);
+                }
             }
-        }
 
-        return redirect()->route('admin.questions.info')->with('success', 'Assessment updated successfully!');
+            DB::commit();
+            return redirect()->route('admin.questions.info')
+                ->with('success', 'Assessment updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Update failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update assessment');
+        }
+    }
+
+    public function index()
+    {
+        // This method is being called in routes but wasn't implemented
+        // Since we already have a 'store' method that returns assessments,
+        // we can use the same implementation here
+        $assessments = Assessment::withCount('questions')->get();
+        
+        return Inertia::render('admin/questions/question-management', [
+            'tests' => $assessments
+        ]);
     }
 }

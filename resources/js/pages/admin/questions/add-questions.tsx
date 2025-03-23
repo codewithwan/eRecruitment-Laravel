@@ -120,10 +120,69 @@ const AddQuestionPanel = () => {
     };
 
     const handleSaveAndNavigate = () => {
-        saveForm();
-        if (pendingNavigation) {
-            router.visit(pendingNavigation);
+        // Modify this to actually save the form before navigating
+        // Don't navigate until the form is saved successfully
+        const pendingUrl = pendingNavigation;
+        
+        // Call the same save function used by the main submit button
+        console.log('Saving before navigation to:', pendingUrl);
+        
+        // Prepare the data the same way as in saveForm
+        const filteredQuestions = questions
+            .filter(q => q.options.some(opt => opt.trim() !== ''))
+            .map(q => ({
+                question: q.question.trim(),
+                options: q.options.filter(opt => opt.trim() !== '')
+            }));
+
+        if (filteredQuestions.length === 0) {
+            alert('Please add at least one question with valid options');
+            setShowNavigationWarning(false);
+            return;
         }
+
+        if (!title.trim()) {
+            alert('Please enter a test title');
+            setShowNavigationWarning(false);
+            return;
+        }
+
+        if (!selectedTestType) {
+            alert('Please select a test type');
+            setShowNavigationWarning(false);
+            return;
+        }
+
+        if (!selectedDuration) {
+            alert('Please select a test duration');
+            setShowNavigationWarning(false);
+            return;
+        }
+
+        // Instead of using router.post, use router.post with a callback for navigation
+        const formData = {
+            title: title.trim(),
+            description: description.trim(),
+            test_type: selectedTestType,
+            duration: selectedDuration,
+            questions: filteredQuestions,
+        };
+        
+        console.log('Saving data before navigation:', formData);
+        
+        router.post('/dashboard/questions', formData, {
+            onSuccess: () => {
+                console.log('Form saved successfully, now navigating to:', pendingUrl);
+                if (pendingUrl) {
+                    window.location.href = pendingUrl; // Use direct navigation to ensure it works
+                }
+            },
+            onError: (errors) => {
+                console.error('Failed to save form:', errors);
+                alert('Failed to save form. Please check the form and try again.');
+            }
+        });
+        
         setShowNavigationWarning(false);
     };
 
@@ -133,20 +192,57 @@ const AddQuestionPanel = () => {
     };
 
     const saveForm = () => {
+        // Filter out empty questions/options
+        const filteredQuestions = questions
+            .filter(q => q.options.some(opt => opt.trim() !== ''))
+            .map(q => ({
+                question: q.question.trim(),
+                options: q.options.filter(opt => opt.trim() !== '')
+            }));
+
+        if (filteredQuestions.length === 0) {
+            alert('Please add at least one question with valid options');
+            return;
+        }
+
+        if (!title.trim()) {
+            alert('Please enter a test title');
+            return;
+        }
+
+        if (!selectedTestType) {
+            alert('Please select a test type');
+            return;
+        }
+
+        if (!selectedDuration) {
+            alert('Please select a test duration');
+            return;
+        }
+
         console.log('Saving form data', {
             title,
             description,
-            testType: selectedTestType,
+            test_type: selectedTestType,
             duration: selectedDuration,
-            questions,
+            questions: filteredQuestions,
         });
 
+        // Add more detailed logging
         router.post('/dashboard/questions', {
-            title,
-            description,
-            testType: selectedTestType,
+            title: title.trim(),
+            description: description.trim(),
+            test_type: selectedTestType,
             duration: selectedDuration,
-            questions: questions.filter((q) => q.options.some((opt) => opt.trim() !== '')),
+            questions: filteredQuestions,
+        }, {
+            onSuccess: () => {
+                console.log('Form saved successfully');
+            },
+            onError: (errors) => {
+                console.error('Failed to save form:', errors);
+                alert('Failed to save form. Please check the form and try again.');
+            }
         });
 
         setIsFormDirty(false);

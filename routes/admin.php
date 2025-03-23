@@ -36,6 +36,14 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
                 Route::post('/', [UserController::class, 'create'])->name('create');
                 Route::put('/{candidate}', [UserController::class, 'update'])->name('update');
                 Route::delete('/{candidate}', [UserController::class, 'destroy'])->name('remove');
+                Route::prefix('questions')
+                    ->name('questions.')
+                    ->group(function () {
+                        Route::get('/', [QuestionController::class, 'index'])->name('info');
+                        // Route::get('/add-questions', [QuestionController::class, 'create'])->name('create');
+                        // Route::put('/{question}', [QuestionController::class, 'update'])->name('update');
+                        // Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('remove');
+                    });
             });
         Route::prefix('questions')
             ->name('questions.')

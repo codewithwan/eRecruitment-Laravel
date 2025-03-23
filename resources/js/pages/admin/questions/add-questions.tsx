@@ -84,7 +84,7 @@ const AddQuestionPanel = () => {
 
     // Intercept Inertia navigation
     useEffect(() => {
-        const handleInertiaBeforeNavigate = (event: any) => {
+        const handleInertiaBeforeNavigate = (event: CustomEvent<{visit: {url: string, completed: boolean}}>) => {
             if (isFormDirty && !event.detail.visit.completed) {
                 event.preventDefault();
                 setPendingNavigation(event.detail.visit.url);
@@ -92,8 +92,8 @@ const AddQuestionPanel = () => {
             }
         };
 
-        document.addEventListener("inertia:before", handleInertiaBeforeNavigate);
-        return () => document.removeEventListener("inertia:before", handleInertiaBeforeNavigate);
+        document.addEventListener("inertia:before", handleInertiaBeforeNavigate as EventListener);
+        return () => document.removeEventListener("inertia:before", handleInertiaBeforeNavigate as EventListener);
     }, [isFormDirty]);
 
     const handleAddQuestion = () => {

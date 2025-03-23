@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Head } from '@inertiajs/react';
-import { router } from '@inertiajs/react';
 
 export default function ServerError({ error = 'Server Error', message = null }) {
 

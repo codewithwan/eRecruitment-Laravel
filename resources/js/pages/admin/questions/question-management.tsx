@@ -3,7 +3,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Plus } from "lucide-react";
+import { Clock } from "lucide-react";
 
 interface Question {
     id: number;

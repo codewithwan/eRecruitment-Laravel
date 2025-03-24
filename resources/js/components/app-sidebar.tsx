@@ -35,7 +35,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Candidate Tests',
-        href: '/dashboard/candidates/questions',
+        href: '/dashboard/psychometric',
         icon: FileCheck2,
     },
 ];

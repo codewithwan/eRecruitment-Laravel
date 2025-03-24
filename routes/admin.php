@@ -5,6 +5,8 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacanciesController;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\PsychometricController;
+use App\Http\Controllers\PsychometricAssignmentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -46,7 +48,8 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
                         Route::get('/', [QuestionController::class, 'store'])->name('info'); // Changed from index to store
                         // Other routes...
                     });
-            });
+            }); // Added missing closing bracket for candidates group
+
         Route::prefix('questions')
             ->name('questions.')
             ->group(function () {
@@ -69,15 +72,41 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
                     ]);
                 })->name('debug.update');
             });
+        
+        // Fix the psychometric routes - remove nested duplicate routes
+        Route::prefix('psychometric')
+            ->name('psychometric.')
+            ->group(function () {
+                Route::get('/', [PsychometricController::class, 'index'])->name('index');
+                Route::post('/', [PsychometricController::class, 'store'])->name('store');
+                Route::get('/{test}', [PsychometricController::class, 'show'])->name('show');
+                Route::put('/{test}', [PsychometricController::class, 'update'])->name('update');
+                Route::delete('/{test}', [PsychometricController::class, 'destroy'])->name('delete');
+                Route::get('/data', [PsychometricController::class, 'getTests'])->name('data');
+                
+                // Properly nest the assignments routes under psychometric
+                Route::prefix('assignments')
+                    ->name('assignments.')
+                    ->group(function () {
+                        Route::get('/', [PsychometricAssignmentController::class, 'index'])->name('index'); // Add missing index route
+                        Route::get('/create', [PsychometricAssignmentController::class, 'create'])->name('create');
+                        Route::post('/', [PsychometricAssignmentController::class, 'store'])->name('store');
+                        Route::get('/{assignment}', [PsychometricAssignmentController::class, 'show'])->name('show');
+                        Route::get('/{assignment}/edit', [PsychometricAssignmentController::class, 'edit'])->name('edit');
+                        Route::put('/{assignment}', [PsychometricAssignmentController::class, 'update'])->name('update');
+                        Route::delete('/{assignment}', [PsychometricAssignmentController::class, 'destroy'])->name('delete');
+                        Route::post('/{assignment}/send-notification', [PsychometricAssignmentController::class, 'sendNotification'])->name('send-notification');
+                        Route::put('/{assignment}/status', [PsychometricAssignmentController::class, 'updateStatus'])->name('update-status');
+                    });
+            });
     });
 
-// Temporary debug route - remove in production
+// Move these debug routes inside the admin group if they should be protected
 Route::get('/debug-logs', function() {
     $logs = array_slice(file(storage_path('logs/laravel-' . date('Y-m-d') . '.log')), -100);
     return response()->json(['logs' => $logs]);
 })->name('debug.logs');
 
-// Add a debug route for form submission
 Route::post('/debug-form', function(Request $request) {
     Log::info('Debug form submission received:', $request->all());
     return response()->json([

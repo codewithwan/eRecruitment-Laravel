@@ -14,10 +14,10 @@ beforeEach(function () {
     ]);
 
     $this->assessment = Assessment::factory()->create([
-        'title'       => 'Test Assessment',
+        'title' => 'Test Assessment',
         'description' => 'Description for test assessment',
-        'test_type'   => 'multiple_choice',
-        'duration'    => '1:30',
+        'test_type' => 'multiple_choice',
+        'duration' => '1:30',
     ]);
 });
 
@@ -26,7 +26,7 @@ test('hr can view question management page', function () {
         ->get(route('admin.questions.info'));
 
     $response->assertStatus(200);
-    $response->assertInertia(fn($page) => $page->component('admin/questions/question-management'));
+    $response->assertInertia(fn ($page) => $page->component('admin/questions/question-management'));
 });
 
 test('hr can view create question page', function () {
@@ -34,24 +34,24 @@ test('hr can view create question page', function () {
         ->get(route('admin.questions.create'));
 
     $response->assertStatus(200);
-    $response->assertInertia(fn($page) => $page->component('admin/questions/add-questions'));
+    $response->assertInertia(fn ($page) => $page->component('admin/questions/add-questions'));
 });
 
 test('hr can create questions within an assessment', function () {
     $questionData = [
-        'title'       => 'New Assessment',
+        'title' => 'New Assessment',
         'description' => 'Assessment Description',
-        'test_type'   => 'multiple_choice',
-        'duration'    => '1:00',
-        'questions'   => [
+        'test_type' => 'multiple_choice',
+        'duration' => '1:00',
+        'questions' => [
             [
-                'question'       => 'What is PHP?',
-                'options'        => ['A programming language', 'A database', 'A web server', 'An operating system'],
+                'question' => 'What is PHP?',
+                'options' => ['A programming language', 'A database', 'A web server', 'An operating system'],
                 'correct_answer' => 0,
             ],
             [
-                'question'       => 'What does HTML stand for?',
-                'options'        => ['Hyper Text Markup Language', 'High Tech Machine Learning', 'Home Tool Management Language'],
+                'question' => 'What does HTML stand for?',
+                'options' => ['Hyper Text Markup Language', 'High Tech Machine Learning', 'Home Tool Management Language'],
                 'correct_answer' => 0,
             ],
         ],
@@ -64,7 +64,7 @@ test('hr can create questions within an assessment', function () {
     $response->assertSessionHas('success');
 
     $this->assertDatabaseHas('assessments', [
-        'title'     => 'New Assessment',
+        'title' => 'New Assessment',
         'test_type' => 'multiple_choice',
     ]);
 
@@ -81,16 +81,15 @@ test('hr can edit existing questions', function () {
     $question = Question::create([
         'assessment_id' => $this->assessment->id,
         'question_text' => 'Original question?',
-        'options'       => ['Option 1', 'Option 2', 'Option 3'],
+        'options' => ['Option 1', 'Option 2', 'Option 3'],
     ]);
 
     $response = $this->actingAs($this->user)
         ->get(route('admin.questions.edit', $this->assessment));
 
     $response->assertStatus(200);
-    $response->assertInertia(fn($page) =>
-        $page->component('admin/questions/edit-questions')
-            ->has('assessment.questions')
+    $response->assertInertia(fn ($page) => $page->component('admin/questions/edit-questions')
+        ->has('assessment.questions')
     );
 });
 
@@ -98,18 +97,18 @@ test('hr can update assessment with questions', function () {
     $question = Question::create([
         'assessment_id' => $this->assessment->id,
         'question_text' => 'Original question?',
-        'options'       => ['Option 1', 'Option 2', 'Option 3'],
+        'options' => ['Option 1', 'Option 2', 'Option 3'],
     ]);
 
     $updatedData = [
-        'title'       => 'Updated Assessment',
+        'title' => 'Updated Assessment',
         'description' => 'Updated Description',
-        'test_type'   => 'multiple_choice',
-        'duration'    => '2:00',
-        'questions'   => json_encode([
+        'test_type' => 'multiple_choice',
+        'duration' => '2:00',
+        'questions' => json_encode([
             [
                 'question_text' => 'Updated question text?',
-                'options'       => ['New Option 1', 'New Option 2', 'New Option 3'],
+                'options' => ['New Option 1', 'New Option 2', 'New Option 3'],
             ],
         ]),
     ];
@@ -120,8 +119,8 @@ test('hr can update assessment with questions', function () {
     $response->assertRedirect(route('admin.questions.info'));
 
     $this->assertDatabaseHas('assessments', [
-        'id'       => $this->assessment->id,
-        'title'    => 'Updated Assessment',
+        'id' => $this->assessment->id,
+        'title' => 'Updated Assessment',
         'duration' => '2:00',
     ]);
 

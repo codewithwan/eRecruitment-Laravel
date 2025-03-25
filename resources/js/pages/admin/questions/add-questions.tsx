@@ -120,10 +120,10 @@ const AddQuestionPanel = () => {
         const pendingUrl = pendingNavigation;
 
         const filteredQuestions = questions
-            .filter(q => q.options.some(opt => opt.trim() !== ''))
-            .map(q => ({
+            .filter((q) => q.options.some((opt) => opt.trim() !== ''))
+            .map((q) => ({
                 question: q.question.trim(),
-                options: q.options.filter(opt => opt.trim() !== '')
+                options: q.options.filter((opt) => opt.trim() !== ''),
             }));
 
         if (filteredQuestions.length === 0) {
@@ -157,18 +157,18 @@ const AddQuestionPanel = () => {
             duration: selectedDuration,
             questions: filteredQuestions,
         };
-        
+
         router.post('/dashboard/questions', formData, {
             onSuccess: () => {
                 if (pendingUrl) {
-                    window.location.href = pendingUrl; 
+                    window.location.href = pendingUrl;
                 }
             },
             onError: () => {
                 alert('Failed to save form. Please check the form and try again.');
-            }
+            },
         });
-        
+
         setShowNavigationWarning(false);
     };
 
@@ -179,10 +179,10 @@ const AddQuestionPanel = () => {
 
     const saveForm = () => {
         const filteredQuestions = questions
-            .filter(q => q.options.some(opt => opt.trim() !== ''))
-            .map(q => ({
+            .filter((q) => q.options.some((opt) => opt.trim() !== ''))
+            .map((q) => ({
                 question: q.question.trim(),
-                options: q.options.filter(opt => opt.trim() !== '')
+                options: q.options.filter((opt) => opt.trim() !== ''),
             }));
 
         if (filteredQuestions.length === 0) {
@@ -205,17 +205,21 @@ const AddQuestionPanel = () => {
             return;
         }
 
-        router.post('/dashboard/questions', {
-            title: title.trim(),
-            description: description.trim(),
-            test_type: selectedTestType,
-            duration: selectedDuration,
-            questions: filteredQuestions,
-        }, {
-            onError: () => {
-                alert('Failed to save form. Please check the form and try again.');
-            }
-        });
+        router.post(
+            '/dashboard/questions',
+            {
+                title: title.trim(),
+                description: description.trim(),
+                test_type: selectedTestType,
+                duration: selectedDuration,
+                questions: filteredQuestions,
+            },
+            {
+                onError: () => {
+                    alert('Failed to save form. Please check the form and try again.');
+                },
+            },
+        );
 
         setIsFormDirty(false);
     };

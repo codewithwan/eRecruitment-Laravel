@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Assessment;
 use App\Models\Question;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AssessmentController extends Controller
 {
@@ -33,37 +33,39 @@ class AssessmentController extends Controller
                 'test_type' => $validated['test_type'],
                 'duration' => $validated['duration'],
             ]);
-            
+
             foreach ($validated['questions'] as $questionData) {
                 $options = array_values(array_filter($questionData['options']));
-                
+
                 if (count($options) >= 2) {
                     $questionAttributes = [
                         'assessment_id' => $assessment->id,
                         'question_text' => $questionData['question'],
                         'options' => $options,
                     ];
-                    
+
                     if (isset($questionData['correct_answer'])) {
                         $questionAttributes['correct_answer'] = $questionData['correct_answer'];
                     }
-                    
+
                     Question::create($questionAttributes);
                 }
             }
-            
+
             DB::commit();
 
             return redirect()->route('admin.questions.info')
-                ->with('success', 'Assessment created successfully with ' . count($validated['questions']) . ' questions');
+                ->with('success', 'Assessment created successfully with '.count($validated['questions']).' questions');
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+
             return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error creating assessment: ' . $e->getMessage());
+            Log::error('Error creating assessment: '.$e->getMessage());
+
             return redirect()->back()->withInput()
-                ->with('error', 'Failed to save assessment: ' . $e->getMessage());
+                ->with('error', 'Failed to save assessment: '.$e->getMessage());
         }
     }
 }

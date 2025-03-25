@@ -25,7 +25,7 @@ class AssessmentFactory extends Factory
             'title' => $this->faker->sentence(4),
             'description' => $this->faker->paragraph(),
             'test_type' => $this->faker->randomElement(['multiple_choice', 'essay', 'technical']),
-            'duration' => sprintf("%d:%02d", $this->faker->numberBetween(0, 2), $this->faker->numberBetween(0, 59)),
+            'duration' => sprintf('%d:%02d', $this->faker->numberBetween(0, 2), $this->faker->numberBetween(0, 59)),
         ];
     }
 }

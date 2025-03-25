@@ -1,17 +1,17 @@
     <?php
 
 use App\Enums\UserRole;
+use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacanciesController;
-use App\Http\Controllers\AssessmentController;
-use Illuminate\Support\Facades\Route;
+use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\Assessment;
+use Illuminate\Support\Facades\Route;
 
 // Admin route
-Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
+Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
     ->prefix('dashboard')
     ->name('admin.')
     ->group(function () {
@@ -43,9 +43,9 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
                 Route::prefix('questions')
                     ->name('questions.')
                     ->group(function () {
-                        Route::get('/', [QuestionController::class, 'store'])->name('info'); 
+                        Route::get('/', [QuestionController::class, 'store'])->name('info');
                     });
-            }); 
+            });
 
         Route::prefix('questions')
             ->name('questions.')

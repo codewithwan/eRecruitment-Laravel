@@ -24,7 +24,7 @@ class QuestionFactory extends Factory
     {
         return [
             'assessment_id' => Assessment::factory(),
-            'question_text' => $this->faker->sentence(10, true) . '?',
+            'question_text' => $this->faker->sentence(10, true).'?',
             'options' => $this->generateOptions(),
         ];
     }
@@ -38,11 +38,11 @@ class QuestionFactory extends Factory
     {
         $numOptions = $this->faker->numberBetween(2, 5);
         $options = [];
-        
+
         for ($i = 0; $i < $numOptions; $i++) {
             $options[] = $this->faker->sentence(3, true);
         }
-        
+
         return $options;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Vacancies;
@@ -31,21 +32,21 @@ class VacanciesController extends Controller
     public function create(Request $request)
     {
         $validated = $request->validate([
-            'title'        => 'required|string|max:255',
-            'department'   => 'required|string|max:255',
-            'location'     => 'required|string|max:255',
+            'title' => 'required|string|max:255',
+            'department' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
             'requirements' => 'required|array',
-            'benefits'     => 'nullable|array',
+            'benefits' => 'nullable|array',
         ]);
 
         $user_id = Auth::user()->id;
-        $job     = Vacancies::create([
-            'user_id'      => $user_id,
-            'title'        => $validated['title'],
-            'department'   => $validated['department'],
-            'location'     => $validated['location'],
+        $job = Vacancies::create([
+            'user_id' => $user_id,
+            'title' => $validated['title'],
+            'department' => $validated['department'],
+            'location' => $validated['location'],
             'requirements' => $validated['requirements'],
-            'benefits'     => $validated['benefits'] ?? [],
+            'benefits' => $validated['benefits'] ?? [],
         ]);
 
         return response()->json([
@@ -57,19 +58,19 @@ class VacanciesController extends Controller
     public function update(Request $request, Vacancies $job)
     {
         $validated = $request->validate([
-            'title'        => 'required|string|max:255',
-            'department'   => 'required|string|max:255',
-            'location'     => 'required|string|max:255',
+            'title' => 'required|string|max:255',
+            'department' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
             'requirements' => 'required|array',
-            'benefits'     => 'nullable|array',
+            'benefits' => 'nullable|array',
         ]);
 
         $job->update([
-            'title'        => $validated['title'],
-            'department'   => $validated['department'],
-            'location'     => $validated['location'],
+            'title' => $validated['title'],
+            'department' => $validated['department'],
+            'location' => $validated['location'],
             'requirements' => $validated['requirements'],
-            'benefits'     => $validated['benefits'] ?? [],
+            'benefits' => $validated['benefits'] ?? [],
         ]);
 
         return response()->json([

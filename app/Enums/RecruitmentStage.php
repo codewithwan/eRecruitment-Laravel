@@ -1,10 +1,12 @@
 <?php
+
 namespace App\Enums;
 
-enum RecruitmentStage: string {
-    case ADMINISTRATIVE_SELECTION = "Administrative Selection";
-    case PSYCHOTEST = "Psychological Test";
-    case INTERVIEW = "Interview";
+enum RecruitmentStage: string
+{
+    case ADMINISTRATIVE_SELECTION = 'Administrative Selection';
+    case PSYCHOTEST = 'Psychological Test';
+    case INTERVIEW = 'Interview';
 
     public function label(): string
     {

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Enums\CandidatesStage;
 use App\Models\Candidate;
 use App\Models\Vacancies;

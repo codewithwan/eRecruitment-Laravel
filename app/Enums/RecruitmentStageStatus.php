@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Enums;
 
-enum RecruitmentStageStatus: string {
+enum RecruitmentStageStatus: string
+{
     case SCHEDULED = 'Terjadwalkan';
     case COMPLETED = 'Selesai';
     case IN_PROGRESS = 'Dalam Proses';

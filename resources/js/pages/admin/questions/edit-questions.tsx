@@ -73,10 +73,10 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         const handleFormChange = () => setIsFormDirty(true);
 
         if (
-            title !== assessment.title || 
-            description !== assessment.description || 
-            selectedTestType !== assessment.test_type || 
-            selectedDuration !== assessment.duration || 
+            title !== assessment.title ||
+            description !== assessment.description ||
+            selectedTestType !== assessment.test_type ||
+            selectedDuration !== assessment.duration ||
             JSON.stringify(questions) !== JSON.stringify(assessment.questions)
         ) {
             handleFormChange();
@@ -85,7 +85,7 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
 
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (isFormDirty && 
+            if (isFormDirty &&
                 !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '') &&
                 window.location.pathname !== window.location.pathname) {
                 e.preventDefault();
@@ -103,16 +103,16 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
             const currentPath = window.location.pathname;
             const targetPath = event.detail.visit.url;
 
-            if (isFormDirty && 
-                !event.detail.visit.completed && 
+            if (isFormDirty &&
+                !event.detail.visit.completed &&
                 currentPath !== targetPath &&
-                typeof currentPath === 'string' && 
+                typeof currentPath === 'string' &&
                 typeof targetPath === 'string' &&
                 !currentPath.includes(targetPath) &&
                 !targetPath.includes(currentPath)) {
-                    event.preventDefault();
-                    setPendingNavigation(targetPath);
-                    setShowNavigationWarning(true);
+                event.preventDefault();
+                setPendingNavigation(targetPath);
+                setShowNavigationWarning(true);
             }
         };
 
@@ -133,10 +133,10 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
     }, [assessment]);
 
     const handleAddQuestion = () => {
-        setQuestions([...questions, { 
-            id: Date.now(), 
-            question_text: '', 
-            options: [''], 
+        setQuestions([...questions, {
+            id: Date.now(),
+            question_text: '',
+            options: [''],
             assessment_id: assessment.id,
         }]);
     };
@@ -240,11 +240,11 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
                     </CardHeader>
                     <CardContent>
                         <div className="mb-6">
-                            <Input 
-                                placeholder="Test Title" 
-                                value={title} 
-                                onChange={(e) => setTitle(e.target.value)} 
-                                className="mb-4" 
+                            <Input
+                                placeholder="Test Title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="mb-4"
                             />
                             <Textarea
                                 placeholder="Test Description"

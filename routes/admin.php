@@ -56,16 +56,5 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
                 Route::post('/', [AssessmentController::class, 'store'])->name('store');
                 Route::put('/{assessment}', [QuestionController::class, 'update'])->name('update');
                 Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('remove');
-
-                // Route::post('/debug-update/{assessment}', function(Request $request, Assessment $assessment) {
-                //     Log::info('Debug update received for assessment: ' . $assessment->id, [
-                //         'request' => $request->all()
-                //     ]);
-                //     return response()->json([
-                //         'status' => 'received',
-                //         'assessment_id' => $assessment->id,
-                //         'data' => $request->all()
-                //     ]);
-                // })->name('debug.update');
             });
     });

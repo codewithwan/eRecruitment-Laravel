@@ -15,12 +15,12 @@ const dashboardNavItems: NavItem[] = [
     },
 ];
 
-const candidateNavItems: NavItem[] = [	
-    {	
-        title: 'Candidates',	
-        href: '/dashboard/candidates',	
-        icon: File,	
-    },	
+const candidateNavItems: NavItem[] = [
+    {
+        title: 'Candidates',
+        href: '/dashboard/candidates',
+        icon: File,
+    },
 ];
 
 const mainNavItems: NavItem[] = [

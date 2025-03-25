@@ -157,18 +157,18 @@ const AddQuestionPanel = () => {
             duration: selectedDuration,
             questions: filteredQuestions,
         };
-        
+
         router.post('/dashboard/questions', formData, {
             onSuccess: () => {
                 if (pendingUrl) {
-                    window.location.href = pendingUrl; 
+                    window.location.href = pendingUrl;
                 }
             },
             onError: () => {
                 alert('Failed to save form. Please check the form and try again.');
             }
         });
-        
+
         setShowNavigationWarning(false);
     };
 

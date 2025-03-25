@@ -2,49 +2,83 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
+use App\Models\Assessment;
 use App\Models\Question;
-use App\Models\Answer;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class QuestionController extends Controller
 {
-    public function index()
+    public function store()
     {
-        $questions = Question::select('id', 'statement_number', 'options')
-            ->inRandomOrder()
-            ->take(50)
-            ->get();
+        $assessments = Assessment::withCount('questions')->get();
 
-        $userAnswers = Answer::where('user_id', Auth::id())
-            ->whereIn('question_id', $questions->pluck('id'))
-            ->pluck('answer', 'question_id')
-            ->toArray();
-
-        return Inertia::render('candidate/question', [
-            'questions' => $questions,
-            'userAnswers' => $userAnswers
+        return Inertia::render('admin/questions/question-management', [
+            'tests' => $assessments,
         ]);
     }
 
-    public function store(Request $request)
+    public function create(Request $request)
     {
-        $validated = $request->validate([
-            'question_id' => 'required|exists:questions,id',
-            'answer' => 'required|string'
+        return Inertia::render('admin/questions/add-questions');
+    }
+
+    public function edit(Assessment $assessment)
+    {
+        $assessment->load('questions');
+        Log::info('Assessment questions: '.$assessment->questions);
+
+        return Inertia::render('admin/questions/edit-questions', [
+            'assessment' => $assessment,
         ]);
+    }
 
-        $answer = Answer::updateOrCreate(
-            [
-                'user_id' => Auth::id(),
-                'question_id' => $validated['question_id']
-            ],
-            [
-                'answer' => $validated['answer']
-            ]
-        );
+    public function update(Request $request, Assessment $assessment)
+    {
+        try {
+            DB::beginTransaction();
 
-        return response()->json(['success' => true, 'answer' => $answer]);
+            $assessment->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'test_type' => $request->test_type,
+                'duration' => $request->duration,
+            ]);
+
+            $questions = json_decode($request->questions, true);
+
+            $assessment->questions()->delete();
+
+            foreach ($questions as $questionData) {
+                if (! empty($questionData['options'])) {
+                    Question::create([
+                        'assessment_id' => $assessment->id,
+                        'question_text' => $questionData['question_text'],
+                        'options' => $questionData['options'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.questions.info')
+                ->with('success', 'Assessment updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Update failed: '.$e->getMessage());
+
+            return back()->with('error', 'Failed to update assessment');
+        }
+    }
+
+    public function index()
+    {
+        $assessments = Assessment::withCount('questions')->get();
+
+        return Inertia::render('admin/questions/question-management', [
+            'tests' => $assessments,
+        ]);
     }
 }

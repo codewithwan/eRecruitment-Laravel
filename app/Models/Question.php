@@ -1,25 +1,40 @@
 <?php
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Question extends Model
 {
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
-        'statement_number',
+        'assessment_id',
+        'question_text',
         'options',
-        'category',
-        'is_active'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
     protected $casts = [
         'options' => 'array',
-        'is_active' => 'boolean'
     ];
 
-    public function answers(): HasMany
+    /**
+     * Get the assessment that owns the question.
+     */
+    public function assessment(): BelongsTo
     {
-        return $this->hasMany(Answer::class);
+        return $this->belongsTo(Assessment::class);
     }
 }

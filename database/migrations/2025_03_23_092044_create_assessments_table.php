@@ -8,17 +8,18 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('candidates', function (Blueprint $table) {
+        Schema::create('assessments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
-            $table->foreignId('vacancy_id')->constrained('vacancies')->onDelete('cascade'); 
-            $table->date('applied_at'); 
+            $table->string('title');
+            $table->text('description');
+            $table->string('test_type');
+            $table->string('duration');
             $table->timestamps();
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('candidates');
+        Schema::dropIfExists('assessments');
     }
 };

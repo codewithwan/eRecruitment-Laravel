@@ -12,6 +12,7 @@ class VacanciesController extends Controller
     public function index()
     {
         $vacancies = Vacancies::all();
+
         return Inertia::render('welcome', [
             'vacancies' => $vacancies,
         ]);
@@ -49,7 +50,7 @@ class VacanciesController extends Controller
 
         return response()->json([
             'message' => 'Job created successfully',
-            'job'     => $job,
+            'job' => $job,
         ], 201);
     }
 
@@ -73,7 +74,7 @@ class VacanciesController extends Controller
 
         return response()->json([
             'message' => 'Job updated successfully',
-            'job'     => $job,
+            'job' => $job,
         ]);
     }
 

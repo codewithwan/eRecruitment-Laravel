@@ -17,7 +17,7 @@ class Vacancies extends Model
 
     protected $casts = [
         'requirements' => 'array',
-        'benefits'     => 'array',
+        'benefits' => 'array',
     ];
 
     /**

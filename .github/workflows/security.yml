@@ -1,0 +1,99 @@
+name: security
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+  schedule:
+    - cron: '0 0 * * 0' # Run weekly on Sunday at midnight
+
+jobs:
+  dependency-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
+
+      - name: PHP Security Checker
+        uses: symfonycorp/security-checker-action@v5
+
+      - name: NPM Audit
+        run: npm audit --audit-level=high
+
+  php-code-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHPStan (Static Analysis)
+        run: vendor/bin/phpstan analyse src --level=7 || true
+
+      - name: Run Psalm (Security Check)
+        run: vendor/bin/psalm --no-progress --output-format=github || true
+
+  js-code-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npx eslint src --ext .js,.jsx,.ts,.tsx || true
+
+      - name: Run NPM Audit
+        run: npm audit --audit-level=high || true
+
+  # secrets-scanning:
+  #   runs-on: ubuntu-latest
+  #   # Only run on push events to avoid token requirement for PRs
+  #   if: github.event_name == 'push' || github.event_name == 'schedule'
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - name: Detect secrets
+  #       uses: gitleaks/gitleaks-action@v2
+  #       # Token removed for now, but will be needed for pull requests
+  #       # env:
+  #       #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

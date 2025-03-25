@@ -1,12 +1,14 @@
 <?php
+
 namespace App\Enums;
 
-enum UserRole: string {
+enum UserRole: string
+{
     case SUPER_ADMIN = 'super_admin';
-    case HR          = 'hr';
-    case HEAD_HR     = 'head_hr';
-    case HEAD_DEV    = 'head_dev';
-    case CANDIDATE   = 'candidate';
+    case HR = 'hr';
+    case HEAD_HR = 'head_hr';
+    case HEAD_DEV = 'head_dev';
+    case CANDIDATE = 'candidate';
 
     public function label(): string
     {

@@ -4,15 +4,26 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Github, User, LayoutGrid, SearchIcon, LucideFileQuestion, File } from 'lucide-react';
+import { File, Github, LayoutGrid, LucideFileQuestion, SearchIcon, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+const dashboardNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutGrid,
     },
+];
+
+const candidateNavItems: NavItem[] = [
+    {
+        title: 'Candidates',
+        href: '/dashboard/candidates',
+        icon: File,
+    },
+];
+
+const mainNavItems: NavItem[] = [
     {
         title: 'Users',
         href: '/dashboard/users',
@@ -31,7 +42,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Question',
         href: '/dashboard/questions',
-        icon: LucideFileQuestion
+        icon: LucideFileQuestion,
     },
 ];
 
@@ -64,7 +75,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                {NavMain('Dashboard', { items: dashboardNavItems })}
+                {NavMain('Candidate', { items: candidateNavItems })}
+                {NavMain('Management', { items: mainNavItems })}
             </SidebarContent>
 
             <SidebarFooter>

@@ -5,14 +5,6 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Clock } from 'lucide-react';
 
-interface Question {
-    id: number;
-    question: string;
-    options: string[];
-    test_type: string;
-    duration: string;
-    created_at: string;
-}
 
 interface Test {
     id: number;
@@ -80,8 +72,8 @@ export default function QuestionManagement(props: TestsProps) {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-gray-700">{test.description}</p>
-                                    <p className="text-gray-500 mt-2">Type: {test.test_type}</p>
+                                    <p className="text-gray-700 dark:text-gray-200">{test.description}</p>
+                                    <p className="text-gray-500 mt-2 dark:text-gray-400">Type: {test.test_type}</p>
                                 </CardContent>
                                 <CardFooter className="flex justify-end">
                                     <Button variant="outline" onClick={() => handleEditTest(test.id)}>

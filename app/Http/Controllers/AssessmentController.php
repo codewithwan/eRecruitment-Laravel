@@ -6,43 +6,64 @@ use App\Models\Assessment;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AssessmentController extends Controller
 {
     public function store(Request $request)
     {
         try {
-            // Log the request data for debugging
-            Log::info('Assessment data received:', $request->all());
-            
-            // Create the assessment
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'test_type' => 'required|string|in:multiple_choice,essay,technical',
+                'duration' => 'required|string|regex:/^\d+:[0-5][0-9]$/', // Format: H:MM
+                'questions' => 'required|array|min:1',
+                'questions.*.question' => 'required|string|min:5',
+                'questions.*.options' => 'required|array|min:2',
+                'questions.*.options.*' => 'nullable|string|distinct',
+                'questions.*.correct_answer' => 'nullable|integer',
+            ]);
+
+            DB::beginTransaction();
+
             $assessment = Assessment::create([
-                'title' => $request->title,
-                'description' => $request->description,
-                'test_type' => $request->testType,
-                'duration' => $request->duration,
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'test_type' => $validated['test_type'],
+                'duration' => $validated['duration'],
             ]);
             
-            Log::info('Assessment created with ID: ' . $assessment->id);
-            
-            // Create questions (without correct_answer as requested)
-            foreach ($request->questions as $questionData) {
-                // Don't encode options - the model cast will handle this
-                $question = Question::create([
-                    'assessment_id' => $assessment->id,
-                    'question_text' => $questionData['question'],
-                    'options' => $questionData['options'],
-                ]);
+            foreach ($validated['questions'] as $questionData) {
+                $options = array_values(array_filter($questionData['options']));
                 
-                Log::info('Question created with ID: ' . $question->id);
+                if (count($options) >= 2) {
+                    $questionAttributes = [
+                        'assessment_id' => $assessment->id,
+                        'question_text' => $questionData['question'],
+                        'options' => $options,
+                    ];
+                    
+                    if (isset($questionData['correct_answer'])) {
+                        $questionAttributes['correct_answer'] = $questionData['correct_answer'];
+                    }
+                    
+                    Question::create($questionAttributes);
+                }
             }
             
-            // Fix the redirect route
-            return redirect()->route('admin.questions.info')->with('success', 'Assessment and questions created successfully');
+            DB::commit();
+
+            return redirect()->route('admin.questions.info')
+                ->with('success', 'Assessment created successfully with ' . count($validated['questions']) . ' questions');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Error creating assessment: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
-            return redirect()->back()->withInput()->with('error', 'Failed to save assessment: ' . $e->getMessage());
+            return redirect()->back()->withInput()
+                ->with('error', 'Failed to save assessment: ' . $e->getMessage());
         }
     }
 }

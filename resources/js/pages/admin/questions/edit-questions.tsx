@@ -22,10 +22,9 @@ import { useEffect, useState } from 'react';
 
 interface Question {
     id: number;
-    question: string;
+    question_text: string;
     options: string[];
     assessment_id: number;
-    correctAnswer?: string;
 }
 
 interface Assessment {
@@ -70,7 +69,6 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
     const [showNavigationWarning, setShowNavigationWarning] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState('');
 
-    // Track form changes
     useEffect(() => {
         const handleFormChange = () => setIsFormDirty(true);
 
@@ -85,10 +83,11 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         }
     }, [title, description, selectedTestType, selectedDuration, questions, assessment]);
 
-    // Handle browser navigation events
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (isFormDirty) {
+            if (isFormDirty && 
+                !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '') &&
+                window.location.pathname !== window.location.pathname) {
                 e.preventDefault();
                 e.returnValue = '';
                 return '';
@@ -99,13 +98,21 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [isFormDirty]);
 
-    // Intercept Inertia navigation
     useEffect(() => {
         const handleInertiaBeforeNavigate = (event: CustomEvent<{ visit: { url: string; completed: boolean } }>) => {
-            if (isFormDirty && !event.detail.visit.completed) {
-                event.preventDefault();
-                setPendingNavigation(event.detail.visit.url);
-                setShowNavigationWarning(true);
+            const currentPath = window.location.pathname;
+            const targetPath = event.detail.visit.url;
+
+            if (isFormDirty && 
+                !event.detail.visit.completed && 
+                currentPath !== targetPath &&
+                typeof currentPath === 'string' && 
+                typeof targetPath === 'string' &&
+                !currentPath.includes(targetPath) &&
+                !targetPath.includes(currentPath)) {
+                    event.preventDefault();
+                    setPendingNavigation(targetPath);
+                    setShowNavigationWarning(true);
             }
         };
 
@@ -113,13 +120,24 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         return () => document.removeEventListener('inertia:before', handleInertiaBeforeNavigate as EventListener);
     }, [isFormDirty]);
 
+    useEffect(() => {
+        if (assessment.questions) {
+            const mappedQuestions = assessment.questions.map(q => ({
+                id: q.id,
+                question_text: q.question_text || '',
+                options: Array.isArray(q.options) ? q.options : [],
+                assessment_id: q.assessment_id,
+            }));
+            setQuestions(mappedQuestions);
+        }
+    }, [assessment]);
+
     const handleAddQuestion = () => {
         setQuestions([...questions, { 
-            id: Date.now(), // temporary ID for new questions
-            question: '', 
+            id: Date.now(), 
+            question_text: '', 
             options: [''], 
             assessment_id: assessment.id,
-            correctAnswer: ''
         }]);
     };
 
@@ -130,7 +148,7 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
 
     const handleQuestionChange = (index: number, value: string) => {
         const newQuestions = [...questions];
-        newQuestions[index].question = value;
+        newQuestions[index].question_text = value;
         setQuestions(newQuestions);
     };
 
@@ -154,7 +172,7 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
 
     const handleSaveAndNavigate = () => {
         saveForm();
-        if (pendingNavigation) {
+        if (pendingNavigation && typeof pendingNavigation === 'string') {
             router.visit(pendingNavigation);
         }
         setShowNavigationWarning(false);
@@ -166,31 +184,33 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
     };
 
     const saveForm = () => {
-        console.log('Saving form data', {
-            title,
-            description,
-            testType: selectedTestType,
-            duration: selectedDuration,
-            questions,
-        });
+        const preparedQuestions = questions
+            .filter(q => q.question_text.trim() !== '' || q.options.some(opt => opt.trim() !== ''))
+            .map(q => ({
+                question_text: q.question_text,
+                options: q.options.filter(opt => opt.trim() !== ''),
+                assessment_id: assessment.id
+            }));
 
-        // Filter out empty questions and ensure only valid questions are sent
-        const validQuestions = questions.filter((q) => q.options.some((opt) => opt.trim() !== ''));
-        
         router.put(`/dashboard/questions/${assessment.id}`, {
             title,
             description,
             test_type: selectedTestType,
             duration: selectedDuration,
-            questions: JSON.stringify(validQuestions), // Convert to JSON string
+            questions: JSON.stringify(preparedQuestions),
         }, {
             onSuccess: () => {
                 setIsFormDirty(false);
-                router.visit('/dashboard/questions');
+                try {
+                    router.visit('/dashboard/questions');
+                } catch (error) {
+                    console.error('Navigation error:', error);
+                    window.location.href = '/dashboard/questions';
+                }
             },
             onError: (errors) => {
                 console.error('Update failed:', errors);
-                alert('Failed to save changes. Please check the form and try again.');
+                alert('Failed to save changes. Please try again.');
             }
         });
     };
@@ -200,8 +220,14 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
     };
 
     const confirmSubmit = () => {
-        saveForm();
-        setShowConfirmDialog(false);
+        try {
+            saveForm();
+            setShowConfirmDialog(false);
+        } catch (error) {
+            console.error('Submit error:', error);
+            setShowConfirmDialog(false);
+            alert('An error occurred. Please try again.');
+        }
     };
 
     return (
@@ -273,7 +299,7 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
                                 </div>
                                 <Textarea
                                     placeholder="Enter question (optional)"
-                                    value={q.question}
+                                    value={q.question_text}
                                     onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
                                     className="mb-4"
                                 />

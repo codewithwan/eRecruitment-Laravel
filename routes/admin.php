@@ -1,4 +1,4 @@
-<?php
+    <?php
 
 use App\Enums\UserRole;
 use App\Http\Controllers\QuestionController;
@@ -6,9 +6,12 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacanciesController;
 use App\Http\Controllers\AssessmentController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Models\Assessment;
 
 // Admin route
-Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
+Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
     ->prefix('dashboard')
     ->name('admin.')
     ->group(function () {
@@ -40,12 +43,10 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
                 Route::prefix('questions')
                     ->name('questions.')
                     ->group(function () {
-                        Route::get('/', [QuestionController::class, 'index'])->name('info');
-                        // Route::get('/add-questions', [QuestionController::class, 'create'])->name('create');
-                        // Route::put('/{question}', [QuestionController::class, 'update'])->name('update');
-                        // Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('remove');
+                        Route::get('/', [QuestionController::class, 'store'])->name('info'); 
                     });
-            });
+            }); 
+
         Route::prefix('questions')
             ->name('questions.')
             ->group(function () {
@@ -55,12 +56,16 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
                 Route::post('/', [AssessmentController::class, 'store'])->name('store');
                 Route::put('/{assessment}', [QuestionController::class, 'update'])->name('update');
                 Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('remove');
-                
-                // Add debug route
-                // Route::get('/debug/{assessment}', function(Assessment $assessment) {
-                //     return response()->json([
-                //         'assessment' => $assessment->load('questions')
+
+                // Route::post('/debug-update/{assessment}', function(Request $request, Assessment $assessment) {
+                //     Log::info('Debug update received for assessment: ' . $assessment->id, [
+                //         'request' => $request->all()
                 //     ]);
-                // })->name('questions.debug');
+                //     return response()->json([
+                //         'status' => 'received',
+                //         'assessment_id' => $assessment->id,
+                //         'data' => $request->all()
+                //     ]);
+                // })->name('debug.update');
             });
     });

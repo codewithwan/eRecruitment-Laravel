@@ -3,37 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { UserTableProps } from '@/types/user';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight, EyeIcon, Pencil, Trash2 } from 'lucide-react';
-
-// User interface definition
-export interface User {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    email_verified_at: string | null;
-    created_at: string;
-}
-
-interface PaginationData {
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-}
-
-interface UserTableProps {
-    users: User[];
-    pagination: PaginationData;
-    onView?: (userId: number) => void;
-    onEdit?: (userId: number) => void;
-    onDelete?: (userId: number) => void;
-    onPageChange: (page: number) => void;
-    onPerPageChange: (perPage: number) => void;
-    itemsPerPageOptions?: number[];
-    isLoading?: boolean;
-}
 
 export function UserTable({
     users,

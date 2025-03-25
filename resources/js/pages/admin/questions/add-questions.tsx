@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ConfirmationDialog from '@/components/confirmation-dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,13 +41,17 @@ const durations = ['10 Minutes', '20 Minutes', '30 Minutes', '40 Minutes'];
 const AddQuestionPanel = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [questions, setQuestions] = useState([{ question: '', options: [''], correctAnswer: '' }]);
+    const [questions, setQuestions] = useState<{ question: string; options: string[]; correctAnswer: string }[]>([
+        { question: '', options: ['', ''], correctAnswer: '' }
+    ]);
     const [selectedTestType, setSelectedTestType] = useState('');
     const [selectedDuration, setSelectedDuration] = useState('');
     const [isFormDirty, setIsFormDirty] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [showNavigationWarning, setShowNavigationWarning] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState('');
+    const [showErrorDialog, setShowErrorDialog] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         const handleFormChange = () => setIsFormDirty(true);
@@ -84,7 +88,7 @@ const AddQuestionPanel = () => {
     }, [isFormDirty]);
 
     const handleAddQuestion = () => {
-        setQuestions([...questions, { question: '', options: [''], correctAnswer: '' }]);
+        setQuestions([...questions, { question: '', options: ['', ''], correctAnswer: '' }]);
     };
 
     const handleRemoveQuestion = (index: number) => {
@@ -116,6 +120,11 @@ const AddQuestionPanel = () => {
         setQuestions(newQuestions);
     };
 
+    const displayError = (message: string) => {
+        setErrorMessage(message);
+        setShowErrorDialog(true);
+    };
+
     const handleSaveAndNavigate = () => {
         const pendingUrl = pendingNavigation;
 
@@ -127,25 +136,25 @@ const AddQuestionPanel = () => {
             }));
 
         if (filteredQuestions.length === 0) {
-            alert('Please add at least one question with valid options');
+            displayError('Please add at least one question with valid options');
             setShowNavigationWarning(false);
             return;
         }
 
         if (!title.trim()) {
-            alert('Please enter a test title');
+            displayError('Please enter a test title');
             setShowNavigationWarning(false);
             return;
         }
 
         if (!selectedTestType) {
-            alert('Please select a test type');
+            displayError('Please select a test type');
             setShowNavigationWarning(false);
             return;
         }
 
         if (!selectedDuration) {
-            alert('Please select a test duration');
+            displayError('Please select a test duration');
             setShowNavigationWarning(false);
             return;
         }
@@ -164,7 +173,8 @@ const AddQuestionPanel = () => {
                     window.location.href = pendingUrl;
                 }
             },
-            onError: () => {
+            onError: (e) => {
+                console.log(e);
                 alert('Failed to save form. Please check the form and try again.');
             },
         });
@@ -186,22 +196,22 @@ const AddQuestionPanel = () => {
             }));
 
         if (filteredQuestions.length === 0) {
-            alert('Please add at least one question with valid options');
+            displayError('Please add at least one question with valid options');
             return;
         }
 
         if (!title.trim()) {
-            alert('Please enter a test title');
+            displayError('Please enter a test title');
             return;
         }
 
         if (!selectedTestType) {
-            alert('Please select a test type');
+            displayError('Please select a test type');
             return;
         }
 
         if (!selectedDuration) {
-            alert('Please select a test duration');
+            displayError('Please select a test duration');
             return;
         }
 
@@ -216,7 +226,7 @@ const AddQuestionPanel = () => {
             },
             {
                 onError: () => {
-                    alert('Failed to save form. Please check the form and try again.');
+                    displayError('Failed to save form. Please check the form and try again.');
                 },
             },
         );
@@ -309,7 +319,7 @@ const AddQuestionPanel = () => {
                                             value={option}
                                             onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
                                         />
-                                        {q.options.length > 1 && (
+                                        {q.options.length > 2 && (
                                             <Button variant="ghost" size="sm" onClick={() => handleRemoveOption(qIndex, oIndex)}>
                                                 <Trash className="h-4 w-4" />
                                             </Button>
@@ -332,22 +342,14 @@ const AddQuestionPanel = () => {
             </div>
 
             {/* Confirmation Dialog */}
-            <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Submission</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to save these questions? This action will add them to the test database.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={confirmSubmit}>Confirm</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmationDialog
+                open={showConfirmDialog}
+                onOpenChange={setShowConfirmDialog}
+                title="Confirm Submission"
+                description="Are you sure you want to save these questions? This action will add them to the test database."
+                confirmLabel="Confirm"
+                onConfirm={confirmSubmit}
+            />
 
             {/* Navigation Warning Dialog */}
             <AlertDialog open={showNavigationWarning} onOpenChange={setShowNavigationWarning}>
@@ -365,6 +367,17 @@ const AddQuestionPanel = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Error Dialog */}
+            <ConfirmationDialog
+                open={showErrorDialog}
+                onOpenChange={setShowErrorDialog}
+                title="Error"
+                description={errorMessage}
+                confirmLabel="OK"
+                onConfirm={() => setShowErrorDialog(false)}
+                cancelLabel=""
+            />
         </AppLayout>
     );
 };

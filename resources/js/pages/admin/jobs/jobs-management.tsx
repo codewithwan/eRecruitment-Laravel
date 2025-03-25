@@ -1,4 +1,4 @@
-import { JobTable, type Job } from '@/components/job-table';
+import { JobTable } from '@/components/job-table';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Job } from '@/types/job';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { useState } from 'react';

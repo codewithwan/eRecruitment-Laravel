@@ -1,25 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { JobTableProps } from '@/types/job';
 import { EyeIcon, Pencil, Trash2 } from 'lucide-react';
-
-export interface Job {
-    id: number;
-    title: string;
-    department: string;
-    location: string;
-    requirements: string[];
-    benefits?: string[] | null;
-    user_id: number;
-    created_at: string;
-    updated_at: string;
-}
-
-interface JobTableProps {
-    jobs: Job[];
-    onView: (jobId: number) => void;
-    onEdit: (jobId: number) => void;
-    onDelete: (jobId: number) => void;
-}
 
 export function JobTable({ jobs, onView, onEdit, onDelete }: JobTableProps) {
     return (

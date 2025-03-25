@@ -16,10 +16,10 @@ class AssessmentController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'required|string',
-                'test_type' => 'required|string|in:multiple_choice,essay,technical',
-                'duration' => 'required|string|regex:/^\d+:[0-5][0-9]$/', // Format: H:MM
+                'test_type' => 'required|string',
+                'duration' => 'required|string', // Format: H:MM
                 'questions' => 'required|array|min:1',
-                'questions.*.question' => 'required|string|min:5',
+                'questions.*.question' => 'required|string|nullable',
                 'questions.*.options' => 'required|array|min:2',
                 'questions.*.options.*' => 'nullable|string|distinct',
                 'questions.*.correct_answer' => 'nullable|integer',

@@ -14,19 +14,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserTable, type User } from '@/components/user-table';
+import { UserTable } from '@/components/user-table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { PaginationData, User } from '@/types/user';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-
-interface PaginationData {
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-}
 
 interface UserManagementProps {
     users?: User[];

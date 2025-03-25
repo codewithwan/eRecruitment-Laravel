@@ -2,23 +2,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { TestsProps } from '@/types/questions';
 import { Head, router } from '@inertiajs/react';
 import { Clock } from 'lucide-react';
-
-interface Test {
-    id: number;
-    title: string;
-    description: string;
-    duration: string;
-    test_type: string;
-    questions_count: number;
-    created_at: string;
-    updated_at: string;
-}
-
-interface TestsProps {
-    tests: Test[];
-}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

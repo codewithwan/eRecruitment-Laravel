@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ConfirmationDialog from '@/components/confirmation-dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,26 +19,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Info, Plus, Save, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
-interface Question {
-    id: number;
-    question_text: string;
-    options: string[];
-    assessment_id: number;
-}
-
-interface Assessment {
-    id: number;
-    title: string;
-    description: string;
-    test_type: string;
-    duration: string;
-    questions: Question[];
-}
-
-interface EditQuestionsProps {
-    assessment: Assessment;
-}
+import { type EditQuestionsProps, type Question } from '@/types/questions';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -68,6 +49,8 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [showNavigationWarning, setShowNavigationWarning] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState('');
+    const [showErrorDialog, setShowErrorDialog] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         const handleFormChange = () => setIsFormDirty(true);
@@ -176,6 +159,11 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         setQuestions(newQuestions);
     };
 
+    const displayError = (message: string) => {
+        setErrorMessage(message);
+        setShowErrorDialog(true);
+    };
+
     const handleSaveAndNavigate = () => {
         saveForm();
         if (pendingNavigation && typeof pendingNavigation === 'string') {
@@ -198,6 +186,26 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
                 assessment_id: assessment.id,
             }));
 
+        if (preparedQuestions.length === 0) {
+            displayError('Please add at least one question with valid options');
+            return;
+        }
+
+        if (!title.trim()) {
+            displayError('Please enter a test title');
+            return;
+        }
+
+        if (!selectedTestType) {
+            displayError('Please select a test type');
+            return;
+        }
+
+        if (!selectedDuration) {
+            displayError('Please select a test duration');
+            return;
+        }
+
         router.put(
             `/dashboard/questions/${assessment.id}`,
             {
@@ -210,16 +218,10 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
             {
                 onSuccess: () => {
                     setIsFormDirty(false);
-                    try {
-                        router.visit('/dashboard/questions');
-                    } catch (error) {
-                        console.error('Navigation error:', error);
-                        window.location.href = '/dashboard/questions';
-                    }
+                    router.visit('/dashboard/questions');
                 },
-                onError: (errors) => {
-                    console.error('Update failed:', errors);
-                    alert('Failed to save changes. Please try again.');
+                onError: () => {
+                    displayError('Failed to save changes. Please try again.');
                 },
             },
         );
@@ -236,7 +238,7 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
         } catch (error) {
             console.error('Submit error:', error);
             setShowConfirmDialog(false);
-            alert('An error occurred. Please try again.');
+            displayError('An error occurred. Please try again.');
         }
     };
 
@@ -344,22 +346,14 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
             </div>
 
             {/* Confirmation Dialog */}
-            <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Update</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to save these changes? This action will update the test in the database.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={confirmSubmit}>Confirm</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmationDialog
+                open={showConfirmDialog}
+                onOpenChange={setShowConfirmDialog}
+                title="Confirm Update"
+                description="Are you sure you want to save these changes? This action will update the test in the database."
+                confirmLabel="Confirm"
+                onConfirm={confirmSubmit}
+            />
 
             {/* Navigation Warning Dialog */}
             <AlertDialog open={showNavigationWarning} onOpenChange={setShowNavigationWarning}>
@@ -377,6 +371,17 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Error Dialog */}
+            <ConfirmationDialog
+                open={showErrorDialog}
+                onOpenChange={setShowErrorDialog}
+                title="Error"
+                description={errorMessage}
+                confirmLabel="OK"
+                onConfirm={() => setShowErrorDialog(false)}
+                cancelLabel=""
+            />
         </AppLayout>
     );
 }

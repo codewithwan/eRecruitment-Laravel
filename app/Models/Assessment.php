@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Log;
 
 class Assessment extends Model
 {
@@ -35,8 +34,8 @@ class Assessment extends Model
      * Retrieve the model for a bound value.
      * This ensures the assessment is properly loaded with all relationships.
      *
-     * @param mixed $value
-     * @param string|null $field
+     * @param  mixed  $value
+     * @param  string|null  $field
      * @return \Illuminate\Database\Eloquent\Model|null
      */
 }

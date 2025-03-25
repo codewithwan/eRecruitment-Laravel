@@ -38,7 +38,7 @@ const mainNavItems: NavItem[] = [
         title: 'Question',
         href: '/dashboard/questions',
         icon: LucideFileQuestion,
-    }
+    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -70,9 +70,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                {NavMain("Dashboard", { items: dashboardNavItems })}
-                {NavMain("Candidate", { items: candidateNavItems })}
-                {NavMain("Management", { items: mainNavItems })}
+                {NavMain('Dashboard', { items: dashboardNavItems })}
+                {NavMain('Candidate', { items: candidateNavItems })}
+                {NavMain('Management', { items: mainNavItems })}
             </SidebarContent>
 
             <SidebarFooter>

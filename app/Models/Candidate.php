@@ -19,17 +19,23 @@ class Candidate extends Model
     ];
 
     protected $casts = [
-        'applied_at' => 'datetime',
+        'applied_at' => 'date',
         'status' => CandidatesStage::class,
     ];
 
+    /**
+     * Get the user associated with the candidate.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function vacancy()
+    /**
+     * Get the vacancy associated with the candidate.
+     */
+    public function vacancy(): BelongsTo
     {
-        return $this->belongsTo(Vacancies::class, 'vacancy_id');
+        return $this->belongsTo(Vacancies::class);
     }
 }

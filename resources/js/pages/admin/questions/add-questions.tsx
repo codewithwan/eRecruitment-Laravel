@@ -49,7 +49,6 @@ const AddQuestionPanel = () => {
     const [showNavigationWarning, setShowNavigationWarning] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState('');
 
-    // Track form changes
     useEffect(() => {
         const handleFormChange = () => setIsFormDirty(true);
 
@@ -58,7 +57,6 @@ const AddQuestionPanel = () => {
         }
     }, [title, description, selectedTestType, selectedDuration, questions]);
 
-    // Handle browser navigation events
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (isFormDirty) {
@@ -72,7 +70,6 @@ const AddQuestionPanel = () => {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [isFormDirty]);
 
-    // Intercept Inertia navigation
     useEffect(() => {
         const handleInertiaBeforeNavigate = (event: CustomEvent<{ visit: { url: string; completed: boolean } }>) => {
             if (isFormDirty && !event.detail.visit.completed) {
@@ -120,10 +117,58 @@ const AddQuestionPanel = () => {
     };
 
     const handleSaveAndNavigate = () => {
-        saveForm();
-        if (pendingNavigation) {
-            router.visit(pendingNavigation);
+        const pendingUrl = pendingNavigation;
+
+        const filteredQuestions = questions
+            .filter((q) => q.options.some((opt) => opt.trim() !== ''))
+            .map((q) => ({
+                question: q.question.trim(),
+                options: q.options.filter((opt) => opt.trim() !== ''),
+            }));
+
+        if (filteredQuestions.length === 0) {
+            alert('Please add at least one question with valid options');
+            setShowNavigationWarning(false);
+            return;
         }
+
+        if (!title.trim()) {
+            alert('Please enter a test title');
+            setShowNavigationWarning(false);
+            return;
+        }
+
+        if (!selectedTestType) {
+            alert('Please select a test type');
+            setShowNavigationWarning(false);
+            return;
+        }
+
+        if (!selectedDuration) {
+            alert('Please select a test duration');
+            setShowNavigationWarning(false);
+            return;
+        }
+
+        const formData = {
+            title: title.trim(),
+            description: description.trim(),
+            test_type: selectedTestType,
+            duration: selectedDuration,
+            questions: filteredQuestions,
+        };
+
+        router.post('/dashboard/questions', formData, {
+            onSuccess: () => {
+                if (pendingUrl) {
+                    window.location.href = pendingUrl;
+                }
+            },
+            onError: () => {
+                alert('Failed to save form. Please check the form and try again.');
+            },
+        });
+
         setShowNavigationWarning(false);
     };
 
@@ -133,21 +178,48 @@ const AddQuestionPanel = () => {
     };
 
     const saveForm = () => {
-        console.log('Saving form data', {
-            title,
-            description,
-            testType: selectedTestType,
-            duration: selectedDuration,
-            questions,
-        });
+        const filteredQuestions = questions
+            .filter((q) => q.options.some((opt) => opt.trim() !== ''))
+            .map((q) => ({
+                question: q.question.trim(),
+                options: q.options.filter((opt) => opt.trim() !== ''),
+            }));
 
-        router.post('/dashboard/questions', {
-            title,
-            description,
-            testType: selectedTestType,
-            duration: selectedDuration,
-            questions: questions.filter((q) => q.options.some((opt) => opt.trim() !== '')),
-        });
+        if (filteredQuestions.length === 0) {
+            alert('Please add at least one question with valid options');
+            return;
+        }
+
+        if (!title.trim()) {
+            alert('Please enter a test title');
+            return;
+        }
+
+        if (!selectedTestType) {
+            alert('Please select a test type');
+            return;
+        }
+
+        if (!selectedDuration) {
+            alert('Please select a test duration');
+            return;
+        }
+
+        router.post(
+            '/dashboard/questions',
+            {
+                title: title.trim(),
+                description: description.trim(),
+                test_type: selectedTestType,
+                duration: selectedDuration,
+                questions: filteredQuestions,
+            },
+            {
+                onError: () => {
+                    alert('Failed to save form. Please check the form and try again.');
+                },
+            },
+        );
 
         setIsFormDirty(false);
     };

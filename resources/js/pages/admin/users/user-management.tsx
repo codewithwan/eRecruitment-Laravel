@@ -13,12 +13,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserTable, type User } from '@/components/user-table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
+import { Filter } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface PaginationData {
@@ -62,6 +64,7 @@ export default function UserManagement(props: UserManagementProps) {
     };
 
     const [users, setUsers] = useState(initialUsers);
+    const [filteredUsers, setFilteredUsers] = useState(initialUsers);
     const [pagination, setPagination] = useState(initialPagination);
     const [isLoading, setIsLoading] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -73,6 +76,14 @@ export default function UserManagement(props: UserManagementProps) {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editUser, setEditUser] = useState<Partial<User>>({ name: '', email: '', role: '' });
 
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [roleFilter, setRoleFilter] = useState('all');
+    const [isFilterActive, setIsFilterActive] = useState(false);
+
+    // Get unique roles for filters
+    const uniqueRoles = ['all', ...Array.from(new Set(users.map((user) => user.role)))];
+
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
@@ -82,6 +93,31 @@ export default function UserManagement(props: UserManagementProps) {
             fetchUsers(page, perPage);
         }
     }, []);
+
+    // Apply filters whenever filter states change
+    useEffect(() => {
+        let result = users;
+
+        // Apply search filter
+        if (searchQuery) {
+            result = result.filter(
+                (user) =>
+                    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.role.toLowerCase().includes(searchQuery.toLowerCase()),
+            );
+        }
+
+        // Apply role filter
+        if (roleFilter && roleFilter !== 'all') {
+            result = result.filter((user) => user.role === roleFilter);
+        }
+
+        setFilteredUsers(result);
+
+        // Set filter active state
+        setIsFilterActive(searchQuery !== '' || roleFilter !== 'all');
+    }, [searchQuery, roleFilter, users]);
 
     const fetchUsers = async (page = 1, perPage = pagination.per_page) => {
         setIsLoading(true);
@@ -96,6 +132,7 @@ export default function UserManagement(props: UserManagementProps) {
                 },
             });
             setUsers(response.data.users);
+            setFilteredUsers(response.data.users);
             setPagination(response.data.pagination);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -205,6 +242,11 @@ export default function UserManagement(props: UserManagementProps) {
         }
     };
 
+    const resetFilters = () => {
+        setSearchQuery('');
+        setRoleFilter('all');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="User Management" />
@@ -217,13 +259,51 @@ export default function UserManagement(props: UserManagementProps) {
                         </Button>
                     </div>
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Users List</CardTitle>
-                            <CardDescription>Manage all users in the system</CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Users List</CardTitle>
+                                <CardDescription>Manage all users in the system</CardDescription>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="relative"></div>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={isFilterActive ? 'default' : 'outline'} size="icon" className="relative">
+                                            <Filter className="h-4 w-4" />
+                                            {isFilterActive && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80">
+                                        <div className="space-y-4">
+                                            <h4 className="font-medium">Filters</h4>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="role-filter">Role</Label>
+                                                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                                    <SelectTrigger id="role-filter">
+                                                        <SelectValue placeholder="Filter by role" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {uniqueRoles.map((role) => (
+                                                            <SelectItem key={role} value={role}>
+                                                                {role === 'all' ? 'All Roles' : role}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="flex justify-end">
+                                                <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
+                                                    Reset Filters
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <UserTable
-                                users={users}
+                                users={filteredUsers}
                                 pagination={pagination}
                                 onView={handleViewUser}
                                 onEdit={handleEditUser}

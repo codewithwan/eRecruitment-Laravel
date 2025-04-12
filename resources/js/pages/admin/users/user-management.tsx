@@ -265,64 +265,68 @@ export default function UserManagement(props: UserManagementProps) {
                         </Button>
                     </div>
                     <Card>
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div>
                             <CardTitle>Users List</CardTitle>
                             <CardDescription>Manage all users in the system</CardDescription>
                         </div>
-                        <div className="mt-4 md:mt-0">
-                        <SearchBar
+
+                        <div className="flex items-center gap-4">
+                            <SearchBar
                             icon={<Search className="w-4 h-4" />}
                             placeholder="Cari user..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                            />
+
+                            <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={isFilterActive ? 'default' : 'outline'}
+                                size="icon"
+                                className="relative"
+                                >
+                                <Filter className="h-4 w-4" />
+                                {isFilterActive && (
+                                    <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>
+                                )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                                <div className="space-y-4">
+                                <h4 className="font-medium">Filters</h4>
+                                <div className="space-y-2">
+                                    <Label htmlFor="role-filter">Role</Label>
+                                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                    <SelectTrigger id="role-filter">
+                                        <SelectValue placeholder="Filter by role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {uniqueRoles.map((role) => (
+                                        <SelectItem key={role} value={role}>
+                                            {role === 'all' ? 'All Roles' : role}
+                                        </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={resetFilters}
+                                    className="text-xs"
+                                    >
+                                    Reset Filters
+                                    </Button>
+                                </div>
+                                </div>
+                            </PopoverContent>
+                            </Popover>
                         </div>
-                        </div>
-                    </CardHeader>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Users List</CardTitle>
-                                <CardDescription>Manage all users in the system</CardDescription>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="relative"></div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant={isFilterActive ? 'default' : 'outline'} size="icon" className="relative">
-                                            <Filter className="h-4 w-4" />
-                                            {isFilterActive && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80">
-                                        <div className="space-y-4">
-                                            <h4 className="font-medium">Filters</h4>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="role-filter">Role</Label>
-                                                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                                                    <SelectTrigger id="role-filter">
-                                                        <SelectValue placeholder="Filter by role" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {uniqueRoles.map((role) => (
-                                                            <SelectItem key={role} value={role}>
-                                                                {role === 'all' ? 'All Roles' : role}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="flex justify-end">
-                                                <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
-                                                    Reset Filters
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
                         </CardHeader>
+
                         <CardContent>
                             <UserTable
                                 users={filteredUsers}

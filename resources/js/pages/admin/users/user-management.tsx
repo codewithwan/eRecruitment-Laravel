@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SearchBar } from '@/components/ui/searchbar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,6 +21,8 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { Search } from "lucide-react"
+
 
 interface PaginationData {
     total: number;
@@ -60,6 +63,7 @@ export default function UserManagement(props: UserManagementProps) {
         current_page: 1,
         last_page: Math.ceil(initialUsers.length / 10),
     };
+    
 
     const [users, setUsers] = useState(initialUsers);
     const [pagination, setPagination] = useState(initialPagination);
@@ -72,7 +76,17 @@ export default function UserManagement(props: UserManagementProps) {
     const [userIdToDelete, setUserIdToDelete] = useState<number | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editUser, setEditUser] = useState<Partial<User>>({ name: '', email: '', role: '' });
+    const [searchQuery, setSearchQuery] = useState('');
+    const filteredUsers = users.filter((user) =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
+    useEffect(() => {
+        setPagination((prev) => ({ ...prev, current_page: 1 }));
+    }, [searchQuery]);
+      
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
@@ -217,13 +231,25 @@ export default function UserManagement(props: UserManagementProps) {
                         </Button>
                     </div>
                     <Card>
-                        <CardHeader>
+                    <CardHeader>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
                             <CardTitle>Users List</CardTitle>
                             <CardDescription>Manage all users in the system</CardDescription>
-                        </CardHeader>
+                        </div>
+                        <div className="mt-4 md:mt-0">
+                        <SearchBar
+                            icon={<Search className="w-4 h-4" />}
+                            placeholder="Cari user..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        </div>
+                        </div>
+                    </CardHeader>
                         <CardContent>
                             <UserTable
-                                users={users}
+                                users={filteredUsers}
                                 pagination={pagination}
                                 onView={handleViewUser}
                                 onEdit={handleEditUser}

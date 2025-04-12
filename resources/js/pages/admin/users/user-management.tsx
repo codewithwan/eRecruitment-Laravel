@@ -88,7 +88,7 @@ export default function UserManagement(props: UserManagementProps) {
     const [isFilterActive, setIsFilterActive] = useState(false);
 
     // Get unique roles for filters
-    const uniqueRoles = ['all', ...Array.from(new Set(users.map(user => user.role)))];
+    const uniqueRoles = ['all', ...Array.from(new Set(users.map((user) => user.role)))];
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -103,28 +103,26 @@ export default function UserManagement(props: UserManagementProps) {
     // Apply filters whenever filter states change
     useEffect(() => {
         let result = users;
-        
+
         // Apply search filter
         if (searchQuery) {
-            result = result.filter(user => 
-                user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                user.role.toLowerCase().includes(searchQuery.toLowerCase())
+            result = result.filter(
+                (user) =>
+                    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.role.toLowerCase().includes(searchQuery.toLowerCase()),
             );
         }
-        
+
         // Apply role filter
         if (roleFilter && roleFilter !== 'all') {
-            result = result.filter(user => user.role === roleFilter);
+            result = result.filter((user) => user.role === roleFilter);
         }
-        
+
         setFilteredUsers(result);
-        
+
         // Set filter active state
-        setIsFilterActive(
-            searchQuery !== '' || 
-            roleFilter !== 'all'
-        );
+        setIsFilterActive(searchQuery !== '' || roleFilter !== 'all');
     }, [searchQuery, roleFilter, users]);
 
     const fetchUsers = async (page = 1, perPage = pagination.per_page) => {
@@ -289,19 +287,12 @@ export default function UserManagement(props: UserManagementProps) {
                                 <CardDescription>Manage all users in the system</CardDescription>
                             </div>
                             <div className="flex items-center gap-4">
-                                <div className="relative">
-                                </div>
+                                <div className="relative"></div>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button 
-                                            variant={isFilterActive ? "default" : "outline"} 
-                                            size="icon" 
-                                            className="relative"
-                                        >
+                                        <Button variant={isFilterActive ? 'default' : 'outline'} size="icon" className="relative">
                                             <Filter className="h-4 w-4" />
-                                            {isFilterActive && (
-                                                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary"></span>
-                                            )}
+                                            {isFilterActive && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-80">
@@ -323,12 +314,7 @@ export default function UserManagement(props: UserManagementProps) {
                                                 </Select>
                                             </div>
                                             <div className="flex justify-end">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm"
-                                                    onClick={resetFilters}
-                                                    className="text-xs"
-                                                >
+                                                <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
                                                     Reset Filters
                                                 </Button>
                                             </div>

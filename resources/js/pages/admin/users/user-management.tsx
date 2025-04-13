@@ -1,3 +1,4 @@
+import { SearchBar } from '@/components/searchbar';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,7 +21,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { Filter } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface PaginationData {
@@ -259,13 +260,20 @@ export default function UserManagement(props: UserManagementProps) {
                         </Button>
                     </div>
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
+                        <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
                                 <CardTitle>Users List</CardTitle>
                                 <CardDescription>Manage all users in the system</CardDescription>
                             </div>
+
                             <div className="flex items-center gap-4">
-                                <div className="relative"></div>
+                                <SearchBar
+                                    icon={<Search className="h-4 w-4" />}
+                                    placeholder="Cari user..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button variant={isFilterActive ? 'default' : 'outline'} size="icon" className="relative">

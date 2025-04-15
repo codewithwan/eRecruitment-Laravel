@@ -22,7 +22,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { Filter, Search } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 interface PaginationData {
     total: number;
@@ -80,32 +80,10 @@ export default function UserManagement(props: UserManagementProps) {
     // Filter states
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
-    const [verificationFilter, setVerificationFilter] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
 
     // Get unique roles for filters
     const uniqueRoles = ['all', ...Array.from(new Set(users.map((user) => user.role)))];
-
-    const fetchUsers = useCallback(async (page = 1, perPage = pagination.per_page) => {
-        setIsLoading(true);
-        try {
-            updateUrlParams(page, perPage);
-
-            const response = await axios.get('/dashboard/users/list', {
-                params: {
-                    page,
-                    per_page: perPage,
-                },
-            });
-            setUsers(response.data.users);
-            setFilteredUsers(response.data.users);
-            setPagination(response.data.pagination);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [pagination.per_page]);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -115,7 +93,7 @@ export default function UserManagement(props: UserManagementProps) {
         if (page !== pagination.current_page || perPage !== pagination.per_page) {
             fetchUsers(page, perPage);
         }
-    }, [fetchUsers, pagination.current_page, pagination.per_page]);
+    }, []);
 
     // Apply filters whenever filter states change
     useEffect(() => {
@@ -136,22 +114,33 @@ export default function UserManagement(props: UserManagementProps) {
             result = result.filter((user) => user.role === roleFilter);
         }
 
-        // Apply verification filter
-        if (verificationFilter !== 'all') {
-            result = result.filter((user) => {
-                if (verificationFilter === 'verified') {
-                    return user.email_verified_at !== null;
-                } else {
-                    return user.email_verified_at === null;
-                }
-            });
-        }
-
         setFilteredUsers(result);
 
         // Set filter active state
-        setIsFilterActive(searchQuery !== '' || roleFilter !== 'all' || verificationFilter !== 'all');
-    }, [searchQuery, roleFilter, verificationFilter, users]);
+        setIsFilterActive(searchQuery !== '' || roleFilter !== 'all');
+    }, [searchQuery, roleFilter, users]);
+
+    const fetchUsers = async (page = 1, perPage = pagination.per_page) => {
+        setIsLoading(true);
+        try {
+            // Update URL without full page refresh
+            updateUrlParams(page, perPage);
+
+            const response = await axios.get('/dashboard/users/list', {
+                params: {
+                    page,
+                    per_page: perPage,
+                },
+            });
+            setUsers(response.data.users);
+            setFilteredUsers(response.data.users);
+            setPagination(response.data.pagination);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     // Function to update URL parameters without page refresh
     const updateUrlParams = (page: number, perPage: number) => {
@@ -257,7 +246,6 @@ export default function UserManagement(props: UserManagementProps) {
     const resetFilters = () => {
         setSearchQuery('');
         setRoleFilter('all');
-        setVerificationFilter('all');
     };
 
     return (
@@ -267,12 +255,8 @@ export default function UserManagement(props: UserManagementProps) {
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">User Management</h2>
-                        <Button 
-                            className="bg-blue-500 hover:bg-blue-600 text-white rounded-md px-6 py-2 flex items-center gap-2"
-                            onClick={handleAddUser}
-                        >
-                            <span className="text-xl font-medium">+</span>
-                            <span>Add User</span>
+                        <Button className="mx-10 px-10" onClick={handleAddUser}>
+                            Add User
                         </Button>
                     </div>
                     <Card>
@@ -297,44 +281,26 @@ export default function UserManagement(props: UserManagementProps) {
                                             {isFilterActive && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-80 font-inter">
+                                    <PopoverContent className="w-80">
                                         <div className="space-y-4">
-                                            <h4 className="font-medium font-inter text-gray-900">Filters</h4>
+                                            <h4 className="font-medium">Filters</h4>
                                             <div className="space-y-2">
-                                                <Label htmlFor="role-filter" className="text-sm font-inter text-gray-700">Role</Label>
+                                                <Label htmlFor="role-filter">Role</Label>
                                                 <Select value={roleFilter} onValueChange={setRoleFilter}>
-                                                    <SelectTrigger id="role-filter" className="font-inter">
-                                                        <SelectValue placeholder="Filter by role" className="font-inter" />
+                                                    <SelectTrigger id="role-filter">
+                                                        <SelectValue placeholder="Filter by role" />
                                                     </SelectTrigger>
-                                                    <SelectContent className="font-inter">
-                                                        <SelectItem value="all" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">All Roles</SelectItem>
-                                                        <SelectItem value="candidate" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Candidate</SelectItem>
-                                                        <SelectItem value="hr" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">HR</SelectItem>
-                                                        <SelectItem value="head_dev" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Head Dev</SelectItem>
-                                                        <SelectItem value="super_admin" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Super Admin</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="verification-filter" className="text-sm font-inter text-gray-700">Verification Status</Label>
-                                                <Select value={verificationFilter} onValueChange={setVerificationFilter}>
-                                                    <SelectTrigger id="verification-filter" className="font-inter">
-                                                        <SelectValue placeholder="Filter by verification" className="font-inter" />
-                                                    </SelectTrigger>
-                                                    <SelectContent className="font-inter">
-                                                        <SelectItem value="all" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">All Users</SelectItem>
-                                                        <SelectItem value="verified" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Verified</SelectItem>
-                                                        <SelectItem value="unverified" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Unverified</SelectItem>
+                                                    <SelectContent>
+                                                        {uniqueRoles.map((role) => (
+                                                            <SelectItem key={role} value={role}>
+                                                                {role === 'all' ? 'All Roles' : role}
+                                                            </SelectItem>
+                                                        ))}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="flex justify-end">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    onClick={resetFilters} 
-                                                    className="text-xs font-inter"
-                                                >
+                                                <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
                                                     Reset Filters
                                                 </Button>
                                             </div>
@@ -361,113 +327,48 @@ export default function UserManagement(props: UserManagementProps) {
 
             {/* Create User Dialog */}
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogContent className="p-0 overflow-hidden border-2 rounded-lg shadow-lg max-w-sm bg-white">
-                    {/* Header with Close Button */}
-                    <div className="flex items-center justify-between p-4 border-b">
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Create User</DialogTitle>
+                        <DialogDescription>Fill in the details to create a new user.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
                         <div>
-                            <h2 className="text-lg font-medium text-gray-900">Create User</h2>
-                            <p className="text-sm text-gray-500">Fill in the details to create a new user</p>
+                            <Label htmlFor="name">Name</Label>
+                            <Input id="name" name="name" value={newUser.name} onChange={handleCreateUserChange} />
+                        </div>
+                        <div>
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" name="email" value={newUser.email} onChange={handleCreateUserChange} />
+                        </div>
+                        <div>
+                            <Label htmlFor="password">Password</Label>
+                            <Input id="password" name="password" value={newUser.password} onChange={handleCreateUserChange} />
+                        </div>
+                        <div>
+                            <Label htmlFor="role">Role</Label>
+                            <Select value={newUser.role} onValueChange={(value) => setNewUser((prevState) => ({ ...prevState, role: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {roles.map((role) => (
+                                        <SelectItem key={role.value} value={role.value}>
+                                            {role.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
-
-                    {/* Form Content */}
-                    <div className="px-4 pt-3 pb-5">
-                        <div className="space-y-4">
-                            {/* Name Field */}
-                            <div className="relative">
-                                <label htmlFor="name" className="absolute left-3 top-2 text-sm text-blue-500">Name</label>
-                                <input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    value={newUser.name}
-                                    onChange={handleCreateUserChange}
-                                    placeholder="Enter username"
-                                    className="w-full px-3 pt-6 pb-2 border border-gray-300 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* Email Field */}
-                            <div className="relative">
-                                <label htmlFor="email" className="absolute left-3 top-2 text-sm text-blue-500">Email</label>
-                                <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    value={newUser.email}
-                                    onChange={handleCreateUserChange}
-                                    placeholder="Enter user email"
-                                    className="w-full px-3 pt-6 pb-2 border border-gray-300 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* Password Field */}
-                            <div className="relative">
-                                <label htmlFor="password" className="absolute left-3 top-2 text-sm text-blue-500">Password</label>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    value={newUser.password}
-                                    onChange={handleCreateUserChange}
-                                    placeholder="Enter user password"
-                                    className="w-full px-3 pt-6 pb-2 border border-gray-300 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* Role Field */}
-                            <div className="relative">
-                                <label htmlFor="role" className="absolute left-3 top-2 text-sm text-blue-500 z-10">Role</label>
-                                <div className="relative">
-                                    <Select 
-                                        value={newUser.role} 
-                                        onValueChange={(value) => setNewUser((prevState) => ({ ...prevState, role: value }))}
-                                    >
-                                        <SelectTrigger 
-                                            id="role" 
-                                            className="w-full h-[60px] px-3 pt-6 pb-2 border border-gray-300 rounded-md text-gray-600 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                textAlign: "left"
-                                            }}
-                                        >
-                                            <SelectValue placeholder="Select a role" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white border border-gray-300 w-full shadow-md">
-                                            {roles.map((role) => (
-                                                <SelectItem 
-                                                    key={role.value} 
-                                                    value={role.value}
-                                                    className="py-2 px-3 text-sm text-gray-700 focus:bg-blue-100 focus:text-blue-700 hover:bg-blue-100 hover:text-blue-700 cursor-pointer"
-                                                >
-                                                    {role.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Footer/Buttons */}
-                        <div className="flex justify-end mt-6 space-x-2">
-                            <button
-                                onClick={() => setIsCreateDialogOpen(false)}
-                                className="px-4 py-1.5 text-sm font-medium text-blue-500 bg-white border border-blue-500 rounded-md hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleCreateUser}
-                                disabled={isLoading}
-                                className="px-4 py-1.5 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600"
-                            >
-                                {isLoading ? 'Creating...' : 'Create'}
-                            </button>
-                        </div>
-                    </div>
+                    <DialogFooter className="sm:justify-end">
+                        <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleCreateUser} disabled={isLoading}>
+                            {isLoading ? 'Creating...' : 'Create'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

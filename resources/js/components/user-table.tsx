@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, EyeIcon, Pencil, Trash2 } from 'lucide-react';
 
 // User interface definition
 export interface User {
@@ -63,118 +63,100 @@ export function UserTable({
     };
 
     return (
-        <div className="w-full">
-            {/* Responsive table container with horizontal scroll */}
-            <div className="overflow-x-auto rounded-md border border-gray-200">
-                <Table className="min-w-full bg-blue-50 [&_tr:hover]:bg-transparent">
-                    <TableHeader className="bg-blue-50 [&_tr:hover]:bg-transparent">
-                        <TableRow className="hover:bg-transparent [&>th]:hover:bg-transparent">
-                            <TableHead className="w-[60px] py-3">ID</TableHead>
-                            <TableHead className="w-[180px] py-3">Name</TableHead>
-                            <TableHead className="w-[200px] py-3">Email</TableHead>
-                            <TableHead className="w-[100px] py-3">Role</TableHead>
-                            <TableHead className="w-[100px] py-3">Verified</TableHead>
-                            <TableHead className="w-[140px] py-3">Registration Date</TableHead>
-                            <TableHead className="w-[140px] py-3 text-center">Action</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-                            // Skeleton loading rows
-                            Array(pagination.per_page)
-                                .fill(0)
-                                .map((_, idx) => (
-                                    <TableRow key={`skeleton-${idx}`}>
-                                        <TableCell className="w-[60px]">
-                                            <Skeleton className="h-4 w-8" />
-                                        </TableCell>
-                                        <TableCell className="w-[180px]">
-                                            <Skeleton className="h-4 w-full" />
-                                        </TableCell>
-                                        <TableCell className="w-[200px]">
-                                            <Skeleton className="h-4 w-full" />
-                                        </TableCell>
-                                        <TableCell className="w-[100px]">
-                                            <Skeleton className="h-6 w-16 rounded-full" />
-                                        </TableCell>
-                                        <TableCell className="w-[100px]">
-                                            <Skeleton className="h-6 w-16 rounded-full" />
-                                        </TableCell>
-                                        <TableCell className="w-[140px]">
-                                            <Skeleton className="h-4 w-24" />
-                                        </TableCell>
-                                        <TableCell className="w-[140px] text-center">
-                                            <div className="flex justify-center space-x-2">
-                                                <Skeleton className="h-8 w-8 rounded-full" />
-                                                <Skeleton className="h-8 w-8 rounded-full" />
-                                                <Skeleton className="h-8 w-8 rounded-full" />
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                        ) : users.length > 0 ? (
-                            users.map((user, index) => (
-                                <TableRow 
-                                    key={user.id} 
-                                    className={index % 2 === 0 ? "bg-white" : "bg-blue-50"}
-                                    style={{ pointerEvents: "none" }}
-                                >
-                                    <TableCell className="whitespace-nowrap">{String(user.id).padStart(2, '0')}</TableCell>
-                                    <TableCell className="whitespace-nowrap font-medium">{user.name}</TableCell>
-                                    <TableCell className="whitespace-nowrap break-all md:break-normal">{user.email}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{user.role}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{user.email_verified_at ? "Verified" : "Non Verified"}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : '-'}</TableCell>
-                                    <TableCell>
-                                        <div className="flex justify-center space-x-3">
-                                            <button 
-                                                onClick={() => onView(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
-                                            >
-                                                <Eye className="h-4.5 w-4.5" />
-                                            </button>
-                                            <button 
-                                                onClick={() => onEdit(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
-                                            >
-                                                <Pencil className="h-4.5 w-4.5" />
-                                            </button>
-                                            <button 
-                                                onClick={() => onDelete(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
-                                            >
-                                                <Trash2 className="h-4.5 w-4.5" />
-                                            </button>
+        <>
+            <Table className="table-fixed">
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-[8%]">ID</TableHead>
+                        <TableHead className="w-[20%]">Name</TableHead>
+                        <TableHead className="w-[22%]">Email</TableHead>
+                        <TableHead className="w-[10%]">Role</TableHead>
+                        <TableHead className="w-[10%]">Verified</TableHead>
+                        <TableHead className="w-[15%]">Registration Date</TableHead>
+                        <TableHead className="w-[15%] pr-10 text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {isLoading ? (
+                        // Skeleton loading rows
+                        Array(pagination.per_page)
+                            .fill(0)
+                            .map((_, idx) => (
+                                <TableRow key={`skeleton-${idx}`}>
+                                    <TableCell className="w-[8%]">
+                                        <Skeleton className="h-4 w-8" />
+                                    </TableCell>
+                                    <TableCell className="w-[20%]">
+                                        <Skeleton className="h-4 w-full" />
+                                    </TableCell>
+                                    <TableCell className="w-[22%]">
+                                        <Skeleton className="h-4 w-full" />
+                                    </TableCell>
+                                    <TableCell className="w-[10%]">
+                                        <Skeleton className="h-6 w-16 rounded-full" />
+                                    </TableCell>
+                                    <TableCell className="w-[10%]">
+                                        <Skeleton className="h-6 w-16 rounded-full" />
+                                    </TableCell>
+                                    <TableCell className="w-[15%]">
+                                        <Skeleton className="h-4 w-24" />
+                                    </TableCell>
+                                    <TableCell className="w-[15%] space-x-2 text-right">
+                                        <div className="flex justify-end space-x-2">
+                                            <Skeleton className="h-8 w-8 rounded-full" />
+                                            <Skeleton className="h-8 w-8 rounded-full" />
+                                            <Skeleton className="h-8 w-8 rounded-full" />
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={7} className="py-4 text-center">
-                                    No users found.
+                    ) : users.length > 0 ? (
+                        users.map((user) => (
+                            <TableRow key={user.id}>
+                                <TableCell className="w-[8%]">{user.id}</TableCell>
+                                <TableCell className="w-[20%] font-medium">{user.name}</TableCell>
+                                <TableCell className="w-[22%]">{user.email}</TableCell>
+                                <TableCell className="w-[10%]">
+                                    <Badge variant={user.role === 'admin' ? 'destructive' : 'default'}>{user.role}</Badge>
+                                </TableCell>
+                                <TableCell className="w-[10%]">
+                                    {user.email_verified_at ? <Badge variant="default">Verified</Badge> : <Badge variant="secondary">Pending</Badge>}
+                                </TableCell>
+                                <TableCell className="w-[15%]">{user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : '-'}</TableCell>
+                                <TableCell className="w-[15%] space-x-2 text-right">
+                                    <Button variant="ghost" size="icon" onClick={() => onView(user.id)}>
+                                        <EyeIcon className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => onEdit(user.id)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => onDelete(user.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </TableCell>
                             </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={7} className="py-4 text-center">
+                                No users found.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
 
-            {/* Responsive pagination controls */}
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Pagination Controls */}
+            <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-500">Show</span>
                     <Select value={pagination.per_page.toString()} onValueChange={handleItemsPerPageChange} disabled={isLoading}>
-                        <SelectTrigger className="h-8 w-16 border border-blue-300 rounded text-blue-300">
+                        <SelectTrigger className="w-20">
                             <SelectValue placeholder={pagination.per_page.toString()} />
                         </SelectTrigger>
-                        <SelectContent className="border border-blue-500">
+                        <SelectContent>
                             {itemsPerPageOptions.map((option) => (
-                                <SelectItem 
-                                    key={option} 
-                                    value={option.toString()}
-                                    className="text-blue-300 hover:bg-blue-50 focus:bg-blue-50 focus:text-blue-500"
-                                >
+                                <SelectItem key={option} value={option.toString()}>
                                     {option}
                                 </SelectItem>
                             ))}
@@ -184,53 +166,83 @@ export function UserTable({
                 </div>
 
                 <div className="flex items-center gap-1">
-                    <button 
-                        onClick={handlePrevPage} 
-                        disabled={pagination.current_page === 1 || isLoading}
-                        className="rounded-md px-2 py-1 flex items-center justify-center text-blue-500 hover:bg-blue-100 disabled:opacity-50 border border-blue-500"
-                    >
+                    <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={pagination.current_page === 1 || isLoading}>
                         <ChevronLeft className="h-4 w-4" />
-                    </button>
+                    </Button>
 
-                    {/* Responsive page numbers - hide some on small screens */}
-                    {Array.from({ length: Math.min(5, pagination.last_page) }).map((_, idx) => {
-                        const pageNumber = idx + 1;
-                        const isActive = pageNumber === pagination.current_page;
-                        // Only show first, last, and current page on small screens
-                        const isVisible = pageNumber === 1 || 
-                                        pageNumber === pagination.last_page || 
-                                        isActive ||
-                                        Math.abs(pageNumber - pagination.current_page) <= 1;
-                        
-                        return (
-                            <button
-                                key={idx}
-                                onClick={() => onPageChange(pageNumber)}
-                                disabled={isLoading}
-                                className={`h-8 min-w-[32px] px-2 flex items-center justify-center rounded-md ${
-                                    isActive 
-                                        ? 'bg-blue-500 text-white' 
-                                        : 'bg-white border border-blue-500 text-blue-500 hover:bg-blue-100'
-                                } ${!isVisible ? 'hidden sm:flex' : ''}`}
-                            >
-                                {pageNumber}
-                            </button>
-                        );
-                    })}
+                    {/* Enhanced Page numbers */}
+                    <div className="flex items-center">
+                        {pagination.last_page > 7 && pagination.current_page > 3 && (
+                            <>
+                                <Button variant="outline" size="sm" className="mx-0.5 h-8 w-8" onClick={() => onPageChange(1)} disabled={isLoading}>
+                                    1
+                                </Button>
+                                {pagination.current_page > 4 && <span className="mx-1">...</span>}
+                            </>
+                        )}
 
-                    <button 
-                        onClick={handleNextPage} 
+                        {/* Page number buttons */}
+                        {[...Array(pagination.last_page)].map((_, idx) => {
+                            const pageNumber = idx + 1;
+
+                            // Only show pages nearby current page for many pages
+                            if (
+                                pagination.last_page <= 7 ||
+                                (pageNumber >= pagination.current_page - 2 && pageNumber <= pagination.current_page + 2)
+                            ) {
+                                return (
+                                    <Button
+                                        key={pageNumber}
+                                        variant={pageNumber === pagination.current_page ? 'default' : 'outline'}
+                                        size="sm"
+                                        className="mx-0.5 h-8 w-8"
+                                        onClick={() => onPageChange(pageNumber)}
+                                        disabled={isLoading}
+                                    >
+                                        {pageNumber}
+                                    </Button>
+                                );
+                            }
+                            return null;
+                        })}
+
+                        {pagination.last_page > 7 && pagination.current_page < pagination.last_page - 2 && (
+                            <>
+                                {pagination.current_page < pagination.last_page - 3 && <span className="mx-1">...</span>}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mx-0.5 h-8 w-8"
+                                    onClick={() => onPageChange(pagination.last_page)}
+                                    disabled={isLoading}
+                                >
+                                    {pagination.last_page}
+                                </Button>
+                            </>
+                        )}
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNextPage}
                         disabled={pagination.current_page === pagination.last_page || isLoading}
-                        className="rounded-md px-2 py-1 flex items-center justify-center text-blue-500 hover:bg-blue-100 disabled:opacity-50 border border-blue-500"
                     >
                         <ChevronRight className="h-4 w-4" />
-                    </button>
+                    </Button>
                 </div>
 
-                <div className="text-sm text-gray-500 text-center sm:text-right">
-                    Showing {(pagination.current_page - 1) * pagination.per_page + 1} to {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of {pagination.total} entries
+                <div className="text-sm text-gray-500">
+                    {pagination.total > 0 ? (
+                        <>
+                            Showing {(pagination.current_page - 1) * pagination.per_page + 1} to{' '}
+                            {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of {pagination.total} entries
+                        </>
+                    ) : (
+                        'No entries'
+                    )}
                 </div>
             </div>
-        </div>
+        </>
     );
 }

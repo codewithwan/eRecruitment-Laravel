@@ -1,9 +1,8 @@
 import { NavFooter } from '@/components/nav-footer';
-import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { File, Github, LayoutGrid, LucideFileQuestion, SearchIcon, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -25,14 +24,9 @@ const candidateNavItems: NavItem[] = [
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Users',
+        title: 'User Management',
         href: '/dashboard/users',
         icon: User,
-    },
-    {
-        title: 'Candidates',
-        href: '/dashboard/candidates',
-        icon: File,
     },
     {
         title: 'Jobs Hiring',
@@ -52,12 +46,58 @@ const footerNavItems: NavItem[] = [
         href: 'https://github.com/codewithwan/eRecruitment-Laravel',
         icon: Github,
     },
-    // {
-    //     title: 'Documentation',
-    //     href: 'https://laravel.com/docs/starter-kits',
-    //     icon: BookOpen,
-    // },
 ];
+
+// Custom Nav function that highlights active items
+function NavMain(title: string, { items }: { items: NavItem[] }) {
+    const { url } = usePage();
+    
+    return (
+        <SidebarMenu>
+            <div className="px-4 py-2">
+                <h2 className="px-2 text-xs font-semibold tracking-tight text-muted-foreground">
+                    {title}
+                </h2>
+            </div>
+            {items.map((item) => {
+                // Check if current URL matches exactly this nav item
+                // For Dashboard, handle the root URL case specifically
+                let isActive = false;
+                if (item.href === "/dashboard") {
+                    // Dashboard is active only if URL is exactly /dashboard or /
+                    isActive = url === "/dashboard" || url === "/";
+                } else {
+                    // For other items, match the exact path
+                    isActive = url === item.href;
+                }
+                
+                return (
+                    <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton 
+                            asChild
+                            className={
+                                isActive 
+                                ? "bg-blue-100 text-blue-600 hover:bg-blue-100 hover:text-blue-600" 
+                                : "hover:bg-blue-50 hover:text-blue-500"
+                            }
+                            onClick={(e) => {
+                                // Prevent navigation if clicking on already active item
+                                if (isActive) {
+                                    e.preventDefault();
+                                }
+                            }}
+                        >
+                            <Link href={item.href} prefetch>
+                                {item.icon && <item.icon className="w-4 h-4 mr-2" />}
+                                <span>{item.title}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                );
+            })}
+        </SidebarMenu>
+    );
+}
 
 export function AppSidebar() {
     return (

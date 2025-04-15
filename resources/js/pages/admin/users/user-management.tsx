@@ -22,7 +22,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { Filter, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface PaginationData {
     total: number;
@@ -86,6 +86,27 @@ export default function UserManagement(props: UserManagementProps) {
     // Get unique roles for filters
     const uniqueRoles = ['all', ...Array.from(new Set(users.map((user) => user.role)))];
 
+    const fetchUsers = useCallback(async (page = 1, perPage = pagination.per_page) => {
+        setIsLoading(true);
+        try {
+            updateUrlParams(page, perPage);
+
+            const response = await axios.get('/dashboard/users/list', {
+                params: {
+                    page,
+                    per_page: perPage,
+                },
+            });
+            setUsers(response.data.users);
+            setFilteredUsers(response.data.users);
+            setPagination(response.data.pagination);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [pagination.per_page]);
+
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
@@ -94,7 +115,7 @@ export default function UserManagement(props: UserManagementProps) {
         if (page !== pagination.current_page || perPage !== pagination.per_page) {
             fetchUsers(page, perPage);
         }
-    }, []);
+    }, [fetchUsers, pagination.current_page, pagination.per_page]);
 
     // Apply filters whenever filter states change
     useEffect(() => {
@@ -131,28 +152,6 @@ export default function UserManagement(props: UserManagementProps) {
         // Set filter active state
         setIsFilterActive(searchQuery !== '' || roleFilter !== 'all' || verificationFilter !== 'all');
     }, [searchQuery, roleFilter, verificationFilter, users]);
-
-    const fetchUsers = async (page = 1, perPage = pagination.per_page) => {
-        setIsLoading(true);
-        try {
-            // Update URL without full page refresh
-            updateUrlParams(page, perPage);
-
-            const response = await axios.get('/dashboard/users/list', {
-                params: {
-                    page,
-                    per_page: perPage,
-                },
-            });
-            setUsers(response.data.users);
-            setFilteredUsers(response.data.users);
-            setPagination(response.data.pagination);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     // Function to update URL parameters without page refresh
     const updateUrlParams = (page: number, perPage: number) => {

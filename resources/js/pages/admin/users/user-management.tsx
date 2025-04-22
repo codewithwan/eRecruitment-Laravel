@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -82,9 +81,6 @@ export default function UserManagement(props: UserManagementProps) {
     const [roleFilter, setRoleFilter] = useState('all');
     const [verificationFilter, setVerificationFilter] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
-
-    // Get unique roles for filters
-    const uniqueRoles = ['all', ...Array.from(new Set(users.map((user) => user.role)))];
 
     const fetchUsers = useCallback(async (page = 1, perPage = pagination.per_page) => {
         setIsLoading(true);
@@ -185,8 +181,8 @@ export default function UserManagement(props: UserManagementProps) {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-            });
-            setIsEditDialogOpen(true);
+            }); // Set user data to state
+            setIsEditDialogOpen(true); // Open the dialog
         }
     };
 
@@ -200,9 +196,9 @@ export default function UserManagement(props: UserManagementProps) {
 
         setIsLoading(true);
         try {
-            fetchUsers(pagination.current_page, pagination.per_page);
-
-            setIsEditDialogOpen(false);
+            await axios.put(`/dashboard/users/${editUser.id}`, editUser); // Update user data
+            fetchUsers(pagination.current_page, pagination.per_page); // Refresh user list
+            setIsEditDialogOpen(false); // Close the dialog
         } catch (error) {
             console.error('Error updating user:', error);
         } finally {
@@ -211,22 +207,21 @@ export default function UserManagement(props: UserManagementProps) {
     };
 
     const handleDeleteUser = (userId: number) => {
-        setUserIdToDelete(userId);
-        setIsDeleteDialogOpen(true);
+        setUserIdToDelete(userId); // Set user ID to state
+        setIsDeleteDialogOpen(true); // Open the confirmation dialog
     };
 
     const confirmDeleteUser = async () => {
         if (userIdToDelete === null) return;
 
         try {
-            await axios.delete(`/dashboard/users/${userIdToDelete}`);
-            // After successful deletion, refresh the current page
-            fetchUsers(pagination.current_page, pagination.per_page);
+            await axios.delete(`/dashboard/users/${userIdToDelete}`); // Delete user
+            fetchUsers(pagination.current_page, pagination.per_page); // Refresh user list
         } catch (error) {
             console.error('Error deleting user:', error);
         } finally {
-            setIsDeleteDialogOpen(false);
-            setUserIdToDelete(null);
+            setIsDeleteDialogOpen(false); // Close the dialog
+            setUserIdToDelete(null); // Reset state
         }
     };
 
@@ -333,7 +328,7 @@ export default function UserManagement(props: UserManagementProps) {
                                                     variant="outline" 
                                                     size="sm" 
                                                     onClick={resetFilters} 
-                                                    className="text-xs font-inter"
+                                                    className="text-blue-500 border border-blue-500 hover:bg-blue-50 rounded-md text-xs font-inter"
                                                 >
                                                     Reset Filters
                                                 </Button>
@@ -383,7 +378,7 @@ export default function UserManagement(props: UserManagementProps) {
                                     value={newUser.name}
                                     onChange={handleCreateUserChange}
                                     placeholder="Enter username"
-                                    className="w-full px-3 pt-6 pb-2 border border-gray-300 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                             </div>
 
@@ -397,7 +392,7 @@ export default function UserManagement(props: UserManagementProps) {
                                     value={newUser.email}
                                     onChange={handleCreateUserChange}
                                     placeholder="Enter user email"
-                                    className="w-full px-3 pt-6 pb-2 border border-gray-300 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                             </div>
 
@@ -411,7 +406,7 @@ export default function UserManagement(props: UserManagementProps) {
                                     value={newUser.password}
                                     onChange={handleCreateUserChange}
                                     placeholder="Enter user password"
-                                    className="w-full px-3 pt-6 pb-2 border border-gray-300 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                             </div>
 
@@ -425,7 +420,7 @@ export default function UserManagement(props: UserManagementProps) {
                                     >
                                         <SelectTrigger 
                                             id="role" 
-                                            className="w-full h-[60px] px-3 pt-6 pb-2 border border-gray-300 rounded-md text-gray-600 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            className="w-full h-[60px] px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                                             style={{
                                                 display: "flex",
                                                 alignItems: "center",
@@ -473,44 +468,99 @@ export default function UserManagement(props: UserManagementProps) {
 
             {/* Edit User Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit User</DialogTitle>
-                        <DialogDescription>Update user information.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
+                <DialogContent className="p-0 overflow-hidden border-2 rounded-lg shadow-lg max-w-sm bg-white">
+                    {/* Header with Close Button */}
+                    <div className="flex items-center justify-between p-4 border-b">
                         <div>
-                            <Label htmlFor="edit-name">Name</Label>
-                            <Input id="edit-name" name="name" value={editUser.name} onChange={handleEditUserChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="edit-email">Email</Label>
-                            <Input id="edit-email" name="email" value={editUser.email} onChange={handleEditUserChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="edit-role">Role</Label>
-                            <Select value={editUser.role} onValueChange={(value) => setEditUser((prevState) => ({ ...prevState, role: value }))}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {roles.map((role) => (
-                                        <SelectItem key={role.value} value={role.value}>
-                                            {role.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <h2 className="text-lg font-medium text-gray-900">Edit User</h2>
+                            <p className="text-sm text-gray-500">Update the details of the user</p>
                         </div>
                     </div>
-                    <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleUpdateUser} disabled={isLoading}>
-                            {isLoading ? 'Updating...' : 'Update'}
-                        </Button>
-                    </DialogFooter>
+
+                    {/* Form Content */}
+                    <div className="px-4 pt-3 pb-5">
+                        <div className="space-y-4">
+                            {/* Name Field */}
+                            <div className="relative">
+                                <label htmlFor="edit-name" className="absolute left-3 top-2 text-sm text-blue-500">Name</label>
+                                <input
+                                    id="edit-name"
+                                    name="name"
+                                    type="text"
+                                    value={editUser.name}
+                                    onChange={handleEditUserChange}
+                                    placeholder="Enter username"
+                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* Email Field */}
+                            <div className="relative">
+                                <label htmlFor="edit-email" className="absolute left-3 top-2 text-sm text-blue-500">Email</label>
+                                <input
+                                    id="edit-email"
+                                    name="email"
+                                    type="email"
+                                    value={editUser.email}
+                                    onChange={handleEditUserChange}
+                                    placeholder="Enter user email"
+                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* Role Field */}
+                            <div className="relative">
+                                <label htmlFor="edit-role" className="absolute left-3 top-2 text-sm text-blue-500 z-10">Role</label>
+                                <div className="relative">
+                                    <Select 
+                                        value={editUser.role} 
+                                        onValueChange={(value) => setEditUser((prevState) => ({ ...prevState, role: value }))}
+                                    >
+                                        <SelectTrigger 
+                                            id="edit-role" 
+                                            className="w-full h-[60px] px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                textAlign: "left"
+                                            }}
+                                        >
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white border border-gray-300 w-full shadow-md">
+                                            {roles.map((role) => (
+                                                <SelectItem 
+                                                    key={role.value} 
+                                                    value={role.value}
+                                                    className="py-2 px-3 text-sm text-gray-700 focus:bg-blue-100 focus:text-blue-700 hover:bg-blue-100 hover:text-blue-700 cursor-pointer"
+                                                >
+                                                    {role.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer/Buttons */}
+                        <div className="flex justify-end mt-6 space-x-2">
+                            <button
+                                onClick={() => setIsEditDialogOpen(false)}
+                                className="px-4 py-1.5 text-sm font-medium text-blue-500 bg-white border border-blue-500 rounded-md hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUpdateUser}
+                                disabled={isLoading}
+                                className="px-4 py-1.5 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                            >
+                                {isLoading ? 'Updating...' : 'Update'}
+                            </button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 
@@ -558,8 +608,18 @@ export default function UserManagement(props: UserManagementProps) {
                         <AlertDialogDescription>Are you sure you want to delete this user? This action cannot be undone.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDeleteUser}>Delete</AlertDialogAction>
+                        <AlertDialogCancel 
+                            onClick={() => setIsDeleteDialogOpen(false)} 
+                            className="text-blue-500 border border-blue-500 hover:bg-blue-50 rounded-md px-4 py-2"
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={confirmDeleteUser} 
+                            className="bg-blue-500 text-white hover:bg-blue-600 rounded-md px-4 py-2"
+                        >
+                            Delete
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

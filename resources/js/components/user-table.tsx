@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -117,7 +116,6 @@ export function UserTable({
                                 <TableRow 
                                     key={user.id} 
                                     className={index % 2 === 0 ? "bg-white" : "bg-blue-50"}
-                                    style={{ pointerEvents: "none" }}
                                 >
                                     <TableCell className="whitespace-nowrap">{String(user.id).padStart(2, '0')}</TableCell>
                                     <TableCell className="whitespace-nowrap font-medium">{user.name}</TableCell>
@@ -127,24 +125,30 @@ export function UserTable({
                                     <TableCell className="whitespace-nowrap">{user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : '-'}</TableCell>
                                     <TableCell>
                                         <div className="flex justify-center space-x-3">
-                                            <button 
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-blue-500 hover:bg-blue-100"
                                                 onClick={() => onView(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
                                             >
                                                 <Eye className="h-4.5 w-4.5" />
-                                            </button>
-                                            <button 
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-blue-500 hover:bg-blue-100"
                                                 onClick={() => onEdit(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
                                             >
                                                 <Pencil className="h-4.5 w-4.5" />
-                                            </button>
-                                            <button 
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-blue-500 hover:bg-blue-100"
                                                 onClick={() => onDelete(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
                                             >
                                                 <Trash2 className="h-4.5 w-4.5" />
-                                            </button>
+                                            </Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>

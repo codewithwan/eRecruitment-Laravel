@@ -112,33 +112,32 @@ export function UserTable({
                                 ))
                         ) : users.length > 0 ? (
                             users.map((user, index) => (
-                                <TableRow 
-                                    key={user.id} 
-                                    className={index % 2 === 0 ? "bg-white" : "bg-blue-50"}
-                                >
+                                <TableRow key={user.id} className={index % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
                                     <TableCell className="whitespace-nowrap">{String(user.id).padStart(2, '0')}</TableCell>
-                                    <TableCell className="whitespace-nowrap font-medium">{user.name}</TableCell>
-                                    <TableCell className="whitespace-nowrap break-all md:break-normal">{user.email}</TableCell>
+                                    <TableCell className="font-medium whitespace-nowrap">{user.name}</TableCell>
+                                    <TableCell className="break-all whitespace-nowrap md:break-normal">{user.email}</TableCell>
                                     <TableCell className="whitespace-nowrap">{user.role}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{user.email_verified_at ? "Verified" : "Non Verified"}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : '-'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{user.email_verified_at ? 'Verified' : 'Non Verified'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : '-'}
+                                    </TableCell>
                                     <TableCell>
                                         <div className="flex justify-center space-x-3">
-                                            <button 
+                                            <button
                                                 onClick={() => onView(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
+                                                className="rounded-full p-1.5 text-blue-500 hover:bg-blue-100 hover:text-blue-700"
                                             >
                                                 <Eye className="h-4.5 w-4.5" />
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => onEdit(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
+                                                className="rounded-full p-1.5 text-blue-500 hover:bg-blue-100 hover:text-blue-700"
                                             >
                                                 <Pencil className="h-4.5 w-4.5" />
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => onDelete(user.id)}
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full"
+                                                className="rounded-full p-1.5 text-blue-500 hover:bg-blue-100 hover:text-blue-700"
                                             >
                                                 <Trash2 className="h-4.5 w-4.5" />
                                             </button>
@@ -158,17 +157,17 @@ export function UserTable({
             </div>
 
             {/* Responsive pagination controls */}
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-500">Show</span>
                     <Select value={pagination.per_page.toString()} onValueChange={handleItemsPerPageChange} disabled={isLoading}>
-                        <SelectTrigger className="h-8 w-16 border border-blue-300 rounded text-blue-300">
+                        <SelectTrigger className="h-8 w-16 rounded border border-blue-300 text-blue-300">
                             <SelectValue placeholder={pagination.per_page.toString()} />
                         </SelectTrigger>
                         <SelectContent className="border border-blue-500">
                             {itemsPerPageOptions.map((option) => (
-                                <SelectItem 
-                                    key={option} 
+                                <SelectItem
+                                    key={option}
                                     value={option.toString()}
                                     className="text-blue-300 hover:bg-blue-50 focus:bg-blue-50 focus:text-blue-500"
                                 >
@@ -181,10 +180,10 @@ export function UserTable({
                 </div>
 
                 <div className="flex items-center gap-1">
-                    <button 
-                        onClick={handlePrevPage} 
+                    <button
+                        onClick={handlePrevPage}
                         disabled={pagination.current_page === 1 || isLoading}
-                        className="rounded-md px-2 py-1 flex items-center justify-center text-blue-500 hover:bg-blue-100 disabled:opacity-50 border border-blue-500"
+                        className="flex items-center justify-center rounded-md border border-blue-500 px-2 py-1 text-blue-500 hover:bg-blue-100 disabled:opacity-50"
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -194,20 +193,19 @@ export function UserTable({
                         const pageNumber = idx + 1;
                         const isActive = pageNumber === pagination.current_page;
                         // Only show first, last, and current page on small screens
-                        const isVisible = pageNumber === 1 || 
-                                        pageNumber === pagination.last_page || 
-                                        isActive ||
-                                        Math.abs(pageNumber - pagination.current_page) <= 1;
-                        
+                        const isVisible =
+                            pageNumber === 1 ||
+                            pageNumber === pagination.last_page ||
+                            isActive ||
+                            Math.abs(pageNumber - pagination.current_page) <= 1;
+
                         return (
                             <button
                                 key={idx}
                                 onClick={() => onPageChange(pageNumber)}
                                 disabled={isLoading}
-                                className={`h-8 min-w-[32px] px-2 flex items-center justify-center rounded-md ${
-                                    isActive 
-                                        ? 'bg-blue-500 text-white' 
-                                        : 'bg-white border border-blue-500 text-blue-500 hover:bg-blue-100'
+                                className={`flex h-8 min-w-[32px] items-center justify-center rounded-md px-2 ${
+                                    isActive ? 'bg-blue-500 text-white' : 'border border-blue-500 bg-white text-blue-500 hover:bg-blue-100'
                                 } ${!isVisible ? 'hidden sm:flex' : ''}`}
                             >
                                 {pageNumber}
@@ -215,17 +213,18 @@ export function UserTable({
                         );
                     })}
 
-                    <button 
-                        onClick={handleNextPage} 
+                    <button
+                        onClick={handleNextPage}
                         disabled={pagination.current_page === pagination.last_page || isLoading}
-                        className="rounded-md px-2 py-1 flex items-center justify-center text-blue-500 hover:bg-blue-100 disabled:opacity-50 border border-blue-500"
+                        className="flex items-center justify-center rounded-md border border-blue-500 px-2 py-1 text-blue-500 hover:bg-blue-100 disabled:opacity-50"
                     >
                         <ChevronRight className="h-4 w-4" />
                     </button>
                 </div>
 
-                <div className="text-sm text-gray-500 text-center sm:text-right">
-                    Showing {(pagination.current_page - 1) * pagination.per_page + 1} to {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of {pagination.total} entries
+                <div className="text-center text-sm text-gray-500 sm:text-right">
+                    Showing {(pagination.current_page - 1) * pagination.per_page + 1} to{' '}
+                    {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of {pagination.total} entries
                 </div>
             </div>
         </div>

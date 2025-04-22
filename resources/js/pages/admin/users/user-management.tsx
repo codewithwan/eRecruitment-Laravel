@@ -21,7 +21,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { Filter, Search } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface PaginationData {
     total: number;
@@ -82,26 +82,29 @@ export default function UserManagement(props: UserManagementProps) {
     const [verificationFilter, setVerificationFilter] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
 
-    const fetchUsers = useCallback(async (page = 1, perPage = pagination.per_page) => {
-        setIsLoading(true);
-        try {
-            updateUrlParams(page, perPage);
+    const fetchUsers = useCallback(
+        async (page = 1, perPage = pagination.per_page) => {
+            setIsLoading(true);
+            try {
+                updateUrlParams(page, perPage);
 
-            const response = await axios.get('/dashboard/users/list', {
-                params: {
-                    page,
-                    per_page: perPage,
-                },
-            });
-            setUsers(response.data.users);
-            setFilteredUsers(response.data.users);
-            setPagination(response.data.pagination);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [pagination.per_page]);
+                const response = await axios.get('/dashboard/users/list', {
+                    params: {
+                        page,
+                        per_page: perPage,
+                    },
+                });
+                setUsers(response.data.users);
+                setFilteredUsers(response.data.users);
+                setPagination(response.data.pagination);
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [pagination.per_page],
+    );
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -262,8 +265,8 @@ export default function UserManagement(props: UserManagementProps) {
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">User Management</h2>
-                        <Button 
-                            className="bg-blue-500 hover:bg-blue-600 text-white rounded-md px-6 py-2 flex items-center gap-2"
+                        <Button
+                            className="flex items-center gap-2 rounded-md bg-blue-500 px-6 py-2 text-white hover:bg-blue-600"
                             onClick={handleAddUser}
                         >
                             <span className="text-xl font-medium">+</span>
@@ -292,44 +295,83 @@ export default function UserManagement(props: UserManagementProps) {
                                             {isFilterActive && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-80 font-inter">
+                                    <PopoverContent className="font-inter w-80">
                                         <div className="space-y-4">
-                                            <h4 className="font-medium font-inter text-gray-900">Filters</h4>
+                                            <h4 className="font-inter font-medium text-gray-900">Filters</h4>
                                             <div className="space-y-2">
-                                                <Label htmlFor="role-filter" className="text-sm font-inter text-gray-700">Role</Label>
+                                                <Label htmlFor="role-filter" className="font-inter text-sm text-gray-700">
+                                                    Role
+                                                </Label>
                                                 <Select value={roleFilter} onValueChange={setRoleFilter}>
                                                     <SelectTrigger id="role-filter" className="font-inter">
                                                         <SelectValue placeholder="Filter by role" className="font-inter" />
                                                     </SelectTrigger>
                                                     <SelectContent className="font-inter">
-                                                        <SelectItem value="all" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">All Roles</SelectItem>
-                                                        <SelectItem value="candidate" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Candidate</SelectItem>
-                                                        <SelectItem value="hr" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">HR</SelectItem>
-                                                        <SelectItem value="head_dev" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Head Dev</SelectItem>
-                                                        <SelectItem value="super_admin" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Super Admin</SelectItem>
+                                                        <SelectItem
+                                                            value="all"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            All Roles
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="candidate"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Candidate
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="hr"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            HR
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="head_dev"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Head Dev
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="super_admin"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Super Admin
+                                                        </SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="verification-filter" className="text-sm font-inter text-gray-700">Verification Status</Label>
+                                                <Label htmlFor="verification-filter" className="font-inter text-sm text-gray-700">
+                                                    Verification Status
+                                                </Label>
                                                 <Select value={verificationFilter} onValueChange={setVerificationFilter}>
                                                     <SelectTrigger id="verification-filter" className="font-inter">
                                                         <SelectValue placeholder="Filter by verification" className="font-inter" />
                                                     </SelectTrigger>
                                                     <SelectContent className="font-inter">
-                                                        <SelectItem value="all" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">All Users</SelectItem>
-                                                        <SelectItem value="verified" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Verified</SelectItem>
-                                                        <SelectItem value="unverified" className="font-inter text-gray-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 cursor-pointer transition-colors">Unverified</SelectItem>
+                                                        <SelectItem
+                                                            value="all"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            All Users
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="verified"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Verified
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="unverified"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Unverified
+                                                        </SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="flex justify-end">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    onClick={resetFilters} 
-                                                    className="text-xs font-inter"
-                                                >
+                                                <Button variant="outline" size="sm" onClick={resetFilters} className="font-inter text-xs">
                                                     Reset Filters
                                                 </Button>
                                             </div>
@@ -356,9 +398,9 @@ export default function UserManagement(props: UserManagementProps) {
 
             {/* Create User Dialog */}
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogContent className="p-0 overflow-hidden border-2 rounded-lg shadow-lg max-w-sm bg-white">
+                <DialogContent className="max-w-sm overflow-hidden rounded-lg border-2 bg-white p-0 shadow-lg">
                     {/* Header with Close Button */}
-                    <div className="flex items-center justify-between p-4 border-b">
+                    <div className="flex items-center justify-between border-b p-4">
                         <div>
                             <h2 className="text-lg font-medium text-gray-900">Create User</h2>
                             <p className="text-sm text-gray-500">Fill in the details to create a new user</p>
@@ -370,7 +412,9 @@ export default function UserManagement(props: UserManagementProps) {
                         <div className="space-y-4">
                             {/* Name Field */}
                             <div className="relative">
-                                <label htmlFor="name" className="absolute left-3 top-2 text-sm text-blue-500">Name</label>
+                                <label htmlFor="name" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Name
+                                </label>
                                 <input
                                     id="name"
                                     name="name"
@@ -378,13 +422,15 @@ export default function UserManagement(props: UserManagementProps) {
                                     value={newUser.name}
                                     onChange={handleCreateUserChange}
                                     placeholder="Enter username"
-                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                 />
                             </div>
 
                             {/* Email Field */}
                             <div className="relative">
-                                <label htmlFor="email" className="absolute left-3 top-2 text-sm text-blue-500">Email</label>
+                                <label htmlFor="email" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Email
+                                </label>
                                 <input
                                     id="email"
                                     name="email"
@@ -392,13 +438,15 @@ export default function UserManagement(props: UserManagementProps) {
                                     value={newUser.email}
                                     onChange={handleCreateUserChange}
                                     placeholder="Enter user email"
-                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                 />
                             </div>
 
                             {/* Password Field */}
                             <div className="relative">
-                                <label htmlFor="password" className="absolute left-3 top-2 text-sm text-blue-500">Password</label>
+                                <label htmlFor="password" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Password
+                                </label>
                                 <input
                                     id="password"
                                     name="password"
@@ -406,36 +454,38 @@ export default function UserManagement(props: UserManagementProps) {
                                     value={newUser.password}
                                     onChange={handleCreateUserChange}
                                     placeholder="Enter user password"
-                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                 />
                             </div>
 
                             {/* Role Field */}
                             <div className="relative">
-                                <label htmlFor="role" className="absolute left-3 top-2 text-sm text-blue-500 z-10">Role</label>
+                                <label htmlFor="role" className="absolute top-2 left-3 z-10 text-sm text-blue-500">
+                                    Role
+                                </label>
                                 <div className="relative">
-                                    <Select 
-                                        value={newUser.role} 
+                                    <Select
+                                        value={newUser.role}
                                         onValueChange={(value) => setNewUser((prevState) => ({ ...prevState, role: value }))}
                                     >
-                                        <SelectTrigger 
-                                            id="role" 
-                                            className="w-full h-[60px] px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        <SelectTrigger
+                                            id="role"
+                                            className="h-[60px] w-full rounded-md border border-blue-500 bg-white px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                             style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                textAlign: "left"
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                textAlign: 'left',
                                             }}
                                         >
                                             <SelectValue placeholder="Select a role" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-white border border-gray-300 w-full shadow-md">
+                                        <SelectContent className="w-full border border-gray-300 bg-white shadow-md">
                                             {roles.map((role) => (
-                                                <SelectItem 
-                                                    key={role.value} 
+                                                <SelectItem
+                                                    key={role.value}
                                                     value={role.value}
-                                                    className="py-2 px-3 text-sm text-gray-700 focus:bg-blue-100 focus:text-blue-700 hover:bg-blue-100 hover:text-blue-700 cursor-pointer"
+                                                    className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-100 focus:text-blue-700"
                                                 >
                                                     {role.label}
                                                 </SelectItem>
@@ -447,17 +497,17 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
 
                         {/* Footer/Buttons */}
-                        <div className="flex justify-end mt-6 space-x-2">
+                        <div className="mt-6 flex justify-end space-x-2">
                             <button
                                 onClick={() => setIsCreateDialogOpen(false)}
-                                className="px-4 py-1.5 text-sm font-medium text-blue-500 bg-white border border-blue-500 rounded-md hover:bg-gray-50"
+                                className="rounded-md border border-blue-500 bg-white px-4 py-1.5 text-sm font-medium text-blue-500 hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleCreateUser}
                                 disabled={isLoading}
-                                className="px-4 py-1.5 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                                className="rounded-md bg-blue-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-600"
                             >
                                 {isLoading ? 'Creating...' : 'Create'}
                             </button>
@@ -468,9 +518,9 @@ export default function UserManagement(props: UserManagementProps) {
 
             {/* Edit User Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="p-0 overflow-hidden border-2 rounded-lg shadow-lg max-w-sm bg-white">
+                <DialogContent className="max-w-sm overflow-hidden rounded-lg border-2 bg-white p-0 shadow-lg">
                     {/* Header with Close Button */}
-                    <div className="flex items-center justify-between p-4 border-b">
+                    <div className="flex items-center justify-between border-b p-4">
                         <div>
                             <h2 className="text-lg font-medium text-gray-900">Edit User</h2>
                             <p className="text-sm text-gray-500">Update the details of the user</p>
@@ -482,7 +532,9 @@ export default function UserManagement(props: UserManagementProps) {
                         <div className="space-y-4">
                             {/* Name Field */}
                             <div className="relative">
-                                <label htmlFor="edit-name" className="absolute left-3 top-2 text-sm text-blue-500">Name</label>
+                                <label htmlFor="edit-name" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Name
+                                </label>
                                 <input
                                     id="edit-name"
                                     name="name"
@@ -490,13 +542,15 @@ export default function UserManagement(props: UserManagementProps) {
                                     value={editUser.name}
                                     onChange={handleEditUserChange}
                                     placeholder="Enter username"
-                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                 />
                             </div>
 
                             {/* Email Field */}
                             <div className="relative">
-                                <label htmlFor="edit-email" className="absolute left-3 top-2 text-sm text-blue-500">Email</label>
+                                <label htmlFor="edit-email" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Email
+                                </label>
                                 <input
                                     id="edit-email"
                                     name="email"
@@ -504,13 +558,15 @@ export default function UserManagement(props: UserManagementProps) {
                                     value={editUser.email}
                                     onChange={handleEditUserChange}
                                     placeholder="Enter user email"
-                                    className="w-full px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                 />
                             </div>
 
                             {/* Role Field */}
                             <div className="relative">
-                                <label htmlFor="edit-role" className="absolute left-3 top-2 text-sm text-blue-500 z-10">Role</label>
+                                <label htmlFor="edit-role" className="absolute top-2 left-3 z-10 text-sm text-blue-500">
+                                    Role
+                                </label>
                                 <div className="relative">
                                     <Select
                                         value={editUser.role}
@@ -518,22 +574,22 @@ export default function UserManagement(props: UserManagementProps) {
                                     >
                                         <SelectTrigger
                                             id="edit-role"
-                                            className="w-full h-[60px] px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            className="h-[60px] w-full rounded-md border border-blue-500 bg-white px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                             style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                textAlign: "left"
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                textAlign: 'left',
                                             }}
                                         >
                                             <SelectValue placeholder="Select a role" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-white border border-gray-300 w-full shadow-md">
+                                        <SelectContent className="w-full border border-gray-300 bg-white shadow-md">
                                             {roles.map((role) => (
                                                 <SelectItem
                                                     key={role.value}
                                                     value={role.value}
-                                                    className="py-2 px-3 text-sm text-gray-700 focus:bg-blue-100 focus:text-blue-700 hover:bg-blue-100 hover:text-blue-700 cursor-pointer"
+                                                    className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-100 focus:text-blue-700"
                                                 >
                                                     {role.label}
                                                 </SelectItem>
@@ -545,17 +601,17 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
 
                         {/* Footer/Buttons */}
-                        <div className="flex justify-end mt-6 space-x-2">
+                        <div className="mt-6 flex justify-end space-x-2">
                             <button
                                 onClick={() => setIsEditDialogOpen(false)}
-                                className="px-4 py-1.5 text-sm font-medium text-blue-500 bg-white border border-blue-500 rounded-md hover:bg-gray-50"
+                                className="rounded-md border border-blue-500 bg-white px-4 py-1.5 text-sm font-medium text-blue-500 hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleUpdateUser}
                                 disabled={isLoading}
-                                className="px-4 py-1.5 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                                className="rounded-md bg-blue-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-600"
                             >
                                 {isLoading ? 'Updating...' : 'Update'}
                             </button>
@@ -593,10 +649,7 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
                     )}
                     <DialogFooter className="sm:justify-end">
-                        <Button 
-                            onClick={() => setIsViewDialogOpen(false)} 
-                            className="bg-blue-500 text-white hover:bg-blue-600"
-                        >
+                        <Button onClick={() => setIsViewDialogOpen(false)} className="bg-blue-500 text-white hover:bg-blue-600">
                             Close
                         </Button>
                     </DialogFooter>
@@ -611,13 +664,8 @@ export default function UserManagement(props: UserManagementProps) {
                         <AlertDialogDescription>Are you sure you want to delete this user? This action cannot be undone.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
-                            Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={confirmDeleteUser}
-                            className="bg-blue-500 text-white hover:bg-blue-600"
-                        >
+                        <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteUser} className="bg-blue-500 text-white hover:bg-blue-600">
                             Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>

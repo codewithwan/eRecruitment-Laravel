@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,7 +21,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { Filter, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface PaginationData {
     total: number;
@@ -80,10 +79,32 @@ export default function UserManagement(props: UserManagementProps) {
     // Filter states
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
+    const [verificationFilter, setVerificationFilter] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
 
-    // Get unique roles for filters
-    const uniqueRoles = ['all', ...Array.from(new Set(users.map((user) => user.role)))];
+    const fetchUsers = useCallback(
+        async (page = 1, perPage = pagination.per_page) => {
+            setIsLoading(true);
+            try {
+                updateUrlParams(page, perPage);
+
+                const response = await axios.get('/dashboard/users/list', {
+                    params: {
+                        page,
+                        per_page: perPage,
+                    },
+                });
+                setUsers(response.data.users);
+                setFilteredUsers(response.data.users);
+                setPagination(response.data.pagination);
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [pagination.per_page],
+    );
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -93,7 +114,7 @@ export default function UserManagement(props: UserManagementProps) {
         if (page !== pagination.current_page || perPage !== pagination.per_page) {
             fetchUsers(page, perPage);
         }
-    }, []);
+    }, [fetchUsers, pagination.current_page, pagination.per_page]);
 
     // Apply filters whenever filter states change
     useEffect(() => {
@@ -114,33 +135,22 @@ export default function UserManagement(props: UserManagementProps) {
             result = result.filter((user) => user.role === roleFilter);
         }
 
+        // Apply verification filter
+        if (verificationFilter !== 'all') {
+            result = result.filter((user) => {
+                if (verificationFilter === 'verified') {
+                    return user.email_verified_at !== null;
+                } else {
+                    return user.email_verified_at === null;
+                }
+            });
+        }
+
         setFilteredUsers(result);
 
         // Set filter active state
-        setIsFilterActive(searchQuery !== '' || roleFilter !== 'all');
-    }, [searchQuery, roleFilter, users]);
-
-    const fetchUsers = async (page = 1, perPage = pagination.per_page) => {
-        setIsLoading(true);
-        try {
-            // Update URL without full page refresh
-            updateUrlParams(page, perPage);
-
-            const response = await axios.get('/dashboard/users/list', {
-                params: {
-                    page,
-                    per_page: perPage,
-                },
-            });
-            setUsers(response.data.users);
-            setFilteredUsers(response.data.users);
-            setPagination(response.data.pagination);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        setIsFilterActive(searchQuery !== '' || roleFilter !== 'all' || verificationFilter !== 'all');
+    }, [searchQuery, roleFilter, verificationFilter, users]);
 
     // Function to update URL parameters without page refresh
     const updateUrlParams = (page: number, perPage: number) => {
@@ -189,8 +199,8 @@ export default function UserManagement(props: UserManagementProps) {
 
         setIsLoading(true);
         try {
+            await axios.put(`/dashboard/users/${editUser.id}`, editUser);
             fetchUsers(pagination.current_page, pagination.per_page);
-
             setIsEditDialogOpen(false);
         } catch (error) {
             console.error('Error updating user:', error);
@@ -209,7 +219,6 @@ export default function UserManagement(props: UserManagementProps) {
 
         try {
             await axios.delete(`/dashboard/users/${userIdToDelete}`);
-            // After successful deletion, refresh the current page
             fetchUsers(pagination.current_page, pagination.per_page);
         } catch (error) {
             console.error('Error deleting user:', error);
@@ -246,6 +255,7 @@ export default function UserManagement(props: UserManagementProps) {
     const resetFilters = () => {
         setSearchQuery('');
         setRoleFilter('all');
+        setVerificationFilter('all');
     };
 
     return (
@@ -255,8 +265,12 @@ export default function UserManagement(props: UserManagementProps) {
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">User Management</h2>
-                        <Button className="mx-10 px-10" onClick={handleAddUser}>
-                            Add User
+                        <Button
+                            className="flex items-center gap-2 rounded-md bg-blue-500 px-6 py-2 text-white hover:bg-blue-600"
+                            onClick={handleAddUser}
+                        >
+                            <span className="text-xl font-medium">+</span>
+                            <span>Add User</span>
                         </Button>
                     </div>
                     <Card>
@@ -281,26 +295,83 @@ export default function UserManagement(props: UserManagementProps) {
                                             {isFilterActive && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-80">
+                                    <PopoverContent className="font-inter w-80">
                                         <div className="space-y-4">
-                                            <h4 className="font-medium">Filters</h4>
+                                            <h4 className="font-inter font-medium text-gray-900">Filters</h4>
                                             <div className="space-y-2">
-                                                <Label htmlFor="role-filter">Role</Label>
+                                                <Label htmlFor="role-filter" className="font-inter text-sm text-gray-700">
+                                                    Role
+                                                </Label>
                                                 <Select value={roleFilter} onValueChange={setRoleFilter}>
-                                                    <SelectTrigger id="role-filter">
-                                                        <SelectValue placeholder="Filter by role" />
+                                                    <SelectTrigger id="role-filter" className="font-inter">
+                                                        <SelectValue placeholder="Filter by role" className="font-inter" />
                                                     </SelectTrigger>
-                                                    <SelectContent>
-                                                        {uniqueRoles.map((role) => (
-                                                            <SelectItem key={role} value={role}>
-                                                                {role === 'all' ? 'All Roles' : role}
-                                                            </SelectItem>
-                                                        ))}
+                                                    <SelectContent className="font-inter">
+                                                        <SelectItem
+                                                            value="all"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            All Roles
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="candidate"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Candidate
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="hr"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            HR
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="head_dev"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Head Dev
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="super_admin"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Super Admin
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="verification-filter" className="font-inter text-sm text-gray-700">
+                                                    Verification Status
+                                                </Label>
+                                                <Select value={verificationFilter} onValueChange={setVerificationFilter}>
+                                                    <SelectTrigger id="verification-filter" className="font-inter">
+                                                        <SelectValue placeholder="Filter by verification" className="font-inter" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="font-inter">
+                                                        <SelectItem
+                                                            value="all"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            All Users
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="verified"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Verified
+                                                        </SelectItem>
+                                                        <SelectItem
+                                                            value="unverified"
+                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                        >
+                                                            Unverified
+                                                        </SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="flex justify-end">
-                                                <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
+                                                <Button variant="outline" size="sm" onClick={resetFilters} className="font-inter text-xs">
                                                     Reset Filters
                                                 </Button>
                                             </div>
@@ -327,91 +398,225 @@ export default function UserManagement(props: UserManagementProps) {
 
             {/* Create User Dialog */}
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Create User</DialogTitle>
-                        <DialogDescription>Fill in the details to create a new user.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
+                <DialogContent className="max-w-sm overflow-hidden rounded-lg border-2 bg-white p-0 shadow-lg">
+                    {/* Header with Close Button */}
+                    <div className="flex items-center justify-between border-b p-4">
                         <div>
-                            <Label htmlFor="name">Name</Label>
-                            <Input id="name" name="name" value={newUser.name} onChange={handleCreateUserChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" name="email" value={newUser.email} onChange={handleCreateUserChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="password">Password</Label>
-                            <Input id="password" name="password" value={newUser.password} onChange={handleCreateUserChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="role">Role</Label>
-                            <Select value={newUser.role} onValueChange={(value) => setNewUser((prevState) => ({ ...prevState, role: value }))}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {roles.map((role) => (
-                                        <SelectItem key={role.value} value={role.value}>
-                                            {role.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <h2 className="text-lg font-medium text-gray-900">Create User</h2>
+                            <p className="text-sm text-gray-500">Fill in the details to create a new user</p>
                         </div>
                     </div>
-                    <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleCreateUser} disabled={isLoading}>
-                            {isLoading ? 'Creating...' : 'Create'}
-                        </Button>
-                    </DialogFooter>
+
+                    {/* Form Content */}
+                    <div className="px-4 pt-3 pb-5">
+                        <div className="space-y-4">
+                            {/* Name Field */}
+                            <div className="relative">
+                                <label htmlFor="name" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Name
+                                </label>
+                                <input
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    value={newUser.name}
+                                    onChange={handleCreateUserChange}
+                                    placeholder="Enter username"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Email Field */}
+                            <div className="relative">
+                                <label htmlFor="email" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Email
+                                </label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    value={newUser.email}
+                                    onChange={handleCreateUserChange}
+                                    placeholder="Enter user email"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Password Field */}
+                            <div className="relative">
+                                <label htmlFor="password" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    value={newUser.password}
+                                    onChange={handleCreateUserChange}
+                                    placeholder="Enter user password"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Role Field */}
+                            <div className="relative">
+                                <label htmlFor="role" className="absolute top-2 left-3 z-10 text-sm text-blue-500">
+                                    Role
+                                </label>
+                                <div className="relative">
+                                    <Select
+                                        value={newUser.role}
+                                        onValueChange={(value) => setNewUser((prevState) => ({ ...prevState, role: value }))}
+                                    >
+                                        <SelectTrigger
+                                            id="role"
+                                            className="h-[60px] w-full rounded-md border border-blue-500 bg-white px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                textAlign: 'left',
+                                            }}
+                                        >
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent className="w-full border border-gray-300 bg-white shadow-md">
+                                            {roles.map((role) => (
+                                                <SelectItem
+                                                    key={role.value}
+                                                    value={role.value}
+                                                    className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-100 focus:text-blue-700"
+                                                >
+                                                    {role.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer/Buttons */}
+                        <div className="mt-6 flex justify-end space-x-2">
+                            <button
+                                onClick={() => setIsCreateDialogOpen(false)}
+                                className="rounded-md border border-blue-500 bg-white px-4 py-1.5 text-sm font-medium text-blue-500 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleCreateUser}
+                                disabled={isLoading}
+                                className="rounded-md bg-blue-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-600"
+                            >
+                                {isLoading ? 'Creating...' : 'Create'}
+                            </button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 
             {/* Edit User Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit User</DialogTitle>
-                        <DialogDescription>Update user information.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
+                <DialogContent className="max-w-sm overflow-hidden rounded-lg border-2 bg-white p-0 shadow-lg">
+                    {/* Header with Close Button */}
+                    <div className="flex items-center justify-between border-b p-4">
                         <div>
-                            <Label htmlFor="edit-name">Name</Label>
-                            <Input id="edit-name" name="name" value={editUser.name} onChange={handleEditUserChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="edit-email">Email</Label>
-                            <Input id="edit-email" name="email" value={editUser.email} onChange={handleEditUserChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="edit-role">Role</Label>
-                            <Select value={editUser.role} onValueChange={(value) => setEditUser((prevState) => ({ ...prevState, role: value }))}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {roles.map((role) => (
-                                        <SelectItem key={role.value} value={role.value}>
-                                            {role.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <h2 className="text-lg font-medium text-gray-900">Edit User</h2>
+                            <p className="text-sm text-gray-500">Update the details of the user</p>
                         </div>
                     </div>
-                    <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleUpdateUser} disabled={isLoading}>
-                            {isLoading ? 'Updating...' : 'Update'}
-                        </Button>
-                    </DialogFooter>
+
+                    {/* Form Content */}
+                    <div className="px-4 pt-3 pb-5">
+                        <div className="space-y-4">
+                            {/* Name Field */}
+                            <div className="relative">
+                                <label htmlFor="edit-name" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Name
+                                </label>
+                                <input
+                                    id="edit-name"
+                                    name="name"
+                                    type="text"
+                                    value={editUser.name}
+                                    onChange={handleEditUserChange}
+                                    placeholder="Enter username"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Email Field */}
+                            <div className="relative">
+                                <label htmlFor="edit-email" className="absolute top-2 left-3 text-sm text-blue-500">
+                                    Email
+                                </label>
+                                <input
+                                    id="edit-email"
+                                    name="email"
+                                    type="email"
+                                    value={editUser.email}
+                                    onChange={handleEditUserChange}
+                                    placeholder="Enter user email"
+                                    className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Role Field */}
+                            <div className="relative">
+                                <label htmlFor="edit-role" className="absolute top-2 left-3 z-10 text-sm text-blue-500">
+                                    Role
+                                </label>
+                                <div className="relative">
+                                    <Select
+                                        value={editUser.role}
+                                        onValueChange={(value) => setEditUser((prevState) => ({ ...prevState, role: value }))}
+                                    >
+                                        <SelectTrigger
+                                            id="edit-role"
+                                            className="h-[60px] w-full rounded-md border border-blue-500 bg-white px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                textAlign: 'left',
+                                            }}
+                                        >
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent className="w-full border border-gray-300 bg-white shadow-md">
+                                            {roles.map((role) => (
+                                                <SelectItem
+                                                    key={role.value}
+                                                    value={role.value}
+                                                    className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-100 focus:text-blue-700"
+                                                >
+                                                    {role.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer/Buttons */}
+                        <div className="mt-6 flex justify-end space-x-2">
+                            <button
+                                onClick={() => setIsEditDialogOpen(false)}
+                                className="rounded-md border border-blue-500 bg-white px-4 py-1.5 text-sm font-medium text-blue-500 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUpdateUser}
+                                disabled={isLoading}
+                                className="rounded-md bg-blue-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-600"
+                            >
+                                {isLoading ? 'Updating...' : 'Update'}
+                            </button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 
@@ -444,7 +649,7 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
                     )}
                     <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                        <Button onClick={() => setIsViewDialogOpen(false)} className="bg-blue-500 text-white hover:bg-blue-600">
                             Close
                         </Button>
                     </DialogFooter>
@@ -460,7 +665,9 @@ export default function UserManagement(props: UserManagementProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDeleteUser}>Delete</AlertDialogAction>
+                        <AlertDialogAction onClick={confirmDeleteUser} className="bg-blue-500 text-white hover:bg-blue-600">
+                            Delete
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

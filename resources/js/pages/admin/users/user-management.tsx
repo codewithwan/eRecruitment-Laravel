@@ -181,8 +181,8 @@ export default function UserManagement(props: UserManagementProps) {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-            }); // Set user data to state
-            setIsEditDialogOpen(true); // Open the dialog
+            });
+            setIsEditDialogOpen(true);
         }
     };
 
@@ -196,9 +196,9 @@ export default function UserManagement(props: UserManagementProps) {
 
         setIsLoading(true);
         try {
-            await axios.put(`/dashboard/users/${editUser.id}`, editUser); // Update user data
-            fetchUsers(pagination.current_page, pagination.per_page); // Refresh user list
-            setIsEditDialogOpen(false); // Close the dialog
+            await axios.put(`/dashboard/users/${editUser.id}`, editUser);
+            fetchUsers(pagination.current_page, pagination.per_page);
+            setIsEditDialogOpen(false);
         } catch (error) {
             console.error('Error updating user:', error);
         } finally {
@@ -207,21 +207,21 @@ export default function UserManagement(props: UserManagementProps) {
     };
 
     const handleDeleteUser = (userId: number) => {
-        setUserIdToDelete(userId); // Set user ID to state
-        setIsDeleteDialogOpen(true); // Open the confirmation dialog
+        setUserIdToDelete(userId);
+        setIsDeleteDialogOpen(true);
     };
 
     const confirmDeleteUser = async () => {
         if (userIdToDelete === null) return;
 
         try {
-            await axios.delete(`/dashboard/users/${userIdToDelete}`); // Delete user
-            fetchUsers(pagination.current_page, pagination.per_page); // Refresh user list
+            await axios.delete(`/dashboard/users/${userIdToDelete}`);
+            fetchUsers(pagination.current_page, pagination.per_page);
         } catch (error) {
             console.error('Error deleting user:', error);
         } finally {
-            setIsDeleteDialogOpen(false); // Close the dialog
-            setUserIdToDelete(null); // Reset state
+            setIsDeleteDialogOpen(false);
+            setUserIdToDelete(null);
         }
     };
 
@@ -328,7 +328,7 @@ export default function UserManagement(props: UserManagementProps) {
                                                     variant="outline" 
                                                     size="sm" 
                                                     onClick={resetFilters} 
-                                                    className="text-blue-500 border border-blue-500 hover:bg-blue-50 rounded-md text-xs font-inter"
+                                                    className="text-xs font-inter"
                                                 >
                                                     Reset Filters
                                                 </Button>
@@ -512,12 +512,12 @@ export default function UserManagement(props: UserManagementProps) {
                             <div className="relative">
                                 <label htmlFor="edit-role" className="absolute left-3 top-2 text-sm text-blue-500 z-10">Role</label>
                                 <div className="relative">
-                                    <Select 
-                                        value={editUser.role} 
+                                    <Select
+                                        value={editUser.role}
                                         onValueChange={(value) => setEditUser((prevState) => ({ ...prevState, role: value }))}
                                     >
-                                        <SelectTrigger 
-                                            id="edit-role" 
+                                        <SelectTrigger
+                                            id="edit-role"
                                             className="w-full h-[60px] px-3 pt-6 pb-2 border border-blue-500 rounded-md text-gray-600 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                                             style={{
                                                 display: "flex",
@@ -530,8 +530,8 @@ export default function UserManagement(props: UserManagementProps) {
                                         </SelectTrigger>
                                         <SelectContent className="bg-white border border-gray-300 w-full shadow-md">
                                             {roles.map((role) => (
-                                                <SelectItem 
-                                                    key={role.value} 
+                                                <SelectItem
+                                                    key={role.value}
                                                     value={role.value}
                                                     className="py-2 px-3 text-sm text-gray-700 focus:bg-blue-100 focus:text-blue-700 hover:bg-blue-100 hover:text-blue-700 cursor-pointer"
                                                 >
@@ -593,7 +593,10 @@ export default function UserManagement(props: UserManagementProps) {
                         </div>
                     )}
                     <DialogFooter className="sm:justify-end">
-                        <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                        <Button 
+                            onClick={() => setIsViewDialogOpen(false)} 
+                            className="bg-blue-500 text-white hover:bg-blue-600"
+                        >
                             Close
                         </Button>
                     </DialogFooter>
@@ -608,15 +611,12 @@ export default function UserManagement(props: UserManagementProps) {
                         <AlertDialogDescription>Are you sure you want to delete this user? This action cannot be undone.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel 
-                            onClick={() => setIsDeleteDialogOpen(false)} 
-                            className="text-blue-500 border border-blue-500 hover:bg-blue-50 rounded-md px-4 py-2"
-                        >
+                        <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
                             Cancel
                         </AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={confirmDeleteUser} 
-                            className="bg-blue-500 text-white hover:bg-blue-600 rounded-md px-4 py-2"
+                        <AlertDialogAction
+                            onClick={confirmDeleteUser}
+                            className="bg-blue-500 text-white hover:bg-blue-600"
                         >
                             Delete
                         </AlertDialogAction>

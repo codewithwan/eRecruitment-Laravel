@@ -29,7 +29,7 @@ const mainNavItems: NavItem[] = [
         icon: User,
     },
     {
-        title: 'Jobs Hiring',
+        title: 'Job Management',
         href: '/dashboard/jobs',
         icon: SearchIcon,
     },

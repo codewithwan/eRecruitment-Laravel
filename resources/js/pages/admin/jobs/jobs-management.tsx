@@ -1,4 +1,5 @@
 import { JobTable, type Job } from '@/components/job-table';
+import { SearchBar } from '@/components/searchbar';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,7 +22,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { Filter } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface JobProps {
@@ -34,7 +35,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
     {
-        title: 'Jobs Management',
+        title: 'Job Management',
         href: '/dashboard/jobs',
     },
 ];
@@ -225,75 +226,87 @@ export default function Jobs(props: JobProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Jobs Management" />
+            <Head title="Job Management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-2xl font-semibold">Jobs Management</h2>
+                        <h2 className="text-2xl font-semibold">Job Management</h2>
                         <div className="flex items-center gap-2">
                             <div className="relative flex items-center"></div>
                             <Button className="px-6" onClick={handleAddJob}>
-                                Add Job
+                                + Add Job
                             </Button>
                         </div>
                     </div>
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Jobs List</CardTitle>
-                                <CardDescription>Manage all job openings in the system</CardDescription>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="relative"></div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant={isFilterActive ? 'default' : 'outline'} size="icon" className="relative">
-                                            <Filter className="h-4 w-4" />
-                                            {isFilterActive && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div>
+                            <CardTitle>Jobs List</CardTitle>
+                            <CardDescription>Manage all jobs in the system</CardDescription>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <SearchBar
+                            icon={<Search className="w-4 h-4" />}
+                            placeholder="Cari user..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                            <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={isFilterActive ? 'default' : 'outline'}
+                                size="icon"
+                                className="relative"
+                                >
+                                <Filter className="h-4 w-4" />
+                                {isFilterActive && (
+                                    <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>
+                                )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                                <div className="space-y-4">
+                                    <h4 className="font-medium">Filters</h4>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="department-filter">Department</Label>
+                                        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                                            <SelectTrigger id="department-filter">
+                                                <SelectValue placeholder="Filter by department" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {departments.map((dept) => (
+                                                    <SelectItem key={dept} value={dept}>
+                                                        {dept === 'all' ? 'All Departments' : dept}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="location-filter">Location</Label>
+                                        <Select value={locationFilter} onValueChange={setLocationFilter}>
+                                            <SelectTrigger id="location-filter">
+                                                <SelectValue placeholder="Filter by location" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {locations.map((loc) => (
+                                                    <SelectItem key={loc} value={loc}>
+                                                        {loc === 'all' ? 'All Locations' : loc}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
+                                            Reset Filters
                                         </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80">
-                                        <div className="space-y-4">
-                                            <h4 className="font-medium">Filters</h4>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="department-filter">Department</Label>
-                                                <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                                                    <SelectTrigger id="department-filter">
-                                                        <SelectValue placeholder="Filter by department" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {departments.map((dept) => (
-                                                            <SelectItem key={dept} value={dept}>
-                                                                {dept === 'all' ? 'All Departments' : dept}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="location-filter">Location</Label>
-                                                <Select value={locationFilter} onValueChange={setLocationFilter}>
-                                                    <SelectTrigger id="location-filter">
-                                                        <SelectValue placeholder="Filter by location" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {locations.map((loc) => (
-                                                            <SelectItem key={loc} value={loc}>
-                                                                {loc === 'all' ? 'All Locations' : loc}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="flex justify-end">
-                                                <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
-                                                    Reset Filters
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                            </Popover>
+                        </div>
                         </CardHeader>
                         <CardContent>
                             {/* Keep the rest of the JobTable component */}

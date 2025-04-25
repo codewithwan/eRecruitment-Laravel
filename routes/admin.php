@@ -1,4 +1,4 @@
-    <?php
+<?php
 
 use App\Enums\UserRole;
 use App\Http\Controllers\AssessmentController;
@@ -11,11 +11,28 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 // Admin route
-Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
+Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
     ->prefix('dashboard')
     ->name('admin.')
     ->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('dashboard');
+        // Tambahkan route untuk halaman dashboard administration
+        Route::get('/administration', function () {
+            return inertia('admin/company/administration');
+        })->name('administration');
+        // Tambahkan route untuk halaman assessment
+        Route::get('/assessment', function () {
+            return inertia('admin/company/assessment');
+        })->name('assessment');
+
+        Route::get('/interview', function () {
+            return inertia('admin/company/interview');
+        })->name('interview');
+
+        Route::get('/reports', function () {
+            return inertia('admin/company/reports');
+        })->name('reports');
+
         Route::prefix('users')
             ->name('users.')
             ->group(function () {

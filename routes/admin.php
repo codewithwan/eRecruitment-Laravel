@@ -47,12 +47,5 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::HR->value])
                 Route::post('/', [AssessmentController::class, 'store'])->name('store');
                 Route::put('/{assessment}', [QuestionController::class, 'update'])->name('update');
                 Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('remove');
-                
-                // Add debug route
-                Route::get('/debug/{assessment}', function(Assessment $assessment) {
-                    return response()->json([
-                        'assessment' => $assessment->load('questions')
-                    ]);
-                })->name('questions.debug');
             });
     });

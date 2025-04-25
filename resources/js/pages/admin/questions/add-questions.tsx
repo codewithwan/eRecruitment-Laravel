@@ -133,6 +133,12 @@ const AddQuestionPanel = () => {
     };
 
     const saveForm = () => {
+        // Validate required fields
+        if (!title || !description || !selectedTestType || !selectedDuration) {
+            alert('Please fill out all required fields (title, description, test type, and duration)');
+            return;
+        }
+
         console.log('Saving form data', {
             title,
             description,
@@ -141,15 +147,49 @@ const AddQuestionPanel = () => {
             questions,
         });
 
+        // Filter out questions with all empty options
+        const validQuestions = questions
+            .filter((q) => q.options.some((opt) => opt.trim() !== ''))
+            .map(q => ({
+                question: q.question || '', // Ensure question is not undefined
+                options: q.options.filter(opt => opt.trim() !== ''), // Filter out empty options
+            }));
+
+        // Log what we're actually sending to the server
+        console.log('Sending to server:', {
+            title,
+            description,
+            testType: selectedTestType,
+            duration: selectedDuration,
+            questions: validQuestions
+        });
+
         router.post('/dashboard/questions', {
             title,
             description,
             testType: selectedTestType,
             duration: selectedDuration,
-            questions: questions.filter((q) => q.options.some((opt) => opt.trim() !== '')),
+            questions: validQuestions,
+        }, {
+            onSuccess: (page) => {
+                setIsFormDirty(false);
+                console.log('Save successful!', page);
+                
+                if (page.props.flash && typeof page.props.flash === 'object' && 'error' in page.props.flash) {
+                    alert('Error: ' + page.props.flash.error);
+                    return;
+                }
+                
+                router.visit('/dashboard/questions');
+            },
+            onError: (errors) => {
+                console.error('Save failed:', errors);
+                const errorMessage = typeof errors === 'object' 
+                    ? Object.values(errors).flat().join('\n') 
+                    : 'Failed to save questions. Please try again.';
+                alert('Error: ' + errorMessage);
+            }
         });
-
-        setIsFormDirty(false);
     };
 
     const handleSubmit = () => {

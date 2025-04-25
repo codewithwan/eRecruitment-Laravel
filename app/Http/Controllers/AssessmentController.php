@@ -6,6 +6,7 @@ use App\Models\Assessment;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AssessmentController extends Controller
 {
@@ -15,6 +16,18 @@ class AssessmentController extends Controller
             // Log the request data for debugging
             Log::info('Assessment data received:', $request->all());
             
+            // Start database transaction
+            DB::beginTransaction();
+            
+            // Validate essential data
+            $validatedData = $request->validate([
+                'title' => 'required|string',
+                'description' => 'required|string',
+                'testType' => 'required|string',
+                'duration' => 'required|string',
+                'questions' => 'present|array',
+            ]);
+            
             // Create the assessment
             $assessment = Assessment::create([
                 'title' => $request->title,
@@ -23,26 +36,55 @@ class AssessmentController extends Controller
                 'duration' => $request->duration,
             ]);
             
-            Log::info('Assessment created with ID: ' . $assessment->id);
+            Log::info('Assessment created:', ['id' => $assessment->id]);
             
-            // Create questions (without correct_answer as requested)
-            foreach ($request->questions as $questionData) {
-                // Don't encode options - the model cast will handle this
-                $question = Question::create([
-                    'assessment_id' => $assessment->id,
-                    'question_text' => $questionData['question'],
-                    'options' => $questionData['options'],
-                ]);
-                
-                Log::info('Question created with ID: ' . $question->id);
+            // Process questions if not empty
+            if (!empty($request->questions)) {
+                foreach ($request->questions as $questionData) {
+                    // Skip completely empty questions
+                    if (empty($questionData['question']) && empty($questionData['options'])) {
+                        continue;
+                    }
+                    
+                    // Make sure options is an array and filter empty options
+                    $options = is_array($questionData['options']) 
+                        ? array_filter($questionData['options'], fn($option) => !empty(trim($option)))
+                        : [];
+                    
+                    if (empty($options)) {
+                        continue; // Skip questions with no valid options
+                    }
+                    
+                    // Create question
+                    $question = Question::create([
+                        'assessment_id' => $assessment->id,
+                        'question_text' => $questionData['question'] ?? '',
+                        'options' => json_encode($options),
+                    ]);
+                    
+                    Log::info('Question created:', ['id' => $question->id]);
+                }
             }
             
-            // Fix the redirect route
-            return redirect()->route('admin.questions.info')->with('success', 'Assessment and questions created successfully');
+            // Commit the transaction
+            DB::commit();
+            
+            Log::info('Assessment created successfully', ['id' => $assessment->id]);
+            return redirect()->route('admin.questions.info')->with('success', 'Assessment created successfully');
+            
         } catch (\Exception $e) {
-            Log::error('Error creating assessment: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
-            return redirect()->back()->withInput()->with('error', 'Failed to save assessment: ' . $e->getMessage());
+            // Roll back the transaction
+            DB::rollBack();
+            
+            Log::error('Error creating assessment: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to save assessment: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

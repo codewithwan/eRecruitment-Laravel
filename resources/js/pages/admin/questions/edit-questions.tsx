@@ -166,6 +166,12 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
     };
 
     const saveForm = () => {
+        // Validate required fields
+        if (!title || !description || !selectedTestType || !selectedDuration) {
+            alert('Please fill out all required fields (title, description, test type, and duration)');
+            return;
+        }
+        
         console.log('Saving form data', {
             title,
             description,
@@ -174,23 +180,48 @@ export default function EditQuestions({ assessment }: EditQuestionsProps) {
             questions,
         });
 
-        // Filter out empty questions and ensure only valid questions are sent
-        const validQuestions = questions.filter((q) => q.options.some((opt) => opt.trim() !== ''));
+        // Filter out empty questions and prepare valid questions with proper formatting
+        const validQuestions = questions
+            .filter((q) => q.options.some((opt) => opt.trim() !== ''))
+            .map(q => ({
+                id: q.id,
+                question: q.question || '',
+                options: q.options.filter(opt => opt.trim() !== '')
+            }));
         
+        console.log('Sending to server:', {
+            title,
+            description,
+            test_type: selectedTestType,
+            duration: selectedDuration,
+            questions: validQuestions
+        });
+
+        // Send data directly without stringifying questions
         router.put(`/dashboard/questions/${assessment.id}`, {
             title,
             description,
             test_type: selectedTestType,
             duration: selectedDuration,
-            questions: JSON.stringify(validQuestions), // Convert to JSON string
+            questions: validQuestions,  // Send as direct object, not JSON string
         }, {
-            onSuccess: () => {
+            onSuccess: (page) => {
                 setIsFormDirty(false);
+                console.log('Update successful!', page);
+                
+                if (page.props.flash && typeof page.props.flash === 'object' && 'error' in page.props.flash) {
+                    alert('Error: ' + page.props.flash.error);
+                    return;
+                }
+                
                 router.visit('/dashboard/questions');
             },
             onError: (errors) => {
                 console.error('Update failed:', errors);
-                alert('Failed to save changes. Please check the form and try again.');
+                const errorMessage = typeof errors === 'object' 
+                    ? Object.values(errors).flat().join('\n') 
+                    : 'Failed to update assessment. Please try again.';
+                alert('Error: ' + errorMessage);
             }
         });
     };

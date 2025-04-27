@@ -106,17 +106,38 @@ export default function AddQuestionPack({ questions = [] }: AddQuestionPackProps
         });
     };
 
-    const handleTimeChange = (field: 'hours' | 'minutes' | 'seconds', value: string) => {
-        let numValue = parseInt(value) || 0;
+    // Removed unused handleTimeChange function
+
+    const handleDirectInput = (field: 'hours' | 'minutes' | 'seconds', value: string) => {
+        // Allow only numeric characters
+        const numericValue = value.replace(/\D/g, '');
+
+        // Update the state directly without formatting
         if (field === 'hours') {
-            numValue = Math.min(Math.max(numValue, 0), 99);
-            setHours(numValue.toString().padStart(2, '0'));
+            setHours(numericValue);
         } else if (field === 'minutes') {
-            numValue = Math.min(Math.max(numValue, 0), 59);
-            setMinutes(numValue.toString().padStart(2, '0'));
+            setMinutes(numericValue);
         } else if (field === 'seconds') {
-            numValue = Math.min(Math.max(numValue, 0), 59);
-            setSeconds(numValue.toString().padStart(2, '0'));
+            setSeconds(numericValue);
+        }
+    };
+
+    const handleBlur = (field: 'hours' | 'minutes' | 'seconds', value: string) => {
+        // Parse the value and apply limits
+        let numValue = parseInt(value) || 0;
+        const maxValue = field === 'hours' ? 99 : 59;
+        numValue = Math.min(Math.max(numValue, 0), maxValue);
+
+        // Format with leading zeros
+        const formattedValue = numValue.toString().padStart(2, '0');
+
+        // Update the state with the formatted value
+        if (field === 'hours') {
+            setHours(formattedValue);
+        } else if (field === 'minutes') {
+            setMinutes(formattedValue);
+        } else if (field === 'seconds') {
+            setSeconds(formattedValue);
         }
     };
 
@@ -177,30 +198,51 @@ export default function AddQuestionPack({ questions = [] }: AddQuestionPackProps
                             <div>
                                 <Label>Test Duration</Label>
                                 <div className="mt-1 flex items-center">
-                                    <Input
-                                        value={hours}
-                                        onChange={(e) => handleTimeChange('hours', e.target.value)}
-                                        className="w-16 text-center"
-                                        maxLength={2}
-                                        placeholder="00"
-                                    />
-                                    <span className="mx-2">:</span>
-                                    <Input
-                                        value={minutes}
-                                        onChange={(e) => handleTimeChange('minutes', e.target.value)}
-                                        className="w-16 text-center"
-                                        maxLength={2}
-                                        placeholder="00"
-                                    />
-                                    <span className="mx-2">:</span>
-                                    <Input
-                                        value={seconds}
-                                        onChange={(e) => handleTimeChange('seconds', e.target.value)}
-                                        className="w-16 text-center"
-                                        maxLength={2}
-                                        placeholder="00"
-                                    />
+                                    <div className="flex flex-col">
+                                        <Input
+                                            value={hours}
+                                            onChange={(e) => handleDirectInput('hours', e.target.value)}
+                                            onBlur={(e) => handleBlur('hours', e.target.value)}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-16 text-center"
+                                            placeholder="00"
+                                            type="text"
+                                        />
+                                        <span className="mt-1 text-xs text-center text-gray-500">Hours</span>
+                                    </div>
+                                    <span className="mx-2 text-xl font-bold">:</span>
+                                    <div className="flex flex-col">
+                                        <Input
+                                            value={minutes}
+                                            onChange={(e) => handleDirectInput('minutes', e.target.value)}
+                                            onBlur={(e) => handleBlur('minutes', e.target.value)}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-16 text-center"
+                                            placeholder="00"
+                                            type="text"
+                                        />
+                                        <span className="mt-1 text-xs text-center text-gray-500">Minutes</span>
+                                    </div>
+                                    <span className="mx-2 text-xl font-bold">:</span>
+                                    <div className="flex flex-col">
+                                        <Input
+                                            value={seconds}
+                                            onChange={(e) => handleDirectInput('seconds', e.target.value)}
+                                            onBlur={(e) => handleBlur('seconds', e.target.value)}
+                                            onFocus={(e) => e.target.select()}
+                                            className="w-16 text-center"
+                                            placeholder="00"
+                                            type="text"
+                                        />
+                                        <span className="mt-1 text-xs text-center text-gray-500">Seconds</span>
+                                    </div>
                                 </div>
+                                <p className="mt-2 text-sm text-gray-500">
+                                    Total duration: {hours !== '00' ? `${hours} hours` : ''} 
+                                    {minutes !== '00' ? ` ${minutes} minutes` : ''} 
+                                    {seconds !== '00' ? ` ${seconds} seconds` : ''}
+                                    {hours === '00' && minutes === '00' && seconds === '00' ? '60 minutes (default)' : ''}
+                                </p>
                                 {errors.duration && <p className="text-sm text-red-500">{errors.duration}</p>}
                             </div>
                         </div>

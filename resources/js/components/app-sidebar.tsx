@@ -14,14 +14,17 @@ import {
 } from '@/components/ui/sidebar';
 import { NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardList, FileBarChart, Github, LayoutGrid, LucideFileQuestion, MessageSquare, Package, SearchIcon, User } from 'lucide-react';
+import { ClipboardList, FileBarChart, Github, LayoutGrid, LucideFileQuestion, MessageSquare, Package, SearchIcon, User, Clock, Calendar } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
 const dashboardNavItems: NavItem[] = [{ title: 'Dashboard', href: '/dashboard', icon: LayoutGrid }];
 
+// Simplify periods navigation items - just the list item
+const periodsNavItems: NavItem[] = [{ title: 'Periods List', href: '/dashboard/periods', icon: Clock }];
+
 const sharedSubItems: NavItem[] = [
-    { title: 'Administration', href: '/dashboard/administration', icon: LayoutGrid },
+    { title: 'Administration', href: '/dashboard/company/administration', icon: LayoutGrid }, // Changed back to original path
     { title: 'Assessment', href: '/dashboard/assessment', icon: ClipboardList },
     { title: 'Interview', href: '/dashboard/interview', icon: MessageSquare },
     { title: 'Reports & Analytics', href: '/dashboard/reports', icon: FileBarChart },
@@ -82,7 +85,7 @@ function SidebarNavGroup({ title, items }: { title: string; items: NavItem[] }) 
     );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], sharedSubItems: NavItem[] }) {
     const { url } = usePage();
     const [activeCompany, setActiveCompany] = useState<string | null>(null);
     const [activeManagementItem, setActiveManagementItem] = useState<string | null>(null);
@@ -127,6 +130,24 @@ export function AppSidebar() {
             <SidebarContent>
                 <SidebarNavGroup title="Dashboard" items={dashboardNavItems} />
 
+                {/* Simplified Periods Section with just the list link */}
+                <SidebarGroup>
+                    <SidebarGroupLabel>Periods</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                className={isActive('/dashboard/periods') ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-500'}
+                            >
+                                <Link href="/dashboard/periods">
+                                    <Clock className="mr-2 h-4 w-4" />
+                                    <span>Periods List</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
                 <SidebarGroup>
                     <SidebarGroupLabel>Company</SidebarGroupLabel>
                     <SidebarGroupContent>
@@ -154,7 +175,13 @@ export function AppSidebar() {
                                                         isActive(item.href) ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-500'
                                                     }`}
                                                 >
-                                                    <Link href={item.href}>
+                                                    <Link
+                                                        href={
+                                                            activeCompany 
+                                                                ? `${item.href}?companyId=${company.name === 'Mitra Karya Analitika' ? 1 : 2}`
+                                                                : item.href
+                                                        }
+                                                    >
                                                         {item.icon && <item.icon className="mr-2 h-4 w-4" />}
                                                         <span>{item.title}</span>
                                                     </Link>

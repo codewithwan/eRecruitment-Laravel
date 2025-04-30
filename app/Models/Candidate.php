@@ -6,6 +6,7 @@ use App\Enums\CandidatesStage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Candidate extends Model
 {
@@ -13,7 +14,6 @@ class Candidate extends Model
 
     protected $fillable = [
         'user_id',
-        'vacancy_id',
         'applied_at',
         'status',
     ];
@@ -32,10 +32,18 @@ class Candidate extends Model
     }
 
     /**
+     * Get administrations associated with the candidate.
+     */
+    public function administrations(): HasMany
+    {
+        return $this->hasMany(Administration::class);
+    }
+
+    /**
      * Get the vacancy associated with the candidate.
      */
     public function vacancy(): BelongsTo
     {
-        return $this->belongsTo(Vacancies::class);
+        return $this->belongsTo(Vacancy::class);
     }
 }

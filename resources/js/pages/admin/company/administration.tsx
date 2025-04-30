@@ -19,16 +19,24 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Check, Eye, Filter, Search, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
-// Removed unused PaginationData interface
-
+// Update the AdminUser type to include periodId
 type AdminUser = {
     id: string;
     name: string;
     email: string;
     position: string;
     registration_date: string;
+    period: string;
+    periodId: string; // Add this field for proper filtering
+    vacancy: string;
+};
+
+type Period = {
+    id: number;
+    name: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -38,12 +46,15 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Administration',
-        href: '/dashboard/company/administration',
+        href: '/dashboard/administration', // Updated path
     },
 ];
 
-export default function AdministrationDashboard() {
-    // Mock data for the administration table
+export default function AdministrationDashboard({ companyId = 1 }) {
+    // Fix type issue by using string | null consistently
+    const [selectedPeriodId, setSelectedPeriodId] = useLocalStorage<string | null>('selectedPeriodId', null);
+    
+    // Mock data for the administration table with periodId included
     const [adminUsers] = useState<AdminUser[]>([
         {
             id: '01',
@@ -51,58 +62,91 @@ export default function AdministrationDashboard() {
             email: 'Rizalfarhannanda@gmail.com',
             position: 'UI / UX',
             registration_date: 'Mar 20, 2025',
+            period: 'Q1 2025 Recruitment',
+            periodId: '1', // Add periodId to match selectedPeriodId
+            vacancy: 'UI/UX Designer',
         },
         {
             id: '02',
             name: 'M. Hassan Naufal Zayyan',
-            email: 'Rizalfarhannanda@gmail.com',
+            email: 'hassan@example.com',
             position: 'Back End',
             registration_date: 'Mar 18, 2025',
+            period: 'Q1 2025 Recruitment',
+            periodId: '1',
+            vacancy: 'Back End Developer',
         },
         {
             id: '03',
             name: 'Ardan Ferdiansah',
-            email: 'Rizalfarhannanda@gmail.com',
+            email: 'ardan@example.com',
             position: 'Front End',
             registration_date: 'Mar 18, 2025',
+            period: 'Q1 2025 Recruitment',
+            periodId: '1',
+            vacancy: 'Front End Developer',
         },
         {
             id: '04',
             name: 'Muhammad Ridwan',
-            email: 'Rizalfarhannanda@gmail.com',
+            email: 'ridwan@example.com',
             position: 'UX Writer',
             registration_date: 'Mar 20, 2025',
+            period: 'Q1 2025 Recruitment',
+            periodId: '1',
+            vacancy: 'UX Writer',
         },
         {
             id: '05',
             name: 'Untara Eka Saputra',
-            email: 'Rizalfarhannanda@gmail.com',
+            email: 'untara@example.com',
             position: 'IT Spesialis',
             registration_date: 'Mar 22, 2025',
+            period: 'Q1 2025 Recruitment',
+            periodId: '1',
+            vacancy: 'IT Specialist',
         },
         {
             id: '06',
             name: 'Dea Derika Winahyu',
-            email: 'Rizalfarhannanda@gmail.com',
+            email: 'dea@example.com',
             position: 'UX Writer',
             registration_date: 'Mar 20, 2025',
+            period: 'Q1 2025 Recruitment',
+            periodId: '1',
+            vacancy: 'UX Writer',
         },
         {
             id: '07',
             name: 'Kartika Yuliana',
-            email: 'Rizalfarhannanda@gmail.com',
+            email: 'kartika@example.com',
             position: 'IT Spesialis',
             registration_date: 'Mar 22, 2025',
+            period: 'Q1 2025 Recruitment',
+            periodId: '1',
+            vacancy: 'IT Specialist',
         },
         {
             id: '08',
             name: 'Ayesha Dear Raisha',
-            email: 'Rizalfarhannanda@gmail.com',
+            email: 'ayesha@example.com',
             position: 'UX Writer',
             registration_date: 'Mar 20, 2025',
+            period: 'Q1 2025 Recruitment',
+            periodId: '1',
+            vacancy: 'UX Writer',
         },
     ]);
 
+    // Add period filter state
+    const [periods, setPeriods] = useState<Period[]>([
+        { id: 1, name: 'Q1 2025 Recruitment' },
+        { id: 2, name: 'Q2 2025 Recruitment' },
+    ]);
+    
+    // Use the string value directly for consistency
+    const [selectedPeriod, setSelectedPeriod] = useState<string | null>(selectedPeriodId);
+    
     // Filter and search state
     const [filteredUsers, setFilteredUsers] = useState(adminUsers);
     const [searchQuery, setSearchQuery] = useState('');
@@ -116,6 +160,37 @@ export default function AdministrationDashboard() {
     const [editUser, setEditUser] = useState<Partial<AdminUser>>({});
     const [isLoading, setIsLoading] = useState(false);
 
+    // Effect to filter users by company ID and period ID
+    useEffect(() => {
+        let result = adminUsers;
+        
+        // Filter by company ID (would be implemented with real data)
+        // This is just a placeholder for the actual implementation
+        // result = result.filter(user => user.companyId === companyId);
+        
+        // Filter by period using periodId instead of name
+        if (selectedPeriod) {
+            result = result.filter(user => user.periodId === selectedPeriod);
+        }
+
+        // Apply other filters
+        if (searchQuery) {
+            result = result.filter(
+                (user) =>
+                    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.position.toLowerCase().includes(searchQuery.toLowerCase()),
+            );
+        }
+
+        if (positionFilter !== 'all') {
+            result = result.filter((user) => user.position.toLowerCase() === positionFilter.toLowerCase());
+        }
+
+        setFilteredUsers(result);
+        setIsFilterActive(searchQuery !== '' || positionFilter !== 'all' || selectedPeriod !== null);
+    }, [companyId, selectedPeriod, searchQuery, positionFilter]);
+    
     // Filter users based on search and position filter
     const handleSearch = (query: string) => {
         setSearchQuery(query);
@@ -150,6 +225,8 @@ export default function AdministrationDashboard() {
     const resetFilters = () => {
         setSearchQuery('');
         setPositionFilter('all');
+        setSelectedPeriod(null);
+        setSelectedPeriodId(null); // Also clear the localStorage value
         setFilteredUsers(adminUsers);
         setIsFilterActive(false);
     };
@@ -231,6 +308,30 @@ export default function AdministrationDashboard() {
                                 <PopoverContent className="w-72">
                                     <div className="space-y-4">
                                         <h4 className="font-medium text-gray-900">Filters</h4>
+                                        
+                                        {/* Add period filter */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="period-filter" className="text-sm text-gray-700">
+                                                Period
+                                            </Label>
+                                            <Select 
+                                                value={selectedPeriod?.toString() || ''} 
+                                                onValueChange={(value) => setSelectedPeriod(value ? value : null)}
+                                            >
+                                                <SelectTrigger id="period-filter">
+                                                    <SelectValue placeholder="All Periods" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="">All Periods</SelectItem>
+                                                    {periods.map(period => (
+                                                        <SelectItem key={period.id} value={period.id.toString()}>
+                                                            {period.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        
                                         <div className="space-y-2">
                                             <Label htmlFor="position-filter" className="text-sm text-gray-700">
                                                 Position
@@ -268,6 +369,7 @@ export default function AdministrationDashboard() {
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Name</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Email</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Position</th>
+                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Period</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Registration Date</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Action</th>
                                     </tr>
@@ -279,6 +381,7 @@ export default function AdministrationDashboard() {
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.name}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.email}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.position}</td>
+                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.period}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.registration_date}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap">
                                                 <div className="flex items-center space-x-2">

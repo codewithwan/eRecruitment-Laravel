@@ -2,35 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class Vacancies extends Model
+/**
+ * @deprecated Use Vacancy model instead
+ */
+class Vacancies extends Vacancy
 {
-    protected $fillable = [
-        'title',
-        'department',
-        'location',
-        'requirements',
-        'benefits',
-        'user_id',
-    ];
-
-    protected $casts = [
-        'requirements' => 'array',
-        'benefits' => 'array',
-    ];
-
-    /**
-     * Get the user that created this job.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function candidates()
-    {
-        return $this->hasMany(Candidate::class, 'vacancy_id');
-    }
+    // This class extends Vacancy, so it inherits all its properties and methods
+    // It's kept for backward compatibility only
 }

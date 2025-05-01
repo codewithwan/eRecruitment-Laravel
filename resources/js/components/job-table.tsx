@@ -11,6 +11,7 @@ export interface Job {
     title: string;
     department: string;
     location: string;
+    salary?: string;
     company?: { name: string };
     company_id?: number | string;
     requirements: string[];
@@ -59,6 +60,7 @@ export function JobTable({
                             <TableHead className="w-[200px] py-3">Title</TableHead>
                             <TableHead className="w-[180px] py-3">Department</TableHead>
                             <TableHead className="w-[180px] py-3">Location</TableHead>
+                            <TableHead className="w-[180px] py-3">Salary</TableHead>
                             <TableHead className="w-[180px] py-3">Company</TableHead>
                             <TableHead className="w-[140px] py-3">Status</TableHead>
                             <TableHead className="w-[140px] py-3">End Date</TableHead>
@@ -108,6 +110,7 @@ export function JobTable({
                                     <TableCell className="whitespace-nowrap">{job.title}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.department}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.location}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.salary || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.company?.name || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">
                                         <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
@@ -141,7 +144,7 @@ export function JobTable({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={8} className="py-4 text-center">
+                                <TableCell colSpan={9} className="py-4 text-center">
                                     No jobs found.
                                 </TableCell>
                             </TableRow>

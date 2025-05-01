@@ -13,18 +13,16 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
-import { ClipboardList, FileBarChart, Github, LayoutGrid, LucideFileQuestion, MessageSquare, Package, SearchIcon, User, Clock, Calendar } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { ClipboardList, FileBarChart, Github, LayoutGrid, LucideFileQuestion, MessageSquare, Package, SearchIcon, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
 const dashboardNavItems: NavItem[] = [{ title: 'Dashboard', href: '/dashboard', icon: LayoutGrid }];
 
-// Simplify periods navigation items - just the list item
-const periodsNavItems: NavItem[] = [{ title: 'Periods List', href: '/dashboard/periods', icon: Clock }];
-
+// Remove periods from shared subitems
 const sharedSubItems: NavItem[] = [
-    { title: 'Administration', href: '/dashboard/company/administration', icon: LayoutGrid }, // Changed back to original path
+    { title: 'Administration', href: '/dashboard/company/administration', icon: LayoutGrid },
     { title: 'Assessment', href: '/dashboard/assessment', icon: ClipboardList },
     { title: 'Interview', href: '/dashboard/interview', icon: MessageSquare },
     { title: 'Reports & Analytics', href: '/dashboard/reports', icon: FileBarChart },
@@ -33,10 +31,10 @@ const sharedSubItems: NavItem[] = [
 // Test and assessment submenu items
 const testAssessmentItems: NavItem[] = [
     { title: 'Question Set', href: '/dashboard/questions', icon: ClipboardList },
-    { title: 'Question Packs', href: '/dashboard/questionpacks', icon: Package }, // Ensure this matches the route
+    { title: 'Question Packs', href: '/dashboard/questionpacks', icon: Package },
 ];
 
-// Updated main navigation items to include Test & Assessment as a dropdown item
+// Updated main navigation items
 const mainNavItems: { name: string; icon: React.ElementType; href?: string; items?: NavItem[] }[] = [
     { name: 'User Management', href: '/dashboard/users', icon: User },
     { name: 'Job Management', href: '/dashboard/jobs', icon: SearchIcon },
@@ -45,13 +43,16 @@ const mainNavItems: { name: string; icon: React.ElementType; href?: string; item
 
 const footerNavItems: NavItem[] = [{ title: 'Github', href: 'https://github.com/codewithwan/eRecruitment-Laravel', icon: Github }];
 
-const companyNavItems: { name: string; icon: React.ElementType; items: NavItem[] }[] = [
+// Updated company items with IDs
+const companyNavItems: { id: number; name: string; icon: React.ElementType; items: NavItem[] }[] = [
     {
+        id: 1,
         name: 'Mitra Karya Analitika',
         icon: LayoutGrid,
         items: sharedSubItems,
     },
     {
+        id: 2,
         name: 'Autentik Karya Analitika',
         icon: ClipboardList,
         items: sharedSubItems,
@@ -92,9 +93,20 @@ export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], 
 
     // Use useEffect to determine which sections should be active based on the current URL
     useEffect(() => {
-        // If URL contains a company path, activate that company's submenu
-        if (url.includes('/administration') || url.includes('/assessment') || url.includes('/interview') || url.includes('/reports')) {
-            setActiveCompany('Mitra Karya Analitika');
+        // If URL contains certain paths, activate the correct company submenu
+        if (url.includes('/periods') || url.includes('/administration') || 
+            url.includes('/assessment') || url.includes('/interview') || 
+            url.includes('/reports')) {
+
+            // Extract companyId from URL if present
+            const urlParams = new URLSearchParams(window.location.search);
+            const companyId = urlParams.get('companyId');
+            
+            if (companyId === '1') {
+                setActiveCompany('Mitra Karya Analitika');
+            } else if (companyId === '2') {
+                setActiveCompany('Autentik Karya Analitika');
+            }
         }
 
         // If URL contains questions or question-packs, activate the Test & Assessment section
@@ -103,7 +115,11 @@ export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], 
         }
     }, [url]);
 
-    const toggleCompany = (companyName: string) => {
+    const toggleCompany = (companyName: string, companyId: number) => {
+        // Update this to navigate with a full page load instead of just updating state
+        window.location.href = `/dashboard/periods?companyId=${companyId}`;
+        
+        // Keep this for UI toggling if needed
         setActiveCompany((prev) => (prev === companyName ? null : companyName));
     };
 
@@ -130,31 +146,14 @@ export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], 
             <SidebarContent>
                 <SidebarNavGroup title="Dashboard" items={dashboardNavItems} />
 
-                {/* Simplified Periods Section with just the list link */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Periods</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                asChild
-                                className={isActive('/dashboard/periods') ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-500'}
-                            >
-                                <Link href="/dashboard/periods">
-                                    <Clock className="mr-2 h-4 w-4" />
-                                    <span>Periods List</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
                 <SidebarGroup>
                     <SidebarGroupLabel>Company</SidebarGroupLabel>
                     <SidebarGroupContent>
                         {companyNavItems.map((company) => (
                             <SidebarMenuItem key={company.name}>
+                                {/* Company name now navigates to periods page AND toggles submenu */}
                                 <SidebarMenuButton
-                                    onClick={() => toggleCompany(company.name)}
+                                    onClick={() => toggleCompany(company.name, company.id)}
                                     className={
                                         activeCompany === company.name
                                             ? 'bg-blue-100 text-blue-600 hover:bg-blue-100'
@@ -172,16 +171,12 @@ export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], 
                                                 <SidebarMenuButton
                                                     asChild
                                                     className={`ml-6 ${
-                                                        isActive(item.href) ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-500'
+                                                        url.includes(item.href.split('?')[0]) 
+                                                            ? 'bg-blue-100 text-blue-600' 
+                                                            : 'hover:bg-blue-50 hover:text-blue-500'
                                                     }`}
                                                 >
-                                                    <Link
-                                                        href={
-                                                            activeCompany 
-                                                                ? `${item.href}?companyId=${company.name === 'Mitra Karya Analitika' ? 1 : 2}`
-                                                                : item.href
-                                                        }
-                                                    >
+                                                    <Link href={`${item.href}?companyId=${company.id}`}>
                                                         {item.icon && <item.icon className="mr-2 h-4 w-4" />}
                                                         <span>{item.title}</span>
                                                     </Link>

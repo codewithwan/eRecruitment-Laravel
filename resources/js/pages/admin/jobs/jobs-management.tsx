@@ -71,6 +71,7 @@ export default function Jobs(props: JobProps) {
         title: '',
         department: '',
         location: '',
+        salary: '',
         company_id: '',
         requirements: '',
         benefits: '',
@@ -84,6 +85,7 @@ export default function Jobs(props: JobProps) {
         title: '',
         department: '',
         location: '',
+        salary: '',
         company_id: '',
         requirements: '',
         benefits: '',
@@ -143,6 +145,7 @@ export default function Jobs(props: JobProps) {
                 title: job.title,
                 department: job.department,
                 location: job.location,
+                salary: job.salary || '',
                 company_id: String(job.company_id || ''),
                 requirements: job.requirements.join('\n'),
                 benefits: job.benefits ? job.benefits.join('\n') : '',
@@ -235,6 +238,7 @@ export default function Jobs(props: JobProps) {
                 title: '',
                 department: '',
                 location: '',
+                salary: '',
                 company_id: '',
                 requirements: '',
                 benefits: '',
@@ -417,6 +421,16 @@ export default function Jobs(props: JobProps) {
                             />
                         </div>
                         <div>
+                            <Label htmlFor="salary">Salary</Label>
+                            <Input 
+                                id="salary" 
+                                name="salary" 
+                                placeholder="Enter salary range or amount"
+                                value={newJob.salary} 
+                                onChange={handleCreateJobChange} 
+                            />
+                        </div>
+                        <div>
                             <Label htmlFor="company_id">Company</Label>
                             <Select name="company_id" value={newJob.company_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, company_id: value }))}>
                                 <SelectTrigger>
@@ -528,6 +542,16 @@ export default function Jobs(props: JobProps) {
                             <Input id="edit-location" name="location" value={editJob.location} onChange={handleEditJobChange} />
                         </div>
                         <div>
+                            <Label htmlFor="edit-salary">Salary</Label>
+                            <Input 
+                                id="edit-salary" 
+                                name="salary" 
+                                placeholder="Enter salary range or amount"
+                                value={editJob.salary} 
+                                onChange={handleEditJobChange} 
+                            />
+                        </div>
+                        <div>
                             <Label htmlFor="edit-company_id">Company</Label>
                             <Select name="company_id" value={String(editJob.company_id)} onValueChange={(value) => setEditJob(prev => ({ ...prev, company_id: value }))}>
                                 <SelectTrigger>
@@ -628,6 +652,9 @@ export default function Jobs(props: JobProps) {
 
                                 <div className="font-medium">Location:</div>
                                 <div className="col-span-2">{selectedJob.location}</div>
+
+                                <div className="font-medium">Salary:</div>
+                                <div className="col-span-2">{selectedJob.salary || 'Not specified'}</div>
 
                                 <div className="font-medium">Company:</div>
                                 <div className="col-span-2">{companies.find(company => company.id === selectedJob.company_id)?.name}</div>

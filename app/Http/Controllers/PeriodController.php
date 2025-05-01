@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Period;
 use App\Models\Company;
+use App\Models\Vacancies;
 use App\Models\Candidate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -11,10 +12,27 @@ use Inertia\Inertia;
 
 class PeriodController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Get periods with associated vacancies
-        $periods = Period::with('vacancy')->get();
+        $companyId = $request->query('companyId');
+        $company = null;
+        
+        // Get the company if ID is provided
+        if ($companyId) {
+            $company = Company::find($companyId);
+        }
+        
+        // Get periods with associated vacancies, filtered by company if provided
+        $periodsQuery = Period::with('vacancy');
+        
+        if ($companyId) {
+            // Filter by vacancies that belong to the selected company
+            $periodsQuery->whereHas('vacancy', function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            });
+        }
+        
+        $periods = $periodsQuery->get();
         
         // Format the data to include dates from the associated vacancy
         $periodsData = $periods->map(function ($period) {
@@ -24,16 +42,24 @@ class PeriodController extends Controller
             if ($period->vacancy) {
                 $data['start_date'] = $period->vacancy->start_date;
                 $data['end_date'] = $period->vacancy->end_date;
+                $data['company'] = $period->vacancy->company ? $period->vacancy->company->name : null;
             } else {
                 $data['start_date'] = null;
                 $data['end_date'] = null;
+                $data['company'] = null;
             }
             
             return $data;
         });
 
-        return Inertia::render('admin/periods/periods-management', [
+        // Ensure we're rendering the periods page, not dashboard
+        return Inertia::render('admin/periods/index', [
             'periods' => $periodsData,
+            'company' => $company ? [
+                'id' => $company->id,
+                'name' => $company->name
+            ] : null,
+            'filtering' => !empty($companyId)
         ]);
     }
 
@@ -51,6 +77,12 @@ class PeriodController extends Controller
         ]);
 
         $period = Period::create($validated);
+
+        // Redirect back with company filter if it was provided
+        if ($request->has('companyId')) {
+            return redirect()->route('periods.index', ['companyId' => $request->companyId])
+                ->with('success', 'Period created successfully');
+        }
 
         return redirect()->route('periods.index')
             ->with('success', 'Period created successfully');

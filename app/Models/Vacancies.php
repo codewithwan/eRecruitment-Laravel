@@ -17,6 +17,7 @@ class Vacancies extends Model
         'title',
         'department',
         'location',
+        'salary',
         'requirements',
         'benefits',
         'start_date',

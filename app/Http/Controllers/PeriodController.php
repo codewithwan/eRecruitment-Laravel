@@ -2,66 +2,60 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Administration;
 use App\Models\Period;
 use App\Models\Company;
 use App\Models\Candidate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PeriodController extends Controller
 {
-    /**
-     * Display a listing of the periods.
-     */
     public function index()
     {
-        $periods = Period::select('id', 'name', 'start_date', 'end_date', 'description')
-            ->get()
-            ->map(function ($period) {
-                return [
-                    'id' => (string)$period->id,
-                    'name' => $period->name,
-                    'startTime' => $period->formatted_start_date,
-                    'endTime' => $period->formatted_end_date,
-                    'description' => $period->description,
-                ];
-            });
+        // Get periods with associated vacancies
+        $periods = Period::with('vacancy')->get();
+        
+        // Format the data to include dates from the associated vacancy
+        $periodsData = $periods->map(function ($period) {
+            $data = $period->toArray();
+            
+            // Add vacancy dates if available
+            if ($period->vacancy) {
+                $data['start_date'] = $period->vacancy->start_date;
+                $data['end_date'] = $period->vacancy->end_date;
+            } else {
+                $data['start_date'] = null;
+                $data['end_date'] = null;
+            }
+            
+            return $data;
+        });
 
-        return Inertia::render('admin/periods/index', [
-            'periods' => $periods
+        return Inertia::render('admin/periods/periods-management', [
+            'periods' => $periodsData,
         ]);
     }
 
-    /**
-     * Show the form for creating a new period.
-     */
     public function create()
     {
         return Inertia::render('admin/periods/create');
     }
 
-    /**
-     * Store a newly created period in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
             'description' => 'nullable|string',
+            'vacancies_id' => 'required|exists:vacancies,id',
         ]);
 
-        Period::create($validated);
+        $period = Period::create($validated);
 
         return redirect()->route('periods.index')
-            ->with('success', 'Period created successfully.');
+            ->with('success', 'Period created successfully');
     }
 
-    /**
-     * Display the specified period.
-     */
     public function show(Period $period)
     {
         return Inertia::render('admin/periods/show', [
@@ -75,9 +69,6 @@ class PeriodController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified period.
-     */
     public function edit(Period $period)
     {
         return Inertia::render('admin/periods/edit', [
@@ -85,33 +76,26 @@ class PeriodController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified period in storage.
-     */
     public function update(Request $request, Period $period)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
             'description' => 'nullable|string',
+            'vacancies_id' => 'required|exists:vacancies,id',
         ]);
 
         $period->update($validated);
 
         return redirect()->route('periods.index')
-            ->with('success', 'Period updated successfully.');
+            ->with('success', 'Period updated successfully');
     }
 
-    /**
-     * Remove the specified period from storage.
-     */
     public function destroy(Period $period)
     {
         $period->delete();
 
         return redirect()->route('periods.index')
-            ->with('success', 'Period deleted successfully.');
+            ->with('success', 'Period deleted successfully');
     }
     
     /**

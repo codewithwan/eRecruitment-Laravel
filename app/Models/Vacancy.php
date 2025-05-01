@@ -13,7 +13,7 @@ class Vacancy extends Model
      *
      * @var string
      */
-    protected $table = 'vacancy';
+    protected $table = 'vacancies';
     
     protected $fillable = [
         'title',
@@ -53,7 +53,7 @@ class Vacancy extends Model
      */
     public function candidates()
     {
-        return $this->hasMany(Candidate::class, 'vacancy_id');
+        return $this->hasMany(Candidate::class, 'vacancies_id');
     }
     
     /**
@@ -61,6 +61,6 @@ class Vacancy extends Model
      */
     public function administrations(): HasMany
     {
-        return $this->hasMany(Administration::class, 'vacancy_id');
+        return $this->hasMany(Administration::class, 'vacancies_id');
     }
 }

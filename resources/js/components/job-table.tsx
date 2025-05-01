@@ -3,17 +3,23 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EyeIcon, Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { format, parseISO } from 'date-fns';
 
 export interface Job {
     id: number;
     title: string;
     department: string;
     location: string;
+    company?: { name: string };
+    company_id?: number | string;
     requirements: string[];
-    benefits?: string[] | null;
-    user_id: number;
+    benefits?: string[];
     created_at: string;
     updated_at: string;
+    status?: string;
+    start_date?: string;
+    end_date?: string;
 }
 
 interface JobTableProps {
@@ -33,6 +39,16 @@ export function JobTable({
     onDelete,
     perPage = 10,
 }: JobTableProps) {
+    // Function to format date to a simple format
+    const formatDate = (dateString: string | undefined) => {
+        if (!dateString) return '-';
+        try {
+            return format(parseISO(dateString), 'dd/MM/yyyy');
+        } catch (error) {
+            return dateString; // Return original if parsing fails
+        }
+    };
+
     return (
         <div className="w-full">
             <div className="overflow-x-auto rounded-md border border-gray-200">
@@ -43,6 +59,9 @@ export function JobTable({
                             <TableHead className="w-[200px] py-3">Title</TableHead>
                             <TableHead className="w-[180px] py-3">Department</TableHead>
                             <TableHead className="w-[180px] py-3">Location</TableHead>
+                            <TableHead className="w-[180px] py-3">Company</TableHead>
+                            <TableHead className="w-[140px] py-3">Status</TableHead>
+                            <TableHead className="w-[140px] py-3">End Date</TableHead>
                             <TableHead className="w-[140px] py-3 text-center">Action</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -64,6 +83,15 @@ export function JobTable({
                                         <TableCell className="w-[180px]">
                                             <Skeleton className="h-4 w-full" />
                                         </TableCell>
+                                        <TableCell className="w-[180px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[140px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[140px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
                                         <TableCell className="w-[140px] text-center">
                                             <div className="flex justify-center space-x-2">
                                                 <Skeleton className="h-8 w-8 rounded-full" />
@@ -80,6 +108,13 @@ export function JobTable({
                                     <TableCell className="whitespace-nowrap">{job.title}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.department}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.location}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.company?.name || '-'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
+                                            {job.status || '-'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">{formatDate(job.end_date)}</TableCell>
                                     <TableCell>
                                         <div className="flex justify-center space-x-3">
                                             <button
@@ -106,7 +141,7 @@ export function JobTable({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="py-4 text-center">
+                                <TableCell colSpan={8} className="py-4 text-center">
                                     No jobs found.
                                 </TableCell>
                             </TableRow>

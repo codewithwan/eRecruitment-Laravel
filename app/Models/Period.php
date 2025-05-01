@@ -13,46 +13,15 @@ class Period extends Model
 
     protected $fillable = [
         'name',
-        'start_date',
-        'end_date',
         'description',
-    ];
-
-    protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
+        'vacancies_id',
     ];
 
     /**
-     * Get the vacancies for this period through the pivot table.
+     * Get the vacancy that this period belongs to.
      */
-    public function vacancies(): BelongsToMany
+    public function vacancy()
     {
-        return $this->belongsToMany(Vacancy::class, 'vacancy_periods')
-            ->withTimestamps();
-    }
-
-    /**
-     * Get the administrations for this period.
-     */
-    public function administrations(): HasMany
-    {
-        return $this->hasMany(Administration::class);
-    }
-
-    /**
-     * Get a formatted version of the start date.
-     */
-    public function getFormattedStartDateAttribute(): string
-    {
-        return $this->start_date->format('d/m/Y');
-    }
-
-    /**
-     * Get a formatted version of the end date.
-     */
-    public function getFormattedEndDateAttribute(): string
-    {
-        return $this->end_date->format('d/m/Y');
+        return $this->belongsTo(Vacancies::class, 'vacancies_id');
     }
 }

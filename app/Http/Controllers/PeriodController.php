@@ -38,10 +38,11 @@ class PeriodController extends Controller
         $periodsData = $periods->map(function ($period) {
             $data = $period->toArray();
             
-            // Add vacancy dates if available
+            // Add vacancy dates if available in a simpler format - fix null check
             if ($period->vacancy) {
-                $data['start_date'] = $period->vacancy->start_date;
-                $data['end_date'] = $period->vacancy->end_date;
+                // Use null coalescing to avoid calling methods on null objects
+                $data['start_date'] = $period->vacancy->start_date ? $period->vacancy->start_date->format('d/m/Y') : null;
+                $data['end_date'] = $period->vacancy->end_date ? $period->vacancy->end_date->format('d/m/Y') : null;
                 $data['company'] = $period->vacancy->company ? $period->vacancy->company->name : null;
             } else {
                 $data['start_date'] = null;
@@ -52,6 +53,22 @@ class PeriodController extends Controller
             return $data;
         });
 
+        // Get available vacancies for the period dropdown with simplified date format - fix error handling
+        $vacancies = Vacancies::select('id', 'start_date', 'end_date')
+            ->whereNotNull('start_date')
+            ->whereNotNull('end_date')
+            ->when($companyId, function($query) use ($companyId) {
+                return $query->where('company_id', $companyId);
+            })
+            ->get()
+            ->map(function ($vacancy) {
+                return [
+                    'id' => $vacancy->id,
+                    'start_date' => $vacancy->start_date ? $vacancy->start_date->format('d/m/Y') : null,
+                    'end_date' => $vacancy->end_date ? $vacancy->end_date->format('d/m/Y') : null,
+                ];
+            });
+
         // Ensure we're rendering the periods page, not dashboard
         return Inertia::render('admin/periods/index', [
             'periods' => $periodsData,
@@ -59,7 +76,8 @@ class PeriodController extends Controller
                 'id' => $company->id,
                 'name' => $company->name
             ] : null,
-            'filtering' => !empty($companyId)
+            'filtering' => !empty($companyId),
+            'vacancies' => $vacancies
         ]);
     }
 
@@ -78,7 +96,24 @@ class PeriodController extends Controller
 
         $period = Period::create($validated);
 
+        // Get the period with its associated vacancy for the response
+        $period->load('vacancy');
+        $periodData = $period->toArray();
+        
+        // Format the response dates to be simpler - fix null checks
+        if ($period->vacancy) {
+            $periodData['start_date'] = $period->vacancy->start_date ? $period->vacancy->start_date->format('d/m/Y') : null;
+            $periodData['end_date'] = $period->vacancy->end_date ? $period->vacancy->end_date->format('d/m/Y') : null;
+        }
+
         // Redirect back with company filter if it was provided
+        if ($request->ajax()) {
+            return response()->json([
+                'message' => 'Period created successfully',
+                'period' => $periodData
+            ]);
+        }
+
         if ($request->has('companyId')) {
             return redirect()->route('periods.index', ['companyId' => $request->companyId])
                 ->with('success', 'Period created successfully');
@@ -113,10 +148,27 @@ class PeriodController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'vacancies_id' => 'required|exists:vacancies,id',
+            'vacancies_id' => 'sometimes|exists:vacancies,id',
         ]);
 
         $period->update($validated);
+
+        // Get the updated period with its associated vacancy for the response
+        $period->load('vacancy');
+        $periodData = $period->toArray();
+        
+        // Format the response dates to be simpler - fix null checks
+        if ($period->vacancy) {
+            $periodData['start_date'] = $period->vacancy->start_date ? $period->vacancy->start_date->format('d/m/Y') : null;
+            $periodData['end_date'] = $period->vacancy->end_date ? $period->vacancy->end_date->format('d/m/Y') : null;
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'message' => 'Period updated successfully',
+                'period' => $periodData
+            ]);
+        }
 
         return redirect()->route('periods.index')
             ->with('success', 'Period updated successfully');

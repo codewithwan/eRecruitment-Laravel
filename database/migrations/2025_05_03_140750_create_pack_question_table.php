@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('pack_question', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('question_pack_id')->constrained('question_packs')->onDelete('cascade');
-            $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
+            $table->foreignId('question_pack_id')->constrained()->onDelete('cascade');
+            $table->foreignId('question_id')->constrained()->onDelete('cascade');
             $table->timestamps();
-
-            // Add a unique constraint to prevent duplicate entries
+            
+            // Ensure each question is only added once per pack
             $table->unique(['question_pack_id', 'question_id']);
         });
     }

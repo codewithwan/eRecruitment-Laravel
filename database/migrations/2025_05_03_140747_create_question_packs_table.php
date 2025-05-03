@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('periods', function (Blueprint $table) {
+        Schema::create('question_packs', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->string('pack_name');
             $table->text('description')->nullable();
+            $table->string('test_type');
+            $table->integer('duration'); // In minutes
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('periods');
+        Schema::dropIfExists('question_packs');
     }
 };

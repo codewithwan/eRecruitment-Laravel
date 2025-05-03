@@ -11,7 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::rename('vacancies', 'vacancy');
+        Schema::create('questions', function (Blueprint $table) {
+            $table->id();
+            $table->text('question_text');
+            $table->json('options');
+            $table->string('correct_answer');
+            $table->string('question_type');
+            $table->timestamps();
+        });
     }
 
     /**
@@ -19,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::rename('vacancy', 'vacancies');
+        Schema::dropIfExists('questions');
     }
 };

@@ -16,12 +16,14 @@ class CompanySeeder extends Seeder
         Company::create([
             'id' => 1,
             'name' => 'Mitra Karya Analitika',
+            'logo' => 'mka_logo.png', // Default logo name, you can update this
             'description' => 'Recruitment partner company',
         ]);
 
         Company::create([
             'id' => 2,
             'name' => 'Autentik Karya Analitika',
+            'logo' => 'aka_logo.png', // Default logo name, you can update this
             'description' => 'Recruitment partner company',
         ]);
     }

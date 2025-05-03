@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Models\Company;
 use App\Models\User;
 use App\Models\Vacancies;
 use Illuminate\Database\Seeder;
@@ -16,6 +17,19 @@ class VacanciesSeeder extends Seeder
     {
         // Get a user to associate with the jobs
         $user = User::where('role', UserRole::HR->value)->first() ?? User::factory()->create(['role' => UserRole::HR->value]);
+        
+        // Get the companies to associate with the vacancies
+        $companies = Company::all();
+        
+        if ($companies->isEmpty()) {
+            $this->command->info('No companies found. Running CompanySeeder first.');
+            $this->call(CompanySeeder::class);
+            $companies = Company::all();
+        }
+        
+        // Get company IDs
+        $mitraKaryaId = $companies->where('name', 'Mitra Karya Analitika')->first()->id ?? 1;
+        $autentikKaryaId = $companies->where('name', 'Autentik Karya Analitika')->first()->id ?? 2;
 
         $vacancies = [
             [
@@ -28,8 +42,14 @@ class VacanciesSeeder extends Seeder
                     'Berpengalaman di bidang marketing minimal 1 tahun',
                     'Komunikatif, Cekatan, Jujur, teliti dan bersedia mobile working',
                 ],
-                'benefits' => null,
+                'benefits' => [
+                    'Gaji pokok kompetitif',
+                    'Asuransi kesehatan',
+                    'Tunjangan transport',
+                    'Pelatihan dan pengembangan karir',
+                ],
                 'user_id' => $user->id,
+                'company_id' => $mitraKaryaId,
             ],
             [
                 'title' => 'PRODUCT SPECIALIST ENVIRONMENTAL',
@@ -41,8 +61,14 @@ class VacanciesSeeder extends Seeder
                     'Berpengalaman di environmental, memiliki kemampuan komunikasi yang baik',
                     'Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working',
                 ],
-                'benefits' => null,
+                'benefits' => [
+                    'Gaji kompetitif',
+                    'Asuransi kesehatan',
+                    'Pengembangan karir',
+                    'Lingkungan kerja yang dinamis',
+                ],
                 'user_id' => $user->id,
+                'company_id' => $mitraKaryaId,
             ],
             [
                 'title' => 'STAFF ACCOUNTING INTERN',
@@ -59,6 +85,7 @@ class VacanciesSeeder extends Seeder
                     'Ilmu yang bermanfaat dan relasi',
                 ],
                 'user_id' => $user->id,
+                'company_id' => $autentikKaryaId,
             ],
             [
                 'title' => 'BUSINESS EXECUTIVE HSE',
@@ -70,8 +97,14 @@ class VacanciesSeeder extends Seeder
                     'Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working',
                     'Diutamakan memiliki pengalaman di bidang marketing atau sebagai user di Laboratorium',
                 ],
-                'benefits' => null,
+                'benefits' => [
+                    'Gaji kompetitif',
+                    'Asuransi kesehatan',
+                    'Tunjangan kinerja',
+                    'Program pengembangan karir',
+                ],
                 'user_id' => $user->id,
+                'company_id' => $autentikKaryaId,
             ],
             [
                 'title' => 'TEKNISI KALIBRASI',
@@ -83,8 +116,14 @@ class VacanciesSeeder extends Seeder
                     'Cekatan, Jujur, Works with minimal supervision dan bersedia mobile working',
                     'Jujur, Ulet dan Proaktif',
                 ],
-                'benefits' => null,
+                'benefits' => [
+                    'Gaji kompetitif',
+                    'BPJS Kesehatan dan Ketenagakerjaan',
+                    'Tunjangan transport',
+                    'Pelatihan teknis berkala',
+                ],
                 'user_id' => $user->id,
+                'company_id' => $mitraKaryaId,
             ],
         ];
 

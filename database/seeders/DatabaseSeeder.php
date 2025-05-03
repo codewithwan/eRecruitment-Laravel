@@ -17,8 +17,11 @@ class DatabaseSeeder extends Seeder
             CompanySeeder::class,
             VacanciesSeeder::class,
             PeriodSeeder::class,
+            QuestionSeeder::class,
+            QuestionPackSeeder::class,
+            AssessmentSeeder::class,
             CandidateSeeder::class,
-            // Add administration seeder if needed
+            AdministrationSeeder::class,
         ]);
     }
 }

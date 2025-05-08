@@ -248,7 +248,7 @@ export default function Jobs(props: JobProps) {
                         <div className="flex items-center gap-4">
                             <SearchBar
                             icon={<Search className="w-4 h-4" />}
-                            placeholder="Cari user..."
+                            placeholder="Search Jobs..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />

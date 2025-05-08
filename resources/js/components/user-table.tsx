@@ -15,6 +15,7 @@ export interface User {
 }
 
 interface PaginationData {
+    
     total: number;
     per_page: number;
     current_page: number;

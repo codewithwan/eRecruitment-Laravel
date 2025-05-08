@@ -1,10 +1,11 @@
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
-import { File, Github, LayoutGrid, LucideFileQuestion, SearchIcon, User } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { File, Github, LayoutGrid, LucideFileQuestion, SearchIcon, User, FileText, Package } from 'lucide-react'; // Tambahkan ikon untuk submenu
 import AppLogo from './app-logo';
+import { useState } from 'react';
 
 const dashboardNavItems: NavItem[] = [
     {
@@ -34,11 +35,26 @@ const mainNavItems: NavItem[] = [
         icon: SearchIcon,
     },
     {
-        title: 'Question',
-        href: '/dashboard/questions',
+        title: 'Test & Assessment',
+        href: '/dashboard/questions/question-set',
         icon: LucideFileQuestion,
+        children: [
+            {
+                title: 'Question Set',
+                href: '/dashboard/questions/question-set',
+                icon: FileText, 
+            },
+            {
+                title: 'Question Packs',
+                href: '/dashboard/questions/question-packs',
+                icon: Package, 
+            },
+        ],
     },
 ];
+
+
+
 
 const footerNavItems: NavItem[] = [
     {
@@ -51,6 +67,7 @@ const footerNavItems: NavItem[] = [
 // Custom Nav function that highlights active items
 function NavMain(title: string, { items }: { items: NavItem[] }) {
     const { url } = usePage();
+    const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
     return (
         <SidebarMenu>
@@ -58,28 +75,31 @@ function NavMain(title: string, { items }: { items: NavItem[] }) {
                 <h2 className="text-muted-foreground px-2 text-xs font-semibold tracking-tight">{title}</h2>
             </div>
             {items.map((item) => {
-                // Check if current URL matches exactly this nav item
-                // For Dashboard, handle the root URL case specifically
-                let isActive = false;
-                if (item.href === '/dashboard') {
-                    // Dashboard is active only if URL is exactly /dashboard or /
-                    isActive = url === '/dashboard' || url === '/';
-                } else {
-                    // For other items, match the exact path
-                    isActive = url === item.href;
-                }
+                // Perbaiki logika isActive
+                const isActive = item.children
+                    ? false // Menu utama tidak pernah aktif
+                    : url.startsWith(item.href); // Aktif jika URL cocok dengan menu utama (tanpa submenu)
+
+                const isExpanded = expandedMenu === item.title || (item.children && item.children.some((subItem) => url.startsWith(subItem.href)));
 
                 return (
                     <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
                             asChild
                             className={
-                                isActive ? 'bg-blue-100 text-blue-600 hover:bg-blue-100 hover:text-blue-600' : 'hover:bg-blue-50 hover:text-blue-500'
+                                isActive
+                                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-100 hover:text-blue-600'
+                                    : 'hover:bg-blue-50 hover:text-blue-500'
                             }
                             onClick={(e) => {
-                                // Prevent navigation if clicking on already active item
-                                if (isActive) {
+                                if (item.children) {
                                     e.preventDefault();
+                                    setExpandedMenu(isExpanded ? null : item.title);
+
+                                    // Navigate to the default child (Question Set) if not expanded
+                                    if (!isExpanded) {
+                                        router.visit(item.children[0].href); // Default to the first child
+                                    }
                                 }
                             }}
                         >
@@ -88,6 +108,27 @@ function NavMain(title: string, { items }: { items: NavItem[] }) {
                                 <span>{item.title}</span>
                             </Link>
                         </SidebarMenuButton>
+
+                        {/* Render submenu if expanded */}
+                        {item.children && isExpanded && (
+                            <SidebarMenuSub>
+                                {item.children.map((subItem) => (
+                                    <SidebarMenuSubItem key={subItem.href}>
+                                        <SidebarMenuSubButton
+                                            href={subItem.href}
+                                            className={
+                                                url.startsWith(subItem.href)
+                                                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-100 hover:text-blue-600'
+                                                    : 'hover:bg-blue-50 hover:text-blue-500'
+                                            }
+                                        >
+                                            {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />}
+                                            {subItem.title}
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                ))}
+                            </SidebarMenuSub>
+                        )}
                     </SidebarMenuItem>
                 );
             })}

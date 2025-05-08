@@ -283,7 +283,7 @@ export default function UserManagement(props: UserManagementProps) {
                             <div className="flex items-center gap-4">
                                 <SearchBar
                                     icon={<Search className="h-4 w-4" />}
-                                    placeholder="Cari user..."
+                                    placeholder="Search user..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />

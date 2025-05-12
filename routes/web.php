@@ -4,9 +4,13 @@ use App\Enums\UserRole;
 use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 
+Route::get('/data-pribadi', function () {
+        return Inertia::render('DataPribadiForm');
+    })->name('data.pribadi');
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     return Auth::user()->role === UserRole::HR

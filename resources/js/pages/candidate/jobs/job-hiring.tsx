@@ -70,8 +70,8 @@ interface FilterButtonProps {
 }
 
 const FilterButton = styled.button<FilterButtonProps>`
-  background: ${(props) => (props.active ? '#1DA1F2' : '#fff')};
-  color: ${(props) => (props.active ? '#fff' : '#1DA1F2')};
+  background: ${({ active }: FilterButtonProps) => (active ? '#1DA1F2' : '#fff')};
+  color: ${({ active }: FilterButtonProps) => (active ? '#fff' : '#1DA1F2')};
   border: 1px solid #1DA1F2;
   border-radius: 20px;
   padding: 8px 16px;
@@ -81,7 +81,7 @@ const FilterButton = styled.button<FilterButtonProps>`
   transition: all 0.2s;
 
   &:hover {
-    background: ${(props) => (props.active ? '#1A91DA' : '#E5F1FB')};
+    background: ${({ active }: FilterButtonProps) => (active ? '#1A91DA' : '#E5F1FB')};
   }
 `;
 

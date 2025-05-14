@@ -4,8 +4,15 @@ use App\Enums\UserRole;
 use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
+Route::get('/job-hiring', function () {
+    return Inertia::render('candidate/jobs/job-hiring');
+})->name('job-hiring');
+Route::get('/application-history', function () {
+    return Inertia::render('candidate/jobs/application-history');
+})->name('application-history');
 
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {

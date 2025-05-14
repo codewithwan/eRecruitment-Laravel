@@ -17,7 +17,7 @@ return new class extends Migration
             // Tambahkan foreign key baru
             $table->foreignId('department_id')
                   ->nullable()
-                  ->constrained()
+                  ->constrained('department') // Changed from 'departments' to 'department'
                   ->onDelete('cascade')
                   ->after('job_type_id'); // sesuaikan posisi
         });

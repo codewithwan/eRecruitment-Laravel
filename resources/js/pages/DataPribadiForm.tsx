@@ -17,55 +17,71 @@ import SocialMediaForm from '../components/forms/SocialMediaForm';
 import TambahSocialMediaForm from '../components/forms/TambahSocialMediaForm';
 import DataTambahanForm from '../components/forms/DataTambahanForm';
 import TambahSkillsForm from '../components/forms/TambahSkillsForm';
+import axios from 'axios';
+import { router } from '@inertiajs/react';
+
+interface Props {
+    profile?: {
+        no_ektp: string;
+        gender: string;
+        phone_number: string;
+        npwp: string;
+        about_me: string;
+        place_of_birth: string;
+        date_of_birth: string;
+        address: string;
+        province: string;
+        city: string;
+        district: string;
+        village: string;
+        rt: string;
+        rw: string;
+    };
+    user: {
+        name: string;
+        email: string;
+    };
+}
+
+// Helper functions for gender conversion
+const convertGender = (dbGender: string): string => {
+    return dbGender === 'male' ? 'Pria' : dbGender === 'female' ? 'Wanita' : '';
+};
+
+const convertGenderForDb = (formGender: string): string => {
+    return formGender === 'Pria' ? 'male' : formGender === 'Wanita' ? 'female' : '';
+};
+
+
+const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+};
+
 
 enum SubFormType {
     NONE,
     TAMBAH_PENDIDIKAN
 }
 
-interface FormData {
-    nik: string;
-    nama: string;
-    email: string;
-    gender: string;
-    agama: string;
-    namaIbu: string;
-    noTelp: string; // Add this field
-    npwp: string;
-    punyaNpwp: boolean;
-    tentangSaya: string;
-    tempatLahir: string;
-    tanggalLahir: string;
-    alamat: string;
-    provinsi: string;
-    kota: string;
-    kecamatan: string;
-    kelurahan: string;
-    rt: string;
-    rw: string;
-}
-
-const DataPribadiForm: React.FC = () => {
-    const [form, setForm] = useState<FormData>({
-        nik: '',
-        nama: '',
-        email: '',
-        gender: '',
-        agama: '',
-        namaIbu: '',
-        noTelp: '', // Add this field
-        npwp: '',
-        punyaNpwp: false,
-        tentangSaya: '',
-        tempatLahir: '',
-        tanggalLahir: '',
-        alamat: '',
-        provinsi: '',
-        kota: '',
-        kecamatan: '',
-        kelurahan: '',
-        rt: '',
-        rw: ''
+const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
+    const [form, setForm] = useState({
+        no_ektp: profile?.no_ektp || '',
+        gender: profile?.gender ? convertGender(profile.gender) : '',
+        phone_number: profile?.phone_number || '',
+        npwp: profile?.npwp || '',
+        about_me: profile?.about_me || '',
+        place_of_birth: profile?.place_of_birth || '',
+        date_of_birth: formatDate(profile?.date_of_birth) || '',
+        address: profile?.address || '',
+        province: profile?.province || '',
+        city: profile?.city || '',
+        district: profile?.district || '',
+        village: profile?.village || '',
+        rt: profile?.rt || '',
+        rw: profile?.rw || '',
+        punyaNpwp: false
     });
 
     const [activeForm, setActiveForm] = useState<FormType>(FormType.DATA_PRIBADI);
@@ -76,6 +92,7 @@ const DataPribadiForm: React.FC = () => {
     const [hasPrestasiValue, setHasPrestasiValue] = useState<boolean | null>(null);
     const [showSocialMediaForm, setShowSocialMediaForm] = useState(false);
     const [activeTambahanForm, setActiveTambahanForm] = useState<string | null>(null);
+    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -86,10 +103,38 @@ const DataPribadiForm: React.FC = () => {
         }));
     };
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log("Data dikirim:", form);
-        // Siap untuk kirim ke Laravel API nanti
+        setMessage(null);
+
+        try {
+            const submitData = {
+                ...form,
+                gender: convertGenderForDb(form.gender),
+                date_of_birth: formatDate(form.date_of_birth),
+                npwp: form.punyaNpwp ? null : form.npwp
+            };
+
+            await router.post('/candidate/profile/data-pribadi', submitData, {
+                onSuccess: (page) => {
+                    // Update the form with the new data from the response
+                    const flash = page.props.flash as { profile?: typeof form } | undefined;
+                    if (flash?.profile) {
+                        setForm(prevForm => ({
+                            ...prevForm,
+                            ...flash?.profile,
+                            gender: convertGender((page.props.flash as { profile: typeof form }).profile.gender)
+                        }));
+                    }
+                    setMessage({ type: 'success', text: 'Data berhasil disimpan' });
+                },
+                preserveScroll: true
+            });
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            setMessage({ type: 'error', text: 'Terjadi kesalahan saat menyimpan data' });
+        }
     };
 
     const renderDataTambahanForm = () => {
@@ -216,9 +261,9 @@ const DataPribadiForm: React.FC = () => {
                             <form onSubmit={handleSubmit} className="p-6 space-y-6">
                                 <div className="grid grid-cols-2 gap-6 text-black">
                                     <div>
-                                        <InputField label="No. E-KTP" name="nik" value={form.nik} onChange={handleChange} />
-                                        <InputField label="Nama Lengkap" name="nama" value={form.nama} onChange={handleChange} />
-                                        <InputField label="Email" name="email" type="email" value={form.email} onChange={handleChange} />
+                                        <InputField label="No. E-KTP" name="no_ektp" value={form.no_ektp} onChange={handleChange} />
+                                        <InputField label="Nama Lengkap" name="nama" value={user.name} onChange={handleChange} />
+                                        <InputField label="Email" name="email" type="email" value={user.email} onChange={handleChange} />
 
                                         <SelectField
                                             label="Gender"
@@ -231,8 +276,8 @@ const DataPribadiForm: React.FC = () => {
                                     <div>
                                         <InputField
                                             label="No. Telepon"
-                                            name="noTelp"
-                                            value={form.noTelp}
+                                            name="phone_number"
+                                            value={form.phone_number}
                                             onChange={handleChange}
                                         />
                                         <div className="space-y-2">
@@ -268,8 +313,8 @@ const DataPribadiForm: React.FC = () => {
                                 <div>
                                     <label className="block mb-1 text-sm font-medium text-gray-700">Tentang Saya</label>
                                     <textarea
-                                        name="tentangSaya"
-                                        value={form.tentangSaya}
+                                        name="about_me"
+                                        value={form.about_me}
                                         onChange={handleChange}
                                         placeholder="Ceritakan tentang Anda min. 200 karakter"
                                         className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-24 
@@ -279,25 +324,31 @@ const DataPribadiForm: React.FC = () => {
 
                                 <h3 className="font-semibold border-b pb-2">Kelahiran</h3>
                                 <div className="grid grid-cols-2 gap-6">
-                                    <InputField label="Tempat Lahir" name="tempatLahir" value={form.tempatLahir} onChange={handleChange} />
-                                    <InputField label="Tanggal Lahir" name="tanggalLahir" type="date" value={form.tanggalLahir} onChange={handleChange} />
+                                    <InputField label="Tempat Lahir" name="place_of_birth" value={form.place_of_birth} onChange={handleChange} />
+                                    <InputField label="Tanggal Lahir" name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} />
                                 </div>
 
                                 <h3 className="font-semibold border-b pb-2">Alamat</h3>
                                 <div className="grid grid-cols-2 gap-6">
                                     <div>
-                                        <InputField label="Alamat" name="alamat" value={form.alamat} onChange={handleChange} />
-                                        <InputField label="Provinsi" name="provinsi" value={form.provinsi} onChange={handleChange} />
-                                        <InputField label="Kecamatan" name="kecamatan" value={form.kecamatan} onChange={handleChange} />
+                                        <InputField label="Alamat" name="address" value={form.address} onChange={handleChange} />
+                                        <InputField label="Provinsi" name="province" value={form.province} onChange={handleChange} />
+                                        <InputField label="Kecamatan" name="district" value={form.district} onChange={handleChange} />
                                     </div>
                                     <div>
-                                        <InputField label="Kota/Kabupaten" name="kota" value={form.kota} onChange={handleChange} />
+                                        <InputField label="Kota/Kabupaten" name="city" value={form.city} onChange={handleChange} />
                                         <div className="grid grid-cols-2 gap-4">
                                             <InputField label="RT" name="rt" value={form.rt} onChange={handleChange} />
                                             <InputField label="RW" name="rw" value={form.rw} onChange={handleChange} />
                                         </div>
                                     </div>
                                 </div>
+
+                                {message && (
+                                    <div className={`p-4 rounded ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {message.text}
+                                    </div>
+                                )}
 
                                 <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
                                     Save & Next
@@ -313,8 +364,8 @@ const DataPribadiForm: React.FC = () => {
         <div className="min-h-screen bg-white">
             <NavbarHeader />
             <ProfileHeader
-                name={form.nama || "Putri Angreani"}
-                email={form.email || "putriangreani@gmail.com"}
+                name={user.name}
+                email={user.email}
             />
 
             <div className="mx-6 flex space-x-6">

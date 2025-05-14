@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Models\Department;
 use App\Models\User;
 use App\Models\Vacancies;
 use Illuminate\Database\Seeder;
@@ -17,10 +18,15 @@ class VacanciesSeeder extends Seeder
         // Get a user to associate with the jobs
         $user = User::where('role', UserRole::HR->value)->first() ?? User::factory()->create(['role' => UserRole::HR->value]);
 
+        // Get department IDs from correct table name
+        $departments = Department::query()
+            ->from('department') // Specify the correct table name
+            ->pluck('id', 'name');
+
         $vacancies = [
             [
                 'title' => 'BUSINESS EXECUTIVE',
-                'department' => 'Marketing',
+                'department_id' => $departments['Marketing'],
                 'location' => 'Semarang',
                 'requirements' => [
                     'Laki-laki atau perempuan',
@@ -33,7 +39,7 @@ class VacanciesSeeder extends Seeder
             ],
             [
                 'title' => 'PRODUCT SPECIALIST ENVIRONMENTAL',
-                'department' => 'Teknik',
+                'department_id' => $departments['Teknik'],
                 'location' => 'Semarang',
                 'requirements' => [
                     'Laki-laki atau perempuan',
@@ -46,7 +52,7 @@ class VacanciesSeeder extends Seeder
             ],
             [
                 'title' => 'STAFF ACCOUNTING INTERN',
-                'department' => 'Akuntansi',
+                'department_id' => $departments['Akuntansi'],
                 'location' => 'Bandung',
                 'requirements' => [
                     'Laki-laki atau perempuan',
@@ -62,7 +68,7 @@ class VacanciesSeeder extends Seeder
             ],
             [
                 'title' => 'BUSINESS EXECUTIVE HSE',
-                'department' => 'Kesehatan',
+                'department_id' => $departments['Kesehatan'],
                 'location' => 'Semarang',
                 'requirements' => [
                     'D3/S1 Analis Kesehatan, atau relevan',
@@ -75,7 +81,7 @@ class VacanciesSeeder extends Seeder
             ],
             [
                 'title' => 'TEKNISI KALIBRASI',
-                'department' => 'Teknik',
+                'department_id' => $departments['Teknik'],
                 'location' => 'Semarang',
                 'requirements' => [
                     'Minimal D3 Teknik Elektro, Teknik Mesin atau Relevan',

@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -19,8 +20,82 @@ const scrollToSection = (id: string) => {
 };
 
 export default function Welcome(props: WelcomeProps) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { vacancies } = props;
     const { auth } = usePage<SharedData>().props;
+
+    const backgroundImages = [
+        "/images/slider1.png",
+        "/images/slider2.png",
+        "/images/slider3.png",
+        "/images/slider4.png",
+    ];
+
+    const jobList = [
+        {
+          title: "Data Analyst",
+          department: "Data",
+          deadline: "25 Maret 2025"
+        },
+        {
+          title: "Software Engineer",
+          department: "Engineering",
+          deadline: "30 Maret 2025"
+        },
+        {
+          title: "Game Developer",
+          department: "Creative",
+          deadline: "5 April 2025"
+        },
+        {
+          title: "Penetration Tester",
+          department: "Security",
+          deadline: "10 April 2025"
+        },
+        {
+          title: "UI/UX Designer",
+          department: "Design",
+          deadline: "15 April 2025"
+        },
+        {
+          title: "Project Manager",
+          department: "Management",
+          deadline: "20 April 2025"
+        },
+      ];
+
+      const benefitCards = [
+        {
+          title: "Lingkungan Kerja Profesional",
+          description: "Kami menciptakan budaya kerja yang kolaboratif dan mendukung perkembangan karier setiap karyawan.",
+          icon: "/images/benefit1.png"
+        },
+        {
+          title: "Inovasi dan Teknologi",
+          description: "Bergabunglah dengan tim yang selalu beradaptasi dengan teknologi terbaru dan menghadirkan solusi terbaik bagi pelanggan.",
+          icon: "/images/benefit2.png"
+        },
+        {
+          title: "Benefit Kompetitif",
+          description: "Kami menawarkan kompensasi dan tunjangan yang menarik sesuai dengan kinerja dan kontribusi Anda.",
+          icon: "/images/benefit3.png"
+        },
+        {
+          title: "Kesempatan Berkembang",
+          description: "Kami menyediakan pelatihan dan pengembangan berkelanjutan untuk meningkatkan keterampilan dan kompetensi Anda.",
+          icon: "/images/benefit4.png"
+        },
+      ];
+      
+
+    const [bgIndex, setBgIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setBgIndex((prev) => (prev + 1) % backgroundImages.length);
+        }, 10000);
+        return () => clearInterval(interval);
+    }, [backgroundImages.length]);
 
     return (
         <>
@@ -35,18 +110,10 @@ export default function Welcome(props: WelcomeProps) {
                     <div className="container mx-auto flex items-center justify-between px-6 py-4">
                         <div className="text-[20px] font-bold text-gray-800">MITRA KARYA GROUP</div>
                         <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex">
-                            <a href="#" className="hover:text-blue-600">
-                                Beranda
-                            </a>
-                            <a href="#tentang" className="hover:text-blue-600">
-                                Tentang Kami
-                            </a>
-                            <a href="#lowongan" className="hover:text-blue-600">
-                                Lowongan Pekerjaan
-                            </a>
-                            <a href="#kontak" className="hover:text-blue-600">
-                                Kontak
-                            </a>
+                            <a href="#" className="hover:text-blue-600">Beranda</a>
+                            <a href="#tentang" className="hover:text-blue-600">Tentang Kami</a>
+                            <a href="#lowongan" className="hover:text-blue-600">Lowongan Pekerjaan</a>
+                            <a href="#kontak" className="hover:text-blue-600">Kontak</a>
                         </nav>
                         <div className="flex items-center gap-4">
                             {auth?.user ? (
@@ -58,9 +125,7 @@ export default function Welcome(props: WelcomeProps) {
                                 </Link>
                             ) : (
                                 <>
-                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">
-                                        Masuk
-                                    </Link>
+                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">Masuk</Link>
                                     <Link
                                         href={route('register')}
                                         className="rounded-md bg-blue-600 px-[16px] py-[10px] text-[14px] text-white hover:bg-blue-700"
@@ -74,12 +139,18 @@ export default function Welcome(props: WelcomeProps) {
                 </header>
 
                 {/* Hero Section */}
-                <section
-                    className="relative h-[1400px] bg-cover bg-center pt-[128px] pb-[80px] text-center text-white"
-                    style={{ backgroundImage: 'url(/dummy-hero.jpg)' }}
-                >
-                    <div className="bg-opacity-50 absolute inset-0 bg-black"></div>
-                    <div className="relative container mx-auto flex h-full flex-col items-center justify-center px-6">
+                <section className="relative h-[1400px] pt-[128px] pb-[80px] text-center text-white">
+                    {/* Background image slideshow */}
+                    {backgroundImages.map((img, index) => (
+                        <div
+                            key={index}
+                            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${index === bgIndex ? 'opacity-100 z-0' : 'opacity-0 z-0'}`}
+                            style={{ backgroundImage: `url(${img})` }}
+                        />
+                    ))}
+                    {/* Black overlay */}
+                    <div className="absolute inset-0 bg-black opacity-60 z-10" />
+                    <div className="relative z-20 container mx-auto flex h-full flex-col items-center justify-center px-6">
                         <h1 className="mb-[16px] text-[36px] font-bold md:text-[56px]">
                             Selamat Datang di E-Recruitment
                             <br />
@@ -93,7 +164,6 @@ export default function Welcome(props: WelcomeProps) {
                             >
                                 Lihat Lowongan
                             </Button>
-
                             <Button
                                 variant="outline"
                                 className="rounded-md border border-white px-[24px] py-[12px] text-white hover:bg-white hover:text-blue-600"
@@ -104,45 +174,34 @@ export default function Welcome(props: WelcomeProps) {
                     </div>
                 </section>
 
-                {/* Mengapa Bergabung */}
-                <section className="bg-white py-20 text-center">
+               {/* Section Kenapa Bergabung dengan Ikon Gambar */}
+                <section className="bg-white py-20 text-left">
                     <div className="container mx-auto px-6">
-                        <h2 className="mb-[16px] text-[24px] font-bold md:text-[32px]">MENGAPA BERGABUNG DENGAN MITRA KARYA GROUP?</h2>
-                        <p className="mx-auto mb-[48px] max-w-[672px] text-[16px] text-gray-600">
+                        <h2 className="mb-[16px] text-[24px] font-bold md:text-[32px] text-center">MENGAPA BERGABUNG DENGAN MITRA KARYA GROUP?</h2>
+                        <p className="mx-auto mb-[48px] max-w-[672px] text-[16px] text-gray-600 text-center">
                             Kami menawarkan lingkungan kerja yang mendukung, peluang pengembangan karier, serta benefit kompetitif.
                         </p>
-                        <div className="grid grid-cols-1 justify-center gap-6 sm:grid-cols-2 md:grid-cols-4">
-                            <div className="mx-auto flex h-[261px] w-[245px] flex-col justify-start rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                                <div className="mb-3 text-2xl text-blue-600">🏢</div>
-                                <h3 className="mb-2 font-semibold">Lingkungan Kerja Profesional</h3>
-                                <p className="text-sm text-gray-600">Mendukung kolaborasi dan pengembangan profesional secara berkelanjutan.</p>
-                            </div>
-                            <div className="mx-auto flex h-[261px] w-[245px] flex-col justify-start rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                                <div className="mb-3 text-2xl text-pink-500">💡</div>
-                                <h3 className="mb-2 font-semibold">Inovasi dan Teknologi</h3>
-                                <p className="text-sm text-gray-600">Sarana digital modern untuk menunjang proses HRD dan rekrutmen.</p>
-                            </div>
-                            <div className="mx-auto flex h-[261px] w-[245px] flex-col justify-start rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                                <div className="mb-3 text-2xl text-purple-500">💰</div>
-                                <h3 className="mb-2 font-semibold">Benefit Kompetitif</h3>
-                                <p className="text-sm text-gray-600">Kompensasi menarik dan benefit sesuai industri terbaik.</p>
-                            </div>
-                            <div className="mx-auto flex h-[261px] w-[245px] flex-col justify-start rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                                <div className="mb-3 text-2xl text-green-500">🚀</div>
-                                <h3 className="mb-2 font-semibold">Kesempatan Berkembang</h3>
-                                <p className="text-sm text-gray-600">Jalur karier jelas dan peluang pelatihan serta promosi.</p>
-                            </div>
+                        <div className="grid grid-cols-1 justify-center gap-[100px] px-[100px] sm:grid-cols-2 md:grid-cols-4">
+                            {benefitCards.map((card, index) => (
+                                <div
+                                    key={index}
+                                    className="flex h-[261px] w-full max-w-[245px] flex-col justify-start rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+                                >
+                                    <img src={card.icon} alt={card.title} className="mb-3 w-10 h-10 object-contain" />
+                                    <h3 className="mb-2 font-semibold text-gray-800">{card.title}</h3>
+                                    <p className="text-sm text-gray-600 leading-relaxed">{card.description}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
-
                 {/* Perusahaan Kami & Lowongan */}
                 <section className="py-[80px] text-center">
                     <div className="container mx-auto px-6">
                         <h2 className="mb-[40px] text-[24px] font-bold md:text-[32px]">Perusahaan Kami</h2>
                         <div className="mb-[40px] flex flex-col justify-center gap-[60px] md:flex-row">
-                        <div className="w-[300px] mx-auto text-left flex items-start gap-4">
-  <img src="/logo1.png" alt="PT AUTENTIK" className="w-[60px] h-[60px] mt-1" />
+                        <div className="w-[528px] mx-auto text-left flex items-start gap-4">
+  <img src="/images/autentik-logo.png" alt="PT AUTENTIK" className="w-[60px] h-[60px] mt-1" />
   <div>
     <h3 className="font-semibold mb-1">PT AUTENTIK KARYA ANALITIKA</h3>
     <p className="text-sm text-gray-600">
@@ -151,8 +210,8 @@ export default function Welcome(props: WelcomeProps) {
   </div>
 </div>
 
-<div className="w-[300px] mx-auto text-left flex items-start gap-4">
-  <img src="/logo2.png" alt="PT AUTENTIK" className="w-[60px] h-[60px] mt-1" />
+<div className="w-[528px] mx-auto text-left flex items-start gap-4">
+  <img src="/images/mitra-logo.png" alt="PT AUTENTIK" className="w-[60px] h-[60px] mt-1" />
   <div>
     <h3 className="font-semibold mb-1">PT MITRA KARYA ANALITIKA</h3>
     <p className="text-sm text-gray-600">
@@ -169,38 +228,45 @@ export default function Welcome(props: WelcomeProps) {
                 </section>
 
                 <section className="bg-[#f6fafe] py-[80px] text-center">
-                    <div className="container mx-auto px-6">
-                        <h2 className="mb-[16px] text-[24px] font-bold md:text-[32px]">LOWONGAN PEKERJAAN TERSEDIA</h2>
-                        <p className="mx-auto mb-[40px] max-w-[672px] text-[16px] text-gray-600">
-                            Temukan posisi yang sesuai dengan minat dan keahlian Anda di PT Mitra Karya Analitika. Kami membuka peluang karier di
-                            berbagai bidang, seperti:
-                        </p>
-                        <div id="lowongan" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-[40px]">
-  {vacancies.map((job, i) => (
-                                <div
-                                    key={i}
-                                    className="mx-auto flex h-[250px] w-[400px] flex-col rounded-xl border border-gray-200 bg-white px-6 pt-6 pb-4 shadow hover:shadow-md"
-                                >
-                                    <div className="mb-1 flex items-center justify-between">
-                                        <h3 className="text-[18px] font-semibold">Data Analyst</h3>
-                                        <span className="rounded bg-blue-100 px-2 py-[2px] text-[12px] font-medium text-blue-600">Department</span>
-                                    </div>
-                                    <div className="mb-3 text-[12px] text-gray-600">PT MITRA KARYA ANALITIKA • Lamar Sebelum: 25 Maret 2025</div>
-                                    <ul className="mb-4 list-inside list-disc space-y-1 text-sm text-gray-700">
-                                        <li>Minimal S1 di bidang IT/Komputer</li>
-                                        <li>Berpengalaman di bidang terkait</li>
-                                        <li>Menguasai bahasa pemrograman atau analisis data</li>
-                                        <li>Mampu bekerja dalam tim.</li>
-                                    </ul>
-                                    <Button className="w-full rounded bg-[#1976f2] py-[10px] text-sm text-white hover:bg-[#125bd1]">
-                                        Lihat Detail
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                        <Button className="rounded-md bg-blue-100 px-[24px] py-[12px] text-blue-600 hover:bg-blue-200">Lihat Semua Lowongan →</Button>
-                    </div>
-                </section>
+  <div className="container mx-auto px-6">
+    <h2 className="mb-[16px] text-[24px] font-bold md:text-[32px]">LOWONGAN PEKERJAAN TERSEDIA</h2>
+    <p className="mx-auto mb-[40px] max-w-[672px] text-[16px] text-gray-600">
+      Temukan posisi yang sesuai dengan minat dan keahlian Anda di PT Mitra Karya Analitika. Kami membuka peluang karier di
+      berbagai bidang, seperti:
+    </p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-[40px]">
+      {jobList.map((job, i) => (
+        <div
+          key={i}
+          className="mx-auto flex h-auto w-[400px] flex-col rounded-xl border border-gray-200 bg-white px-6 pt-6 pb-4 shadow hover:shadow-md text-left"
+        >
+          <div className="mb-1 flex items-center justify-between">
+            <h3 className="text-[18px] font-semibold">{job.title}</h3>
+            <span className="rounded bg-blue-100 px-2 py-[2px] text-[12px] font-medium text-blue-600">
+              {job.department}
+            </span>
+          </div>
+          <div className="mb-3 text-[12px] text-gray-600">
+            PT MITRA KARYA ANALITIKA • Lamar Sebelum: {job.deadline}
+          </div>
+          <ul className="mb-4 list-disc pl-5 text-sm text-gray-700">
+            <li>Minimal S1 di bidang IT/Komputer</li>
+            <li>Berpengalaman di bidang terkait</li>
+            <li>Menguasai bahasa pemrograman atau analisis data</li>
+            <li>Mampu bekerja dalam tim.</li>
+          </ul>
+          <Button className="w-full rounded bg-[#1976f2] py-[10px] text-sm text-white hover:bg-[#125bd1]">
+            Lihat Detail
+          </Button>
+        </div>
+      ))}
+    </div>
+    <Button className="rounded-md bg-blue-100 px-[24px] py-[12px] text-blue-600 hover:bg-blue-200">
+      Lihat Semua Lowongan →
+    </Button>
+  </div>
+</section>
+
                 {/* Cara Mendaftar */}
                 <section className="py-[80px] bg-white text-center">
   <div className="container mx-auto px-6 relative">
@@ -246,24 +312,31 @@ export default function Welcome(props: WelcomeProps) {
 </section>
 
 
-                {/* Siap untuk Bergabung */}
-                <section className="py-[80px]">
-                    <div className="container mx-auto px-6">
-                        <div className="relative overflow-hidden rounded-[24px] bg-black">
-                            <img src="/bg-register.jpg" alt="Bergabung" className="h-[300px] w-full object-cover opacity-50" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-white">
-                                <h2 className="mb-4 text-[28px] font-bold md:text-[36px]">Siap untuk Bergabung?</h2>
-                                <p className="mb-6 max-w-[560px] text-center text-[14px] md:text-[16px]">
-                                    Jangan lewatkan kesempatan untuk menjadi bagian dari tim PT Mitra Karya Analitika.
-                                </p>
-                                <div className="flex gap-4">
-                                    <Button className="rounded-md bg-white px-6 py-3 text-blue-600 hover:bg-blue-50">Lihat Lowongan</Button>
-                                    <Button className="rounded-md bg-blue-600 px-6 py-3 text-white hover:bg-blue-700">Tentang Kami</Button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+<section className="py-[80px]">
+  <div className="container mx-auto px-6">
+    <div className="relative overflow-hidden rounded-[24px] bg-black">
+      <img
+        src="/images/siap-bergabung.png"
+        alt="Bergabung"
+        className="h-[300x] w-full object-cover opacity-60"
+      />
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-white text-center">
+        <h2 className="mb-4 text-[28px] font-bold md:text-[36px]">Siap untuk Bergabung?</h2>
+        <p className="mb-6 max-w-[560px] text-[14px] md:text-[16px]">
+          Jangan lewatkan kesempatan untuk menjadi bagian dari tim PT Mitra Karya Analitika.
+        </p>
+        <div className="flex gap-4 flex-wrap justify-center">
+          <Button className="rounded-md bg-white px-6 py-3 text-blue-600 hover:bg-blue-50">
+            Lihat Lowongan
+          </Button>
+          <Button className="rounded-md bg-blue-600 px-6 py-3 text-white hover:bg-blue-700">
+            Tentang Kami
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
                 {/* Footer */}
                 <footer className="bg-[#f6fafe] py-16">

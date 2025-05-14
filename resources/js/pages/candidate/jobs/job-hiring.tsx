@@ -25,23 +25,34 @@ const PageWrapper = styled.div`
 `;
 
 const JobHiringContainer = styled.div`
-  padding: 40px 0 60px 0;
-  max-width: 900px;
   margin: 0 auto;
+`;
+
+const TeamImageWrapper = styled.div`
+  width: 100%;
+  height: 500px; // Changed from 300px
+  position: relative;
+  margin-bottom: 60px;
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
 `;
 
 const TeamImage = styled.div`
   width: 100%;
-  margin-bottom: 30px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  height: 500px; // Changed from 300px to match wrapper
+  position: relative;
 
   img {
     width: 100%;
-    height: auto;
-    display: block;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
+`;
+
+const ContentContainer = styled.div`
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
 `;
 
 const Title = styled.h2`
@@ -181,31 +192,35 @@ const JobHiring: React.FC = () => {
       <Header />
       <PageWrapper>
         <JobHiringContainer>
-          <TeamImage>
-            <img src="/images/team-celebration.png" alt="Deskripsi gambar" />
-          </TeamImage>
-          <Title>Open Positions</Title>
-          <Underline />
-          <FilterContainer>
-            <FilterButton active>View All</FilterButton>
-            <FilterButton>PT MITRA KARYA ANALITIKA</FilterButton>
-            <FilterButton>PT AUTENTIK KARYA ANALITIKA</FilterButton>
-          </FilterContainer>
-          {jobs.map((job, index) => (
-            <JobCard key={index}>
-              <JobInfo>
-                <JobTitle>{job.title}</JobTitle>
-                <Company>{job.company}</Company>
-                <Description>{job.description}</Description>
-                <JobDetails>
-                  <span>🏢 {job.location}</span>
-                  <span>🕒 {job.type}</span>
-                  <span>📅 {job.deadline}</span>
-                </JobDetails>
-              </JobInfo>
-              <DetailButton>Lihat Detail</DetailButton>
-            </JobCard>
-          ))}
+          <TeamImageWrapper>
+            <TeamImage>
+              <img src="/images/team-celebration.png" alt="Deskripsi gambar" />
+            </TeamImage>
+          </TeamImageWrapper>
+          <ContentContainer>
+            <Title>Open Positions</Title>
+            <Underline />
+            <FilterContainer>
+              <FilterButton active>View All</FilterButton>
+              <FilterButton>PT MITRA KARYA ANALITIKA</FilterButton>
+              <FilterButton>PT AUTENTIK KARYA ANALITIKA</FilterButton>
+            </FilterContainer>
+            {jobs.map((job, index) => (
+              <JobCard key={index}>
+                <JobInfo>
+                  <JobTitle>{job.title}</JobTitle>
+                  <Company>{job.company}</Company>
+                  <Description>{job.description}</Description>
+                  <JobDetails>
+                    <span>🏢 {job.location}</span>
+                    <span>🕒 {job.type}</span>
+                    <span>📅 {job.deadline}</span>
+                  </JobDetails>
+                </JobInfo>
+                <DetailButton>Lihat Detail</DetailButton>
+              </JobCard>
+            ))}
+          </ContentContainer>
         </JobHiringContainer>
       </PageWrapper>
       <Footer />

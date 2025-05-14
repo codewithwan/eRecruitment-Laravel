@@ -11,7 +11,8 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::CANDIDATE->value])
     ->name('user.')
     ->group(function () {
         Route::get('/', [CandidateController::class, 'index'])->name('info');
-        Route::get('/profile', [CandidateController::class, 'store'])->name('profile');
+        Route::get('/profile', [CandidateController::class, 'profile'])->name('profile');
+        Route::post('/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])->name('profile.data-pribadi.store');
         Route::prefix('jobs')
             ->name('jobs.')
             ->group(function () {

@@ -14,14 +14,15 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             SuperAdminSeeder::class,
-            VacanciesSeeder::class,
-            CandidateSeeder::class,
-            CompaniesSeeder::class,
-            JobTypesTableSeeder::class,
             DepartmentsTableSeeder::class,
-            VacanciesTableSeeder::class,
-            
-   
+            CandidateSeeder::class,
+            CandidateProfileSeeder::class,
+            CompaniesTableSeeder::class,
+            JobTypesTableSeeder::class,
+            VacanciesSeeder::class,
+            // VacanciesTableSeeder::class,
+
+
 
         ]);
     }

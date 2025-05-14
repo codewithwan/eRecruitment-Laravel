@@ -5,12 +5,14 @@ namespace Database\Seeders;
 
 
 use Illuminate\Database\Seeder;
-use App\Models\JobType;
+use App\Models\JobTypes;
 
 class JobTypesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        JobType::create(['name' => 'Full Time']);
+        JobTypes::create(['name' => 'Full Time']);
+        JobTypes::create(['name' => 'Part Time']);
+        JobTypes::create(['name' => 'Internship']);
     }
 }

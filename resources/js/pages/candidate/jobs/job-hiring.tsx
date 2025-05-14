@@ -10,12 +10,20 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 interface Job {
+  id: number;
   title: string;
-  company: string;
+  company: {
+    name: string;
+  };
   description: string;
   location: string;
   type: string;
   deadline: string;
+  department: string;
+}
+
+interface Props {
+  jobs: Job[];
 }
 
 const PageWrapper = styled.div`
@@ -164,27 +172,18 @@ const DetailButton = styled.button`
   }
 `;
 
-const JobHiring: React.FC = () => {
-  const jobs: Job[] = [
-    {
-      title: 'Hardware Engineer',
-      company: 'PT MITRA KARYA ANALITIKA',
-      description:
-        'Ahli yang merancang, mengembangkan, dan menguji perangkat keras, termasuk desain PCB dan integrasi komponen elektronik, untuk aplikasi seperti robotika dan sistem tertanam.',
-      location: 'Office',
-      type: 'Full Time',
-      deadline: 'Lamar Sebelum 25 Maret',
-    },
-    {
-      title: 'Hardware Engineer',
-      company: 'PT MITRA KARYA ANALITIKA',
-      description:
-        'Ahli yang merancang, mengembangkan, dan menguji perangkat keras, termasuk desain PCB dan integrasi komponen elektronik, untuk aplikasi seperti robotika dan sistem tertanam.',
-      location: 'Office',
-      type: 'Full Time',
-      deadline: 'Lamar Sebelum 25 Maret',
-    },
-  ];
+const JobHiring: React.FC<Props> = ({ jobs }) => {
+  const [activeFilter, setActiveFilter] = React.useState<string>('all');
+  const [filteredJobs, setFilteredJobs] = React.useState(jobs);
+
+  const filterJobs = (company: string) => {
+    setActiveFilter(company);
+    if (company === 'all') {
+      setFilteredJobs(jobs);
+    } else {
+      setFilteredJobs(jobs.filter(job => job.company.name === company));
+    }
+  };
 
   return (
     <>
@@ -194,27 +193,43 @@ const JobHiring: React.FC = () => {
         <JobHiringContainer>
           <TeamImageWrapper>
             <TeamImage>
-              <img src="/images/team-celebration.png" alt="Deskripsi gambar" />
+              <img src="/images/team-celebration.png" alt="Team celebration" />
             </TeamImage>
           </TeamImageWrapper>
           <ContentContainer>
             <Title>Open Positions</Title>
             <Underline />
             <FilterContainer>
-              <FilterButton active>View All</FilterButton>
-              <FilterButton>PT MITRA KARYA ANALITIKA</FilterButton>
-              <FilterButton>PT AUTENTIK KARYA ANALITIKA</FilterButton>
+              <FilterButton
+                active={activeFilter === 'all'}
+                onClick={() => filterJobs('all')}
+              >
+                View All
+              </FilterButton>
+              <FilterButton
+                active={activeFilter === 'PT MITRA KARYA ANALITIKA'}
+                onClick={() => filterJobs('PT MITRA KARYA ANALITIKA')}
+              >
+                PT MITRA KARYA ANALITIKA
+              </FilterButton>
+              <FilterButton
+                active={activeFilter === 'PT AUTENTIK KARYA ANALITIKA'}
+                onClick={() => filterJobs('PT AUTENTIK KARYA ANALITIKA')}
+              >
+                PT AUTENTIK KARYA ANALITIKA
+              </FilterButton>
             </FilterContainer>
-            {jobs.map((job, index) => (
-              <JobCard key={index}>
+            {filteredJobs.map((job) => (
+              <JobCard key={job.id}>
                 <JobInfo>
                   <JobTitle>{job.title}</JobTitle>
-                  <Company>{job.company}</Company>
+                  <Company>{job.company.name}</Company>
                   <Description>{job.description}</Description>
                   <JobDetails>
                     <span>🏢 {job.location}</span>
                     <span>🕒 {job.type}</span>
                     <span>📅 {job.deadline}</span>
+                    <span>👥 {job.department}</span>
                   </JobDetails>
                 </JobInfo>
                 <DetailButton>Lihat Detail</DetailButton>

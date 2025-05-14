@@ -87,4 +87,37 @@ class VacanciesController extends Controller
             'message' => 'Job deleted successfully',
         ]);
     }
+
+    public function getVacancies()
+    {
+        try {
+            $vacancies = Vacancies::with(['department', 'company', 'jobType'])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($vacancy) {
+                    return [
+                        'id' => $vacancy->id,
+                        'title' => $vacancy->title,
+                        'company' => [
+                            'name' => $vacancy->company ? $vacancy->company->name : 'N/A'
+                        ],
+                        'description' => $vacancy->job_description,
+                        'location' => $vacancy->location,
+                        'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
+                        'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : null,
+                        'department' => $vacancy->department ? $vacancy->department->name : 'N/A'
+                    ];
+                });
+
+            return Inertia::render('candidate/jobs/job-hiring', [
+                'jobs' => $vacancies
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in VacanciesController@getVacancies: ' . $e->getMessage());
+            return Inertia::render('candidate/jobs/job-hiring', [
+                'jobs' => [],
+                'error' => 'Failed to load job vacancies'
+            ]);
+        }
+    }
 }

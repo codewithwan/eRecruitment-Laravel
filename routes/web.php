@@ -16,6 +16,11 @@ Route::get('/application-history', function () {
 Route::get('/data-pribadi', function () {
         return Inertia::render('DataPribadiForm');
     })->name('data.pribadi');
+
+Route::get('/about-us', function () {
+    return Inertia::render('about-us');
+})->name('about-us');
+
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     return Auth::user()->role === UserRole::HR

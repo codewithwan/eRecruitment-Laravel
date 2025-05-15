@@ -1,29 +1,82 @@
 import React from 'react';
+import styled from 'styled-components';
 
-const NavbarHeader: React.FC = () => {
-    return (
-        <nav className="bg-white border-b">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16">
-                    <div className="flex items-center">
-                        <h1 className="text-xl font-bold text-black">MITRA KARYA GROUP</h1>
-                    </div>
+const HeaderWrapper = styled.header`
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+`;
 
-                    <div className="flex items-center space-x-8">
-                        <a href="#" className="text-gray-700 hover:text-gray-900">Dasbor</a>
-                        <a href="#" className="text-gray-700 hover:text-gray-900">Profil</a>
-                        <a href="#" className="text-gray-700 hover:text-gray-900">Lowongan Pekerjaan</a>
-                        <a href="#" className="text-gray-700 hover:text-gray-900">Lamaran</a>
-                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    );
-};
+const HeaderContent = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
 
-export default NavbarHeader;
+const Logo = styled.div`
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+  color: #111; // warna hitam
+`;
+
+const Nav = styled.nav`
+  display: flex;
+  gap: 24px;
+  align-items: center;
+`;
+
+const NavLink = styled.a`
+  color: #222;
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color 0.2s;
+  padding: 0 4px;
+  &:hover {
+    color: #1DA1F2;
+  }
+`;
+
+const ProfileIcon = styled.div`
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e5f1fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1DA1F2;
+  font-size: 22px;
+  margin-right: 8px;
+  border: 1.5px solid #e5e7eb;
+`;
+
+const Header: React.FC = () => (
+  <HeaderWrapper>
+    <HeaderContent>
+      <Logo>MITRA KARYA GROUP</Logo>
+      <Nav>
+        <NavLink href="#">Dasbor</NavLink>
+        <NavLink href="#">Profil</NavLink>
+        <NavLink href="/job-hiring">Lowongan Pekerjaan</NavLink>
+        <NavLink href="#">Lamaran</NavLink>
+      </Nav>
+      <ProfileIcon>
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4" fill="#1DA1F2"/>
+          <rect x="4" y="16" width="16" height="6" rx="3" fill="#1DA1F2"/>
+        </svg>
+      </ProfileIcon>
+    </HeaderContent>
+  </HeaderWrapper>
+);
+
+export default Header;

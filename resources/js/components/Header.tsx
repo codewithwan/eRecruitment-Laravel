@@ -65,7 +65,7 @@ const Header: React.FC = () => (
       <Logo>MITRA KARYA GROUP</Logo>
       <Nav>
         <NavLink href="#">Dasbor</NavLink>
-        <NavLink href="#">Profil</NavLink>
+        <NavLink href="/candidate/profile">Profil</NavLink>
         <NavLink href="#">Lowongan Pekerjaan</NavLink>
         <NavLink href="#">Lamaran</NavLink>
       </Nav>

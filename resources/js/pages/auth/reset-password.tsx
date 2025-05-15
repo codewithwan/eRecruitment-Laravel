@@ -1,98 +1,103 @@
 import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, CheckCircle2 } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
-import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import InputError from '@/components/input-error';
 import { Label } from '@/components/ui/label';
-import AuthLayout from '@/layouts/auth-layout';
 
 interface ResetPasswordProps {
-    token: string;
-    email: string;
+    token: string; // Token tetap dibutuhkan untuk keamanan saat reset password
+    status?: string;
 }
 
-type ResetPasswordForm = {
-    token: string;
-    email: string;
-    password: string;
-    password_confirmation: string;
-};
-
-export default function ResetPassword({ token, email }: ResetPasswordProps) {
-    const { data, setData, post, processing, errors, reset } = useForm<Required<ResetPasswordForm>>({
-        token: token,
-        email: email,
+export default function ResetPassword({ token, status }: ResetPasswordProps) {
+    const { data, setData, post, processing, errors } = useForm({
+        token,
         password: '',
         password_confirmation: '',
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('password.store'), {
-            onFinish: () => reset('password', 'password_confirmation'),
-        });
+        post(route('password.update'));
     };
 
     return (
-        <AuthLayout title="Reset password" description="Please enter your new password below">
-            <Head title="Reset password" />
+        <div className="flex flex-col min-h-screen bg-white">
+            <Head title="Atur Ulang Kata Sandi" />
 
-            <form onSubmit={submit}>
-                <div className="grid gap-6">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            name="email"
-                            autoComplete="email"
-                            value={data.email}
-                            className="mt-1 block w-full"
-                            readOnly
-                            onChange={(e) => setData('email', e.target.value)}
-                        />
-                        <InputError message={errors.email} className="mt-2" />
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            name="password"
-                            autoComplete="new-password"
-                            value={data.password}
-                            className="mt-1 block w-full"
-                            autoFocus
-                            onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Password"
-                        />
-                        <InputError message={errors.password} />
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm password</Label>
-                        <Input
-                            id="password_confirmation"
-                            type="password"
-                            name="password_confirmation"
-                            autoComplete="new-password"
-                            value={data.password_confirmation}
-                            className="mt-1 block w-full"
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
-                            placeholder="Confirm password"
-                        />
-                        <InputError message={errors.password_confirmation} className="mt-2" />
-                    </div>
-
-                    <Button type="submit" className="mt-4 w-full" disabled={processing}>
-                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Reset password
-                    </Button>
+            <header className="py-4 px-6 shadow">
+                <div className="container mx-auto flex justify-between items-center">
+                    <div className="font-bold text-xl text-black">MITRA KARYA GROUP</div>
                 </div>
-            </form>
-        </AuthLayout>
+            </header>
+
+            <main className="flex-grow flex items-center justify-center py-12 px-4">
+                <div className="w-full max-w-md">
+                    {status && (
+                        <div className="bg-green-500 text-white px-4 py-3 rounded mb-4 flex items-center">
+                            <CheckCircle2 className="w-5 h-5 mr-2" />
+                            <span>{status}</span>
+                        </div>
+                    )}
+
+                    <div className="text-center mb-6">
+                        <h1 className="text-blue-500 text-3xl font-bold mb-2">Masukkan Kata Sandi Baru</h1>
+                        <p className="text-sm text-gray-500">Atur ulang kata sandi Anda.</p>
+                    </div>
+
+                    <form onSubmit={submit} className="flex flex-col gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Kata sandi baru</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                required
+                                value={data.password}
+                                onChange={(e) => setData('password', e.target.value)}
+                                placeholder="Masukkan kata sandi baru"
+                                className="w-full bg-gray-100"
+                            />
+                            <InputError message={errors.password} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password_confirmation">Konfirmasi Kata sandi</Label>
+                            <Input
+                                id="password_confirmation"
+                                type="password"
+                                required
+                                value={data.password_confirmation}
+                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                placeholder="Masukkan ulang kata sandi"
+                                className="w-full bg-gray-100"
+                            />
+                            <InputError message={errors.password_confirmation} />
+                        </div>
+
+                        <Button
+                            type="submit"
+                            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 h-10"
+                            disabled={processing}
+                        >
+                            {processing && <LoaderCircle className="h-4 w-4 animate-spin mr-2" />}
+                            Reset Kata Sandi
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => window.location.href = route('login')}
+                        >
+                            ← Kembali ke Login
+                        </Button>
+                    </form>
+                </div>
+            </main>
+        </div>
     );
 }
+

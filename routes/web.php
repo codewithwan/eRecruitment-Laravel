@@ -4,8 +4,10 @@ use App\Enums\UserRole;
 use App\Http\Controllers\VacanciesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ResetPasswordController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
+Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
 
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {

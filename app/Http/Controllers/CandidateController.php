@@ -7,11 +7,11 @@ use Inertia\Inertia;
 
 class CandidateController extends Controller
 {
-    public function index()
+    public function dashboard()
     {
         $user = Auth::user();
 
-        return Inertia::render('candidate/candidate-dashboard', [
+        return Inertia::render('candidate/dashboard/candidate-dashboard', [
             'users' => $user,
         ]);
     }

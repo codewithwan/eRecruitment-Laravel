@@ -24,6 +24,7 @@ interface Job {
 
 interface Props {
   jobs: Job[];
+  companies: string[];
 }
 
 const PageWrapper = styled.div`
@@ -172,18 +173,39 @@ const DetailButton = styled.button`
   }
 `;
 
-const JobHiring: React.FC<Props> = ({ jobs }) => {
+const JobHiring: React.FC<Props> = ({ jobs, companies }) => {
   const [activeFilter, setActiveFilter] = React.useState<string>('all');
   const [filteredJobs, setFilteredJobs] = React.useState(jobs);
 
-  const filterJobs = (company: string) => {
+  const filterJobs = React.useCallback((company: string) => {
     setActiveFilter(company);
+
+    // Update URL with company filter
+    const url = new URL(window.location.href);
+    if (company === 'all') {
+      url.searchParams.delete('company');
+    } else {
+      url.searchParams.set('company', company);
+    }
+    window.history.pushState({}, '', url.toString());
+
+    // Filter jobs
     if (company === 'all') {
       setFilteredJobs(jobs);
     } else {
-      setFilteredJobs(jobs.filter(job => job.company.name === company));
+      const filtered = jobs.filter(job => job.company.name === company);
+      setFilteredJobs(filtered);
     }
-  };
+  }, [jobs]);
+
+  // Add effect to handle initial filter from URL
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const companyFilter = urlParams.get('company');
+    if (companyFilter) {
+      filterJobs(companyFilter);
+    }
+  }, [filterJobs]);
 
   return (
     <>
@@ -206,18 +228,15 @@ const JobHiring: React.FC<Props> = ({ jobs }) => {
               >
                 View All
               </FilterButton>
-              <FilterButton
-                active={activeFilter === 'PT MITRA KARYA ANALITIKA'}
-                onClick={() => filterJobs('PT MITRA KARYA ANALITIKA')}
-              >
-                PT MITRA KARYA ANALITIKA
-              </FilterButton>
-              <FilterButton
-                active={activeFilter === 'PT AUTENTIK KARYA ANALITIKA'}
-                onClick={() => filterJobs('PT AUTENTIK KARYA ANALITIKA')}
-              >
-                PT AUTENTIK KARYA ANALITIKA
-              </FilterButton>
+              {companies.map((company) => (
+                <FilterButton
+                  key={company}
+                  active={activeFilter === company}
+                  onClick={() => filterJobs(company)}
+                >
+                  {company}
+                </FilterButton>
+              ))}
             </FilterContainer>
             {filteredJobs.map((job) => (
               <JobCard key={job.id}>

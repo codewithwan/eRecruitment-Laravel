@@ -15,6 +15,7 @@ class DepartmentsTableSeeder extends Seeder
             ['name' => 'Teknik' ],
             ['name' => 'Akuntansi' ],
             ['name' => 'Kesehatan' ],
+            ['name' => 'IT' ],
         ];
 
         foreach ($departments as $department) {

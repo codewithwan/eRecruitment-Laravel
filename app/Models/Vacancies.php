@@ -26,7 +26,7 @@ class Vacancies extends Model
     protected $casts = [
         'requirements' => 'array',
         'benefits' => 'array',
-        'deadline' => 'date',
+        'deadline' => 'datetime',
     ];
 
     public function department(): BelongsTo

@@ -20,7 +20,14 @@ export interface Job {
     updated_at: string;
     status?: string;
     start_date?: string;
-    end_date?: string;
+    questionPack?: {
+        id: number;
+        pack_name: string;
+        description?: string;
+        test_type?: string;
+        duration?: number;
+    };
+    question_pack_id?: number | null;
 }
 
 interface JobTableProps {
@@ -62,8 +69,7 @@ export function JobTable({
                             <TableHead className="w-[180px] py-3">Location</TableHead>
                             <TableHead className="w-[180px] py-3">Salary</TableHead>
                             <TableHead className="w-[180px] py-3">Company</TableHead>
-                            <TableHead className="w-[140px] py-3">Status</TableHead>
-                            <TableHead className="w-[140px] py-3">End Date</TableHead>
+                            <TableHead className="w-[180px] py-3">Question Packs</TableHead>
                             <TableHead className="w-[140px] py-3 text-center">Action</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -91,9 +97,6 @@ export function JobTable({
                                         <TableCell className="w-[140px]">
                                             <Skeleton className="h-4 w-full" />
                                         </TableCell>
-                                        <TableCell className="w-[140px]">
-                                            <Skeleton className="h-4 w-full" />
-                                        </TableCell>
                                         <TableCell className="w-[140px] text-center">
                                             <div className="flex justify-center space-x-2">
                                                 <Skeleton className="h-8 w-8 rounded-full" />
@@ -113,11 +116,14 @@ export function JobTable({
                                     <TableCell className="whitespace-nowrap">{job.salary || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.company?.name || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">
-                                        <Badge variant={job.status === 'Open' ? 'default' : 'secondary'}>
-                                            {job.status || '-'}
-                                        </Badge>
+                                        {job.questionPack && job.questionPack.pack_name ? (
+                                            <Badge variant="default">
+                                                {job.questionPack.pack_name}
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="secondary">None</Badge>
+                                        )}
                                     </TableCell>
-                                    <TableCell className="whitespace-nowrap">{formatDate(job.end_date)}</TableCell>
                                     <TableCell>
                                         <div className="flex justify-center space-x-3">
                                             <button
@@ -144,7 +150,7 @@ export function JobTable({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={9} className="py-4 text-center">
+                                <TableCell colSpan={8} className="py-4 text-center">
                                     No jobs found.
                                 </TableCell>
                             </TableRow>

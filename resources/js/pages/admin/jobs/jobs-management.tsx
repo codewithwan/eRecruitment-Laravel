@@ -22,14 +22,15 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { Filter, Search, Calendar } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+
 
 interface JobProps {
     vacancies: Job[];
     companies: { id: number; name: string }[];
+    questionPacks: { id: number; pack_name: string; description?: string; test_type?: string; duration?: number }[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -75,8 +76,7 @@ export default function Jobs(props: JobProps) {
         company_id: '',
         requirements: '',
         benefits: '',
-        start_date: '',
-        end_date: '',
+        question_pack_id: 'none',
     });
 
     // Edit job form state
@@ -89,15 +89,8 @@ export default function Jobs(props: JobProps) {
         company_id: '',
         requirements: '',
         benefits: '',
-        start_date: '',
-        end_date: '',
+        question_pack_id: '',
     });
-
-    // Date picker states - separate for create and edit
-    const [isStartDateOpen, setIsStartDateOpen] = useState(false);
-    const [isEndDateOpen, setIsEndDateOpen] = useState(false);
-    const [isEditStartDateOpen, setIsEditStartDateOpen] = useState(false);
-    const [isEditEndDateOpen, setIsEditEndDateOpen] = useState(false);
 
     // Apply filters whenever filter states change
     useEffect(() => {
@@ -149,8 +142,7 @@ export default function Jobs(props: JobProps) {
                 company_id: String(job.company_id || ''),
                 requirements: job.requirements.join('\n'),
                 benefits: job.benefits ? job.benefits.join('\n') : '',
-                start_date: job.start_date || '',
-                end_date: job.end_date || '',
+                question_pack_id: job.question_pack_id ? String(job.question_pack_id) : 'none',
             });
             setIsEditDialogOpen(true);
         }
@@ -191,33 +183,7 @@ export default function Jobs(props: JobProps) {
         setEditJob((prevState) => ({ ...prevState, [name]: value }));
     };
 
-    const handleStartDateSelect = (date: Date | undefined) => {
-        if (date) {
-            setNewJob(prev => ({ ...prev, start_date: format(date, 'yyyy-MM-dd') }));
-            setIsStartDateOpen(false);
-        }
-    };
-
-    const handleEndDateSelect = (date: Date | undefined) => {
-        if (date) {
-            setNewJob(prev => ({ ...prev, end_date: format(date, 'yyyy-MM-dd') }));
-            setIsEndDateOpen(false);
-        }
-    };
-
-    const handleEditStartDateSelect = (date: Date | undefined) => {
-        if (date) {
-            setEditJob(prev => ({ ...prev, start_date: format(date, 'yyyy-MM-dd') }));
-            setIsEditStartDateOpen(false);
-        }
-    };
-
-    const handleEditEndDateSelect = (date: Date | undefined) => {
-        if (date) {
-            setEditJob(prev => ({ ...prev, end_date: format(date, 'yyyy-MM-dd') }));
-            setIsEditEndDateOpen(false);
-        }
-    };
+    // Removed start date handling
 
     const handleCreateJob = async () => {
         setIsLoading(true);
@@ -227,6 +193,7 @@ export default function Jobs(props: JobProps) {
                 requirements: newJob.requirements.split('\n').filter((req) => req.trim() !== ''),
                 benefits: newJob.benefits ? newJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : null,
                 company_id: parseInt(newJob.company_id),
+                question_pack_id: (newJob.question_pack_id && newJob.question_pack_id !== 'none') ? parseInt(newJob.question_pack_id) : null,
             };
             console.log('formattedData', formattedData);
             const response = await axios.post('/dashboard/jobs', formattedData);
@@ -242,8 +209,7 @@ export default function Jobs(props: JobProps) {
                 company_id: '',
                 requirements: '',
                 benefits: '',
-                start_date: '',
-                end_date: '',
+                question_pack_id: 'none',
             });
         } catch (error) {
             console.error('Error creating job:', error);
@@ -260,6 +226,7 @@ export default function Jobs(props: JobProps) {
                 requirements: editJob.requirements.split('\n').filter((req) => req.trim() !== ''),
                 benefits: editJob.benefits ? editJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : null,
                 company_id: parseInt(editJob.company_id),
+                question_pack_id: (editJob.question_pack_id && editJob.question_pack_id !== 'none') ? parseInt(editJob.question_pack_id) : null,
             };
 
             const response = await axios.put(`/dashboard/jobs/${editJob.id}`, formattedData);
@@ -445,47 +412,21 @@ export default function Jobs(props: JobProps) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="start_date">Start Date</Label>
-                                <Popover open={isStartDateOpen} onOpenChange={setIsStartDateOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start text-left font-normal"
-                                        >
-                                            <Calendar className="mr-2 h-4 w-4" />
-                                            {newJob.start_date ? newJob.start_date : "Select date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <CalendarComponent
-                                            mode="single"
-                                            onSelect={handleStartDateSelect}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div>
-                                <Label htmlFor="end_date">End Date</Label>
-                                <Popover open={isEndDateOpen} onOpenChange={setIsEndDateOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start text-left font-normal"
-                                        >
-                                            <Calendar className="mr-2 h-4 w-4" />
-                                            {newJob.end_date ? newJob.end_date : "Select date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <CalendarComponent
-                                            mode="single"
-                                            onSelect={handleEndDateSelect}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                        <div>
+                            <Label htmlFor="question_pack_id">Question Pack</Label>
+                            <Select name="question_pack_id" value={newJob.question_pack_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, question_pack_id: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select question pack" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {props.questionPacks.map((pack) => (
+                                        <SelectItem key={pack.id} value={String(pack.id)}>
+                                            {pack.pack_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label htmlFor="requirements">Requirements (one per line)</Label>
@@ -566,47 +507,21 @@ export default function Jobs(props: JobProps) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="edit-start_date">Start Date</Label>
-                                <Popover open={isEditStartDateOpen} onOpenChange={setIsEditStartDateOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start text-left font-normal"
-                                        >
-                                            <Calendar className="mr-2 h-4 w-4" />
-                                            {editJob.start_date ? editJob.start_date : "Select date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <CalendarComponent
-                                            mode="single"
-                                            onSelect={handleEditStartDateSelect}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div>
-                                <Label htmlFor="edit-end_date">End Date</Label>
-                                <Popover open={isEditEndDateOpen} onOpenChange={setIsEditEndDateOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full justify-start text-left font-normal"
-                                        >
-                                            <Calendar className="mr-2 h-4 w-4" />
-                                            {editJob.end_date ? editJob.end_date : "Select date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <CalendarComponent
-                                            mode="single"
-                                            onSelect={handleEditEndDateSelect}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                        <div>
+                            <Label htmlFor="edit-question_pack_id">Question Pack</Label>
+                            <Select name="question_pack_id" value={editJob.question_pack_id} onValueChange={(value) => setEditJob(prev => ({ ...prev, question_pack_id: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select question pack" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {props.questionPacks.map((pack) => (
+                                        <SelectItem key={pack.id} value={String(pack.id)}>
+                                            {pack.pack_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label htmlFor="edit-requirements">Requirements (one per line)</Label>
@@ -659,11 +574,10 @@ export default function Jobs(props: JobProps) {
                                 <div className="font-medium">Company:</div>
                                 <div className="col-span-2">{companies.find(company => company.id === selectedJob.company_id)?.name}</div>
 
-                                <div className="font-medium">Start Date:</div>
-                                <div className="col-span-2">{formatDate(selectedJob.start_date)}</div>
-
-                                <div className="font-medium">End Date:</div>
-                                <div className="col-span-2">{formatDate(selectedJob.end_date)}</div>
+                                <div className="font-medium">Question Pack:</div>
+                                <div className="col-span-2">
+                                    {selectedJob.questionPack ? selectedJob.questionPack.pack_name : 'None'}
+                                </div>
 
                                 <div className="font-medium">Requirements:</div>
                                 <div className="col-span-2">

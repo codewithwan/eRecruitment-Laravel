@@ -25,12 +25,14 @@ class VacanciesController extends Controller
     {
         $vacancies = $this->getVacanciesWithStatus();
         $companies = Company::all();
+        $questionPacks = \App\Models\QuestionPack::all();
 
         Log::info($vacancies);
 
         return Inertia::render('admin/jobs/jobs-management', [
             'vacancies' => $vacancies,
             'companies' => $companies,
+            'questionPacks' => $questionPacks,
         ]);
     }
 
@@ -60,6 +62,9 @@ class VacanciesController extends Controller
             'question_pack_id' => $validated['question_pack_id'] ?? null,
         ]);
 
+        // Load the question pack relationship
+        $job->load('questionPack');
+        
         return response()->json([
             'message' => 'Job created successfully',
             'job' => $job,
@@ -92,6 +97,9 @@ class VacanciesController extends Controller
             'question_pack_id' => $validated['question_pack_id'] ?? null,
         ]);
 
+        // Load the fresh model with relationships
+        $job = $job->fresh(['company', 'questionPack']);
+
         return response()->json([
             'message' => 'Job updated successfully',
             'job' => $job,
@@ -109,7 +117,7 @@ class VacanciesController extends Controller
     }
 
     /**
-     * Get all vacancies with their associated companies
+     * Get all vacancies with their associated companies and question packs
      */
     private function getVacanciesWithStatus()
     {
@@ -118,6 +126,17 @@ class VacanciesController extends Controller
         return $vacancies->map(function ($vacancy) {
             // Set all vacancies as open by default
             $vacancy->status = 'Open';
+            
+            // Ensure questionPack is properly loaded and included in the response
+            if ($vacancy->questionPack) {
+                $vacancy->questionPack = [
+                    'id' => $vacancy->questionPack->id,
+                    'pack_name' => $vacancy->questionPack->pack_name,
+                    'description' => $vacancy->questionPack->description,
+                    'test_type' => $vacancy->questionPack->test_type,
+                    'duration' => $vacancy->questionPack->duration,
+                ];
+            }
             
             return $vacancy;
         });

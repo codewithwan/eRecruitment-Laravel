@@ -169,7 +169,7 @@ export default function AdministrationDashboard({ companyId = 1 }) {
         // result = result.filter(user => user.companyId === companyId);
         
         // Filter by period using periodId instead of name
-        if (selectedPeriod) {
+        if (selectedPeriod && selectedPeriod !== 'all') {
             result = result.filter(user => user.periodId === selectedPeriod);
         }
 
@@ -315,14 +315,14 @@ export default function AdministrationDashboard({ companyId = 1 }) {
                                                 Period
                                             </Label>
                                             <Select 
-                                                value={selectedPeriod?.toString() || ''} 
-                                                onValueChange={(value) => setSelectedPeriod(value ? value : null)}
+                                                value={selectedPeriod || 'all'} 
+                                                onValueChange={(value) => setSelectedPeriod(value === 'all' ? null : value)}
                                             >
                                                 <SelectTrigger id="period-filter">
                                                     <SelectValue placeholder="All Periods" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="">All Periods</SelectItem>
+                                                    <SelectItem value="all">All Periods</SelectItem>
                                                     {periods.map(period => (
                                                         <SelectItem key={period.id} value={period.id.toString()}>
                                                             {period.name}

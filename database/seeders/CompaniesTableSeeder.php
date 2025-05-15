@@ -10,7 +10,7 @@ class CompaniesTableSeeder extends Seeder
     public function run(): void
     {
         Companies::create([
-            'name' => 'PT Mitra Karya Analitika',
+            'name' => 'PT MITRA KARYA ANALITIKA',
             'description' => 'Perusahaan teknologi yang berfokus pada analisis data dan solusi TI.',
             'logo' => 'logo-mka.png',
         ]);

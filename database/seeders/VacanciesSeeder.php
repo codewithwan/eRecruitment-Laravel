@@ -22,7 +22,7 @@ class VacanciesSeeder extends Seeder
 
         // Create companies
         $mka = Companies::firstOrCreate(
-            ['name' => 'PT MITRA KARYA ANALITIKA'],
+            ['name' => 'PT MITRA KARYA ANALITIKA'],  // Changed to all caps
             [
                 'description' => 'Perusahaan teknologi yang berfokus pada pengembangan hardware.',
                 'address' => 'Semarang'

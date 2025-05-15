@@ -9,6 +9,11 @@ use Inertia\Inertia;
 use App\Http\Controllers\ResetPasswordController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
+Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('job-hiring');
+Route::get('/application-history', function () {
+    return Inertia::render('candidate/jobs/application-history');
+})->name('application-history');
+Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
 
 Route::get('/data-pribadi', function () {
         return Inertia::render('DataPribadiForm');

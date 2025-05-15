@@ -32,17 +32,7 @@ class Candidate extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get administrations associated with the candidate.
-     */
-    public function administrations(): HasMany
-    {
-        // If Administration model exists, uncomment this line:
-        // return $this->hasMany(Administration::class);
-        
-        // If there is no Administration model yet, return empty collection
-        return $this->hasMany(Model::class); // This is a placeholder, actual implementation would depend on existence of Administration model
-    }
+    // Removed administration relationship as per requirements
 
     /**
      * Get the vacancy associated with the candidate.

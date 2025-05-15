@@ -52,4 +52,12 @@ class Vacancies extends Model
     {
         return $this->belongsTo(QuestionPack::class);
     }
+    
+    /**
+     * Get the candidates associated with this vacancy.
+     */
+    public function candidates()
+    {
+        return $this->hasMany(Candidate::class, 'vacancy_id');
+    }
 }

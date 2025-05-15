@@ -16,6 +16,13 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             VacanciesSeeder::class,
             CandidateSeeder::class,
+            CompaniesSeeder::class,
+            JobTypesTableSeeder::class,
+            DepartmentsTableSeeder::class,
+            VacanciesTableSeeder::class,
+            
+   
+
         ]);
     }
 }

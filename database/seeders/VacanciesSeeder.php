@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\Vacancies;
+use App\Models\QuestionPack;
 use Illuminate\Database\Seeder;
 
 class VacanciesSeeder extends Seeder
@@ -26,16 +27,31 @@ class VacanciesSeeder extends Seeder
             $this->call(CompanySeeder::class);
             $companies = Company::all();
         }
+
+        // Get question packs
+        $questionPacks = QuestionPack::all();
         
-        // Get company IDs
+        if ($questionPacks->isEmpty()) {
+            $this->command->info('No question packs found. Running QuestionPackSeeder first.');
+            $this->call(QuestionPackSeeder::class);
+            $questionPacks = QuestionPack::all();
+        }
+        
+        // Get the relevant IDs for seeding
         $mitraKaryaId = $companies->where('name', 'Mitra Karya Analitika')->first()->id ?? 1;
         $autentikKaryaId = $companies->where('name', 'Autentik Karya Analitika')->first()->id ?? 2;
+        
+        // Get question pack IDs
+        $generalAssessmentId = $questionPacks->where('pack_name', 'General Assessment')->first()->id ?? null;
+        $techAssessmentId = $questionPacks->where('pack_name', 'Technical Assessment')->first()->id ?? null;
+        $marketingAssessmentId = $questionPacks->where('pack_name', 'Marketing Assessment')->first()->id ?? null;
 
         $vacancies = [
             [
                 'title' => 'BUSINESS EXECUTIVE',
                 'department' => 'Marketing',
                 'location' => 'Semarang',
+                'salary' => 'Rp. 4.000.000 - 6.000.000',
                 'requirements' => [
                     'Laki-laki atau perempuan',
                     'SMK Analis Kimia, D3 Analis Kimia atau relevan',
@@ -50,11 +66,13 @@ class VacanciesSeeder extends Seeder
                 ],
                 'user_id' => $user->id,
                 'company_id' => $mitraKaryaId,
+                'question_pack_id' => $marketingAssessmentId,
             ],
             [
                 'title' => 'PRODUCT SPECIALIST ENVIRONMENTAL',
                 'department' => 'Teknik',
                 'location' => 'Semarang',
+                'salary' => 'Rp. 5.000.000 - 8.000.000',
                 'requirements' => [
                     'Laki-laki atau perempuan',
                     'S1 Teknik Lingkungan atau relevan',
@@ -69,11 +87,13 @@ class VacanciesSeeder extends Seeder
                 ],
                 'user_id' => $user->id,
                 'company_id' => $mitraKaryaId,
+                'question_pack_id' => $techAssessmentId,
             ],
             [
                 'title' => 'STAFF ACCOUNTING INTERN',
                 'department' => 'Akuntansi',
                 'location' => 'Bandung',
+                'salary' => 'Rp. 1.500.000 - 2.500.000',
                 'requirements' => [
                     'Laki-laki atau perempuan',
                     'Sekolah Menengah Kejuruan jurusan Akuntansi atau setara',
@@ -86,11 +106,13 @@ class VacanciesSeeder extends Seeder
                 ],
                 'user_id' => $user->id,
                 'company_id' => $autentikKaryaId,
+                'question_pack_id' => $generalAssessmentId,
             ],
             [
                 'title' => 'BUSINESS EXECUTIVE HSE',
                 'department' => 'Kesehatan',
                 'location' => 'Semarang',
+                'salary' => 'Rp. 4.500.000 - 7.000.000',
                 'requirements' => [
                     'D3/S1 Analis Kesehatan, atau relevan',
                     'Memiliki kemampuan komunikasi yang baik',
@@ -105,11 +127,13 @@ class VacanciesSeeder extends Seeder
                 ],
                 'user_id' => $user->id,
                 'company_id' => $autentikKaryaId,
+                'question_pack_id' => $marketingAssessmentId,
             ],
             [
                 'title' => 'TEKNISI KALIBRASI',
                 'department' => 'Teknik',
                 'location' => 'Semarang',
+                'salary' => 'Rp. 3.500.000 - 5.000.000',
                 'requirements' => [
                     'Minimal D3 Teknik Elektro, Teknik Mesin atau Relevan',
                     'Memiliki kemampuan komunikasi yang baik',
@@ -124,6 +148,7 @@ class VacanciesSeeder extends Seeder
                 ],
                 'user_id' => $user->id,
                 'company_id' => $mitraKaryaId,
+                'question_pack_id' => $techAssessmentId,
             ],
         ];
 

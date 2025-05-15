@@ -15,13 +15,11 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             SuperAdminSeeder::class,
             CompanySeeder::class,
-            VacanciesSeeder::class,
-            PeriodSeeder::class,
             QuestionSeeder::class,
             QuestionPackSeeder::class,
-            AssessmentSeeder::class,
+            VacanciesSeeder::class,
+            PeriodSeeder::class, // This will now create the periods and associate them with vacancies
             CandidateSeeder::class,
-            AdministrationSeeder::class,
         ]);
     }
 }

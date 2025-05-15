@@ -21,9 +21,7 @@ return new class extends Migration
             $table->string('salary')->nullable();
             $table->json('requirements');
             $table->json('benefits');
-            $table->json('applicants')->nullable();
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
+            $table->foreignId('question_pack_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
         });
     }

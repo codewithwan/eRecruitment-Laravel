@@ -14,14 +14,15 @@ class Period extends Model
     protected $fillable = [
         'name',
         'description',
-        'vacancies_id',
+        'start_time',
+        'end_time',
     ];
 
     /**
-     * Get the vacancy that this period belongs to.
+     * Get the vacancies that belong to this period.
      */
-    public function vacancy()
+    public function vacancies()
     {
-        return $this->belongsTo(Vacancies::class, 'vacancies_id');
+        return $this->belongsToMany(Vacancies::class, 'vacancy_period', 'period_id', 'vacancy_id');
     }
 }

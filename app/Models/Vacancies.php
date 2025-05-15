@@ -20,16 +20,13 @@ class Vacancies extends Model
         'salary',
         'requirements',
         'benefits',
-        'start_date',
-        'end_date',
+        'question_pack_id',
         'company_id'
     ];
     
     protected $casts = [
         'requirements' => 'array',
         'benefits' => 'array',
-        'start_date' => 'date',
-        'end_date' => 'date',
     ];
     
     /**
@@ -37,7 +34,7 @@ class Vacancies extends Model
      */
     public function periods()
     {
-        return $this->hasMany(Period::class, 'vacancies_id');
+        return $this->belongsToMany(Period::class, 'vacancy_period', 'vacancy_id', 'period_id');
     }
 
     /**
@@ -46,5 +43,13 @@ class Vacancies extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+    
+    /**
+     * Get the question pack associated with this vacancy.
+     */
+    public function questionPack()
+    {
+        return $this->belongsTo(QuestionPack::class);
     }
 }

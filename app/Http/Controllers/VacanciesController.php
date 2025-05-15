@@ -44,8 +44,7 @@ class VacanciesController extends Controller
             'company_id' => 'required|exists:companies,id',
             'requirements' => 'required|array',
             'benefits' => 'nullable|array',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
+            'question_pack_id' => 'nullable|exists:question_packs,id',
         ]);
 
         $user_id = Auth::user()->id;
@@ -58,8 +57,7 @@ class VacanciesController extends Controller
             'company_id' => $validated['company_id'],
             'requirements' => $validated['requirements'],
             'benefits' => $validated['benefits'] ?? [],
-            'start_date' => $validated['start_date'],
-            'end_date' => $validated['end_date'],
+            'question_pack_id' => $validated['question_pack_id'] ?? null,
         ]);
 
         return response()->json([
@@ -80,8 +78,7 @@ class VacanciesController extends Controller
             'company_id' => 'required|exists:companies,id',
             'requirements' => 'required|array',
             'benefits' => 'nullable|array',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
+            'question_pack_id' => 'nullable|exists:question_packs,id',
         ]);
 
         $job->update([
@@ -92,8 +89,7 @@ class VacanciesController extends Controller
             'company_id' => $validated['company_id'],
             'requirements' => $validated['requirements'],
             'benefits' => $validated['benefits'] ?? [],
-            'start_date' => $validated['start_date'],
-            'end_date' => $validated['end_date'],
+            'question_pack_id' => $validated['question_pack_id'] ?? null,
         ]);
 
         return response()->json([
@@ -113,22 +109,15 @@ class VacanciesController extends Controller
     }
 
     /**
-     * Get all vacancies with their status based on date
+     * Get all vacancies with their associated companies
      */
     private function getVacanciesWithStatus()
     {
-        $today = Carbon::today();
-        $vacancies = Vacancies::with('company')->get();
+        $vacancies = Vacancies::with(['company', 'questionPack'])->get();
         
-        return $vacancies->map(function ($vacancy) use ($today) {
-            $startDate = Carbon::parse($vacancy->start_date);
-            $endDate = Carbon::parse($vacancy->end_date);
-            
-            // Calculate status based on date
-            $status = ($today->between($startDate, $endDate)) ? 'Open' : 'Closed';
-            
-            // Add status and format dates
-            $vacancy->status = $status;
+        return $vacancies->map(function ($vacancy) {
+            // Set all vacancies as open by default
+            $vacancy->status = 'Open';
             
             return $vacancy;
         });

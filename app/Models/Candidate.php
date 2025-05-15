@@ -14,6 +14,7 @@ class Candidate extends Model
 
     protected $fillable = [
         'user_id',
+        'vacancy_id',
         'applied_at',
         'status',
     ];
@@ -36,7 +37,11 @@ class Candidate extends Model
      */
     public function administrations(): HasMany
     {
-        return $this->hasMany(Administration::class);
+        // If Administration model exists, uncomment this line:
+        // return $this->hasMany(Administration::class);
+        
+        // If there is no Administration model yet, return empty collection
+        return $this->hasMany(Model::class); // This is a placeholder, actual implementation would depend on existence of Administration model
     }
 
     /**
@@ -44,6 +49,6 @@ class Candidate extends Model
      */
     public function vacancy(): BelongsTo
     {
-        return $this->belongsTo(Vacancy::class);
+        return $this->belongsTo(Vacancies::class);
     }
 }

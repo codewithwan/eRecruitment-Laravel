@@ -50,9 +50,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/company/{companyId}/administration', [PeriodController::class, 'administration'])
         ->name('company.administration');
     
-    // Direct administration route
-    Route::get('/dashboard/administration', [AdminController::class, 'administration'])->name('administration.index');
-    
     // Company administration route
     Route::get('/dashboard/company/administration', [CompanyController::class, 'administration'])
         ->name('company.administration');

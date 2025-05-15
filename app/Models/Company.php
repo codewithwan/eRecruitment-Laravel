@@ -21,22 +21,7 @@ class Company extends Model
         'description',
     ];
 
-    /**
-     * Get the vacancies associated with the company.
-     */
-    public function vacancies(): HasMany
-    {
-        return $this->hasMany(Vacancy::class);
-    }
-
-    /**
-     * Get the administrations associated with the company.
-     */
-    public function administrations(): HasMany
-    {
-        return $this->hasMany(Administration::class);
-    }
-
+   
     /**
      * Get the candidates associated with the company.
      */

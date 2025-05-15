@@ -38,25 +38,24 @@ class PeriodController extends Controller
         $periodsData = $periods->map(function ($period) {
             $data = $period->toArray();
             
-            // Add vacancy dates if available in a simpler format - fix null check
+            // Add vacancy and question pack information if available
             if ($period->vacancy) {
-                // Use null coalescing to avoid calling methods on null objects
-                $data['start_date'] = $period->vacancy->start_date ? $period->vacancy->start_date->format('d/m/Y') : null;
-                $data['end_date'] = $period->vacancy->end_date ? $period->vacancy->end_date->format('d/m/Y') : null;
+                $data['title'] = $period->vacancy->title ?? null;
+                $data['department'] = $period->vacancy->department ?? null;
                 $data['company'] = $period->vacancy->company ? $period->vacancy->company->name : null;
+                $data['question_pack'] = $period->vacancy->questionPack ? $period->vacancy->questionPack->pack_name : null;
             } else {
-                $data['start_date'] = null;
-                $data['end_date'] = null;
+                $data['title'] = null;
+                $data['department'] = null;
                 $data['company'] = null;
+                $data['question_pack'] = null;
             }
             
             return $data;
         });
 
-        // Get available vacancies for the period dropdown with simplified date format - fix error handling
-        $vacancies = Vacancies::select('id', 'start_date', 'end_date')
-            ->whereNotNull('start_date')
-            ->whereNotNull('end_date')
+        // Get available vacancies for the period dropdown
+        $vacancies = Vacancies::select('id', 'title', 'department')
             ->when($companyId, function($query) use ($companyId) {
                 return $query->where('company_id', $companyId);
             })
@@ -64,8 +63,8 @@ class PeriodController extends Controller
             ->map(function ($vacancy) {
                 return [
                     'id' => $vacancy->id,
-                    'start_date' => $vacancy->start_date ? $vacancy->start_date->format('d/m/Y') : null,
-                    'end_date' => $vacancy->end_date ? $vacancy->end_date->format('d/m/Y') : null,
+                    'title' => $vacancy->title,
+                    'department' => $vacancy->department,
                 ];
             });
 

@@ -109,11 +109,13 @@ export default function Welcome(props: WelcomeProps) {
                 <header className="fixed top-0 right-0 left-0 z-50 h-[80px] border-b border-gray-200 bg-white px-[20px] shadow">
                     <div className="container mx-auto flex items-center justify-between px-6 py-4">
                         <div className="text-[20px] font-bold text-gray-800">MITRA KARYA GROUP</div>
+                        
+
                         <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex">
-                            <a href="#" className="hover:text-blue-600">Beranda</a>
-                            <a href="#tentang" className="hover:text-blue-600">Tentang Kami</a>
-                            <a href="#lowongan" className="hover:text-blue-600">Lowongan Pekerjaan</a>
-                            <a href="#kontak" className="hover:text-blue-600">Kontak</a>
+                          <Link href="/" className="hover:text-blue-600">Beranda</Link>
+                          <Link href="/lowongan-pekerjaan" className="hover:text-blue-600">Lowongan Pekerjaan</Link>
+                          <Link href="/tentang" className="hover:text-blue-600">Tentang Kami</Link>
+                          <Link href="/kontak" className="hover:text-blue-600">Kontak</Link>
                         </nav>
                         <div className="flex items-center gap-4">
                             {auth?.user ? (

@@ -17,6 +17,13 @@ Route::get('/application-history', function () {
 Route::get('/data-pribadi', function () {
         return Inertia::render('DataPribadiForm');
     })->name('data.pribadi');
+
+Route::get('/lowongan-pekerjaan', function () {
+        return Inertia::render('landing-page/job-hiring-landing-page');
+    })->name('job-hiring');
+Route::get('/kontak', function () {
+        return Inertia::render('landing-page/kontak');
+    })->name('job-hiring');
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     return Auth::user()->role === UserRole::HR

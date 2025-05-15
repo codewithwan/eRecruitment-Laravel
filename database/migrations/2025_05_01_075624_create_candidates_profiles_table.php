@@ -10,8 +10,7 @@ class CreateCandidatesProfilesTable extends Migration
         Schema::create('candidate_profiles', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('no_ektp')->nullable();
-            $table->string('full_name')->nullable();
+            $table->string('no_ektp');
             $table->enum('gender', ['male', 'female'])->nullable(); // sesuaikan dengan enum sebenarnya
             $table->string('phone_number')->nullable();
             $table->string('npwp')->nullable();

@@ -37,25 +37,32 @@ const JobHiringContainer = styled.div`
   margin: 0 auto;
 `;
 
-const TeamImageWrapper = styled.div`
+const HeroSection = styled.div`
   width: 100%;
-  height: 500px; // Changed from 300px
+  height: 500px;
   position: relative;
-  margin-bottom: 60px;
-  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+              url('/images/team-celebration.png') center/cover no-repeat;
 `;
 
-const TeamImage = styled.div`
-  width: 100%;
-  height: 500px; // Changed from 300px to match wrapper
-  position: relative;
+const HeroContent = styled.div`
+  color: white;
+  z-index: 1;
+`;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-  }
+const HeroTitle = styled.h1`
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 16px;
+`;
+
+const HeroSubtitle = styled.p`
+  font-size: 18px;
+  opacity: 0.9;
 `;
 
 const ContentContainer = styled.div`
@@ -65,22 +72,24 @@ const ContentContainer = styled.div`
 `;
 
 const Title = styled.h2`
-  color: #1DA1F2;
+  color: #0088FF;  // Changed to match the image
   font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: left;  // Added to center the title
+  margin: 40px 0 16px;  // Adjusted margins
 `;
 
 const Underline = styled.div`
   width: 80px;
   height: 4px;
-  background: #1DA1F2;
+  background: #0088FF;  // Changed to match the image
   border-radius: 2px;
-  margin-bottom: 32px;
+  margin: 0 0 32px;  // Centered the underline
 `;
 
 const FilterContainer = styled.div`
   display: flex;
+  justify-content: flex-start;  // Center the filter buttons
   gap: 12px;
   margin-bottom: 24px;
 `;
@@ -90,18 +99,19 @@ interface FilterButtonProps {
 }
 
 const FilterButton = styled.button<FilterButtonProps>`
-  background: ${(props) => (props.active ? '#1DA1F2' : '#fff')};
-  color: ${(props) => (props.active ? '#fff' : '#1DA1F2')};
-  border: 1px solid #1DA1F2;
+  background: ${(props) => (props.active ? '#0088FF' : '#fff')};
+  color: ${(props) => (props.active ? '#fff' : '#0088FF')};
+  border: 1px solid #0088FF;
   border-radius: 20px;
-  padding: 8px 16px;
+  padding: 8px 20px;  // Adjusted padding
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;  // Adjusted weight
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;  // Prevent text wrapping
 
   &:hover {
-    background: ${(props) => (props.active ? '#1A91DA' : '#E5F1FB')};
+    background: ${(props) => (props.active ? '#0077E6' : '#E6F4FF')};
   }
 `;
 
@@ -173,7 +183,7 @@ const DetailButton = styled.button`
   }
 `;
 
-const JobHiring: React.FC<Props> = ({ jobs, companies }) => {
+const JobHiring: React.FC<Props> = ({ jobs }) => {
   const [activeFilter, setActiveFilter] = React.useState<string>('all');
   const [filteredJobs, setFilteredJobs] = React.useState(jobs);
 
@@ -213,11 +223,14 @@ const JobHiring: React.FC<Props> = ({ jobs, companies }) => {
       <Header />
       <PageWrapper>
         <JobHiringContainer>
-          <TeamImageWrapper>
-            <TeamImage>
-              <img src="/images/team-celebration.png" alt="Team celebration" />
-            </TeamImage>
-          </TeamImageWrapper>
+          <HeroSection>
+            <HeroContent>
+              <HeroTitle>Bergabunglah Bersama Kami</HeroTitle>
+              <HeroSubtitle>
+                Telusuri berbagai peluang karir dan berkembang bersama PT Mitra Karya Analitika
+              </HeroSubtitle>
+            </HeroContent>
+          </HeroSection>
           <ContentContainer>
             <Title>Open Positions</Title>
             <Underline />
@@ -228,15 +241,18 @@ const JobHiring: React.FC<Props> = ({ jobs, companies }) => {
               >
                 View All
               </FilterButton>
-              {companies.map((company) => (
-                <FilterButton
-                  key={company}
-                  active={activeFilter === company}
-                  onClick={() => filterJobs(company)}
-                >
-                  {company}
-                </FilterButton>
-              ))}
+              <FilterButton
+                active={activeFilter === 'PT MITRA KARYA ANALITIKA'}
+                onClick={() => filterJobs('PT MITRA KARYA ANALITIKA')}
+              >
+                PT MITRA KARYA ANALITIKA
+              </FilterButton>
+              <FilterButton
+                active={activeFilter === 'PT AUTENTIK KARYA ANALITIKA'}
+                onClick={() => filterJobs('PT AUTENTIK KARYA ANALITIKA')}
+              >
+                PT AUTENTIK KARYA ANALITIKA
+              </FilterButton>
             </FilterContainer>
             {filteredJobs.map((job) => (
               <JobCard key={job.id}>

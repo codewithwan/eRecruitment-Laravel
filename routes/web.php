@@ -22,7 +22,7 @@ Route::get('/data-pribadi', function () {
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     return Auth::user()->role === UserRole::HR
     ? redirect()->route('admin.dashboard')
-    : redirect()->route('user.profile');
+    : redirect()->route('user.dashboard');
 })->name('dashboard');
 
 Route::post('/candidate/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])

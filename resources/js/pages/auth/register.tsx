@@ -40,7 +40,7 @@ export default function Register({ status }: RegisterProps) {
             
             <header className="py-4 px-6 shadow">
                 <div className="container mx-auto flex justify-between items-center">
-                    <div className="font-bold text-xl text-blue-600">MITRA KARYA GROUP</div>
+                    <div className="font-bold text-xl text-blue-600 ml-8">MITRA KARYA GROUP</div>
                     <div className="flex items-center gap-x-4">
                         <Link
                             href={route('login')}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -32,6 +33,12 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        // Redirect berdasarkan role user
+        $user = Auth::user();
+        if ($user && $user->role === UserRole::CANDIDATE->value) {
+            return redirect()->intended(route('user.dashboard')); // Sesuaikan dengan nama route di candidate.php
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

@@ -114,7 +114,7 @@ export default function Welcome(props: WelcomeProps) {
                         <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex">
                           <Link href="/" className="hover:text-blue-600">Beranda</Link>
                           <Link href="/lowongan-pekerjaan" className="hover:text-blue-600">Lowongan Pekerjaan</Link>
-                          <Link href="/tentang-kami" className="hover:text-blue-600">Tentang Kami</Link>
+                          <Link href="/about-us" className="hover:text-blue-600">Tentang Kami</Link>
                           <Link href="/kontak" className="hover:text-blue-600">Kontak</Link>
                         </nav>
                         <div className="flex items-center gap-4">
@@ -160,18 +160,22 @@ export default function Welcome(props: WelcomeProps) {
                         </h1>
                         <p className="mb-[32px] text-[18px]">Temukan Karier Impian Anda Bersama Kami</p>
                         <div className="flex justify-center gap-4">
+                          <Link href="/lowongan-pekerjaan" >  
                             <Button
                                 className="rounded-md bg-blue-600 px-[24px] py-[12px] text-white hover:bg-blue-700"
                                 onClick={() => scrollToSection('lowongan')}
                             >
                                 Lihat Lowongan
                             </Button>
-                            <Button
+                          </Link>
+                            <Link href="/about-us" >
+                              <Button
                                 variant="outline"
                                 className="rounded-md border border-white px-[24px] py-[12px] text-white hover:bg-white hover:text-blue-600"
-                            >
+                              >
                                 Tentang Kami
-                            </Button>
+                              </Button>
+                            </Link>
                         </div>
                     </div>
                 </section>
@@ -223,9 +227,11 @@ export default function Welcome(props: WelcomeProps) {
 </div>
 
                         </div>
+                        <Link href="/about-us" >
                         <Button className="rounded-md border border-blue-600 bg-white px-[24px] py-[12px] text-blue-600 hover:bg-blue-50">
                             Tentang Kami →
                         </Button>
+                        </Link>
                     </div>
                 </section>
 
@@ -263,9 +269,11 @@ export default function Welcome(props: WelcomeProps) {
         </div>
       ))}
     </div>
+    <Link href="/lowongan-pekerjaan" >  
     <Button className="rounded-md bg-blue-100 px-[24px] py-[12px] text-blue-600 hover:bg-blue-200">
       Lihat Semua Lowongan →
     </Button>
+    </Link>
   </div>
 </section>
 
@@ -328,12 +336,16 @@ export default function Welcome(props: WelcomeProps) {
           Jangan lewatkan kesempatan untuk menjadi bagian dari tim PT Mitra Karya Analitika.
         </p>
         <div className="flex gap-4 flex-wrap justify-center">
+        <Link href="/lowongan-pekerjaan" >  
           <Button className="rounded-md bg-white px-6 py-3 text-blue-600 hover:bg-blue-50">
             Lihat Lowongan
           </Button>
+        </Link>
+        <Link href="/about-us" >
           <Button className="rounded-md bg-blue-600 px-6 py-3 text-white hover:bg-blue-700">
             Tentang Kami
           </Button>
+        </Link>
         </div>
       </div>
     </div>
@@ -345,7 +357,7 @@ export default function Welcome(props: WelcomeProps) {
                     <div className="container mx-auto grid grid-cols-1 gap-10 px-6 md:grid-cols-3">
                         {/* Kolom 1 */}
                         <div>
-                            <h4 className="mb-2 text-[16px] font-bold">PT MITRA KAYA ANALITIKA</h4>
+                            <h4 className="mb-2 text-[16px] font-bold">MITRA KARYA GROUP</h4>
                             <p className="mb-6 text-sm text-gray-700">
                                 Kami adalah perusahaan teknologi pintar yang senantiasa berkomitmen untuk memberikan dan meningkatkan kepuasan
                                 pelanggan

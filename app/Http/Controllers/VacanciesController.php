@@ -134,4 +134,5 @@ class VacanciesController extends Controller
             ]);
         }
     }
+
 }

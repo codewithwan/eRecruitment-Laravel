@@ -103,7 +103,7 @@ export default function JobHiringPage() {
             <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex">
               <Link href="/" className="hover:text-blue-600">Beranda</Link>
               <Link href="/lowongan-pekerjaan" className="hover:text-blue-600">Lowongan Pekerjaan</Link>
-              <Link href="/tentang-kami" className="hover:text-blue-600">Tentang Kami</Link>
+              <Link href="/about-us" className="hover:text-blue-600">Tentang Kami</Link>
               <Link href="/kontak" className="hover:text-blue-600">Kontak</Link>
             </nav>
             <div className="flex items-center gap-4">
@@ -166,7 +166,7 @@ export default function JobHiringPage() {
                     <div className="container mx-auto grid grid-cols-1 gap-10 px-6 md:grid-cols-3">
                         {/* Kolom 1 */}
                         <div>
-                            <h4 className="mb-2 text-[16px] font-bold">PT MITRA KAYA ANALITIKA</h4>
+                            <h4 className="mb-2 text-[16px] font-bold">MITRA KARYA GROUP</h4>
                             <p className="mb-6 text-sm text-gray-700">
                                 Kami adalah perusahaan teknologi pintar yang senantiasa berkomitmen untuk memberikan dan meningkatkan kepuasan
                                 pelanggan

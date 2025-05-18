@@ -28,8 +28,8 @@ class CreateApplicationHistoryTable extends Migration
             $table->foreign('application_id')->references('id')->on('applications')->onDelete('cascade');
             $table->foreign('candidate_id')->references('id')->on('candidates')->onDelete('cascade');
             $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade');
-            $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
-            $table->foreign('status_id')->references('id')->on('statuses')->onDelete('cascade');
+            $table->foreign('department_id')->references('id')->on('department')->onDelete('cascade');
+            $table->foreign('status_id')->references('id')->on('statuses_id')->onDelete('cascade');
         });
     }
 

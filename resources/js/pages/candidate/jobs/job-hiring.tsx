@@ -10,12 +10,21 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 interface Job {
+  id: number;
   title: string;
-  company: string;
+  company: {
+    name: string;
+  };
   description: string;
   location: string;
   type: string;
   deadline: string;
+  department: string;
+}
+
+interface Props {
+  jobs: Job[];
+  companies: string[];
 }
 
 const PageWrapper = styled.div`
@@ -25,42 +34,62 @@ const PageWrapper = styled.div`
 `;
 
 const JobHiringContainer = styled.div`
-  padding: 40px 0 60px 0;
-  max-width: 900px;
   margin: 0 auto;
 `;
 
-const TeamImage = styled.div`
+const HeroSection = styled.div`
   width: 100%;
-  margin-bottom: 30px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  height: 500px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+              url('/images/team-celebration.png') center/cover no-repeat;
+`;
 
-  img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
+const HeroContent = styled.div`
+  color: white;
+  z-index: 1;
+`;
+
+const HeroTitle = styled.h1`
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 16px;
+`;
+
+const HeroSubtitle = styled.p`
+  font-size: 18px;
+  opacity: 0.9;
+`;
+
+const ContentContainer = styled.div`
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
 `;
 
 const Title = styled.h2`
-  color: #1DA1F2;
+  color: #0088FF;  // Changed to match the image
   font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: left;  // Added to center the title
+  margin: 40px 0 16px;  // Adjusted margins
 `;
 
 const Underline = styled.div`
   width: 80px;
   height: 4px;
-  background: #1DA1F2;
+  background: #0088FF;  // Changed to match the image
   border-radius: 2px;
-  margin-bottom: 32px;
+  margin: 0 0 32px;  // Centered the underline
 `;
 
 const FilterContainer = styled.div`
   display: flex;
+  justify-content: flex-start;  // Center the filter buttons
   gap: 12px;
   margin-bottom: 24px;
 `;
@@ -70,18 +99,19 @@ interface FilterButtonProps {
 }
 
 const FilterButton = styled.button<FilterButtonProps>`
-  background: ${({ active }: FilterButtonProps) => (active ? '#1DA1F2' : '#fff')};
-  color: ${({ active }: FilterButtonProps) => (active ? '#fff' : '#1DA1F2')};
+  background: ${(props) => (props.active ? '#1DA1F2' : '#fff')};
+  color: ${(props) => (props.active ? '#fff' : '#1DA1F2')};
   border: 1px solid #1DA1F2;
   border-radius: 20px;
-  padding: 8px 16px;
+  padding: 8px 20px;  // Adjusted padding
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;  // Adjusted weight
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;  // Prevent text wrapping
 
   &:hover {
-    background: ${({ active }: FilterButtonProps) => (active ? '#1A91DA' : '#E5F1FB')};
+    background: ${(props) => (props.active ? '#1A91DA' : '#E5F1FB')};
   }
 `;
 
@@ -153,27 +183,39 @@ const DetailButton = styled.button`
   }
 `;
 
-const JobHiring: React.FC = () => {
-  const jobs: Job[] = [
-    {
-      title: 'Hardware Engineer',
-      company: 'PT MITRA KARYA ANALITIKA',
-      description:
-        'Ahli yang merancang, mengembangkan, dan menguji perangkat keras, termasuk desain PCB dan integrasi komponen elektronik, untuk aplikasi seperti robotika dan sistem tertanam.',
-      location: 'Office',
-      type: 'Full Time',
-      deadline: 'Lamar Sebelum 25 Maret',
-    },
-    {
-      title: 'Hardware Engineer',
-      company: 'PT MITRA KARYA ANALITIKA',
-      description:
-        'Ahli yang merancang, mengembangkan, dan menguji perangkat keras, termasuk desain PCB dan integrasi komponen elektronik, untuk aplikasi seperti robotika dan sistem tertanam.',
-      location: 'Office',
-      type: 'Full Time',
-      deadline: 'Lamar Sebelum 25 Maret',
-    },
-  ];
+const JobHiring: React.FC<Props> = ({ jobs }) => {
+  const [activeFilter, setActiveFilter] = React.useState<string>('all');
+  const [filteredJobs, setFilteredJobs] = React.useState(jobs);
+
+  const filterJobs = React.useCallback((company: string) => {
+    setActiveFilter(company);
+
+    // Update URL with company filter
+    const url = new URL(window.location.href);
+    if (company === 'all') {
+      url.searchParams.delete('company');
+    } else {
+      url.searchParams.set('company', company);
+    }
+    window.history.pushState({}, '', url.toString());
+
+    // Filter jobs
+    if (company === 'all') {
+      setFilteredJobs(jobs);
+    } else {
+      const filtered = jobs.filter(job => job.company.name === company);
+      setFilteredJobs(filtered);
+    }
+  }, [jobs]);
+
+  // Add effect to handle initial filter from URL
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const companyFilter = urlParams.get('company');
+    if (companyFilter) {
+      filterJobs(companyFilter);
+    }
+  }, [filterJobs]);
 
   return (
     <>
@@ -181,31 +223,54 @@ const JobHiring: React.FC = () => {
       <Header />
       <PageWrapper>
         <JobHiringContainer>
-          <TeamImage>
-            <img src="/images/team-celebration.png" alt="Deskripsi gambar" />
-          </TeamImage>
-          <Title>Open Positions</Title>
-          <Underline />
-          <FilterContainer>
-            <FilterButton active>View All</FilterButton>
-            <FilterButton>PT MITRA KARYA ANALITIKA</FilterButton>
-            <FilterButton>PT AUTENTIK KARYA ANALITIKA</FilterButton>
-          </FilterContainer>
-          {jobs.map((job, index) => (
-            <JobCard key={index}>
-              <JobInfo>
-                <JobTitle>{job.title}</JobTitle>
-                <Company>{job.company}</Company>
-                <Description>{job.description}</Description>
-                <JobDetails>
-                  <span>🏢 {job.location}</span>
-                  <span>🕒 {job.type}</span>
-                  <span>📅 {job.deadline}</span>
-                </JobDetails>
-              </JobInfo>
-              <DetailButton>Lihat Detail</DetailButton>
-            </JobCard>
-          ))}
+          <HeroSection>
+            <HeroContent>
+              <HeroTitle>Bergabunglah Bersama Kami</HeroTitle>
+              <HeroSubtitle>
+                Telusuri berbagai peluang karir dan berkembang bersama PT Mitra Karya Analitika
+              </HeroSubtitle>
+            </HeroContent>
+          </HeroSection>
+          <ContentContainer>
+            <Title>Open Positions</Title>
+            <Underline />
+            <FilterContainer>
+              <FilterButton
+                active={activeFilter === 'all'}
+                onClick={() => filterJobs('all')}
+              >
+                View All
+              </FilterButton>
+              <FilterButton
+                active={activeFilter === 'PT MITRA KARYA ANALITIKA'}
+                onClick={() => filterJobs('PT MITRA KARYA ANALITIKA')}
+              >
+                PT MITRA KARYA ANALITIKA
+              </FilterButton>
+              <FilterButton
+                active={activeFilter === 'PT AUTENTIK KARYA ANALITIKA'}
+                onClick={() => filterJobs('PT AUTENTIK KARYA ANALITIKA')}
+              >
+                PT AUTENTIK KARYA ANALITIKA
+              </FilterButton>
+            </FilterContainer>
+            {filteredJobs.map((job) => (
+              <JobCard key={job.id}>
+                <JobInfo>
+                  <JobTitle>{job.title}</JobTitle>
+                  <Company>{job.company.name}</Company>
+                  <Description>{job.description}</Description>
+                  <JobDetails>
+                    <span>🏢 {job.location}</span>
+                    <span>🕒 {job.type}</span>
+                    <span>📅 {job.deadline}</span>
+                    <span>👥 {job.department}</span>
+                  </JobDetails>
+                </JobInfo>
+                <DetailButton>Lihat Detail</DetailButton>
+              </JobCard>
+            ))}
+          </ContentContainer>
         </JobHiringContainer>
       </PageWrapper>
       <Footer />

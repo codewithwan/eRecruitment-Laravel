@@ -10,6 +10,16 @@ class DepartmentsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        Department::create(['name' => 'IT']);
+        $departments = [
+            ['name' => 'Marketing'],
+            ['name' => 'Teknik' ],
+            ['name' => 'Akuntansi' ],
+            ['name' => 'Kesehatan' ],
+            ['name' => 'IT' ],
+        ];
+
+        foreach ($departments as $department) {
+            Department::create($department);
+        }
     }
 }

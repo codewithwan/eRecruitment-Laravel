@@ -114,7 +114,7 @@ export default function Welcome(props: WelcomeProps) {
                         <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex">
                           <Link href="/" className="hover:text-blue-600">Beranda</Link>
                           <Link href="/lowongan-pekerjaan" className="hover:text-blue-600">Lowongan Pekerjaan</Link>
-                          <Link href="/tentang" className="hover:text-blue-600">Tentang Kami</Link>
+                          <Link href="/tentang-kami" className="hover:text-blue-600">Tentang Kami</Link>
                           <Link href="/kontak" className="hover:text-blue-600">Kontak</Link>
                         </nav>
                         <div className="flex items-center gap-4">

@@ -54,10 +54,10 @@ class Vacancies extends Model
     }
     
     /**
-     * Get the candidates associated with this vacancy.
+     * Get the applicants associated with this vacancy.
      */
-    public function candidates()
+    public function applicants()
     {
-        return $this->hasMany(Candidate::class, 'vacancy_id');
+        return $this->hasMany(Applicant::class, 'vacancy_id');
     }
 }

@@ -25,4 +25,12 @@ class Period extends Model
     {
         return $this->belongsToMany(Vacancies::class, 'vacancy_period', 'period_id', 'vacancy_id');
     }
+    
+    /**
+     * Get the applicants that belong to this period.
+     */
+    public function applicants()
+    {
+        return $this->hasMany(Applicant::class, 'period_id');
+    }
 }

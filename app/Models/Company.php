@@ -21,12 +21,6 @@ class Company extends Model
         'description',
     ];
 
-   
-    /**
-     * Get the candidates associated with the company.
-     */
-    public function candidates(): HasMany
-    {
-        return $this->hasMany(Candidate::class);
-    }
+
+
 }

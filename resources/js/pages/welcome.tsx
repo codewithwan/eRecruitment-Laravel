@@ -1,17 +1,23 @@
 import { Button } from '@/components/ui/button';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 interface WelcomeProps {
     vacancies: JobOpening[];
 }
 
 interface JobOpening {
+    id: number;
     title: string;
-    department: string;
+    company: {
+        name: string;
+    };
+    description: string;
     location: string;
-    requirements: string[];
-    benefits?: string[];
+    type: string;
+    deadline: string;
+    department: string;
 }
 
 const scrollToSection = (id: string) => {
@@ -19,348 +25,363 @@ const scrollToSection = (id: string) => {
 };
 
 export default function Welcome(props: WelcomeProps) {
+
     const { vacancies } = props;
     const { auth } = usePage<SharedData>().props;
+
+    const backgroundImages = ['/images/slider1.png', '/images/slider2.png', '/images/slider3.png', '/images/slider4.png'];
+
+    
+    const benefitCards = [
+        {
+            title: 'Lingkungan Kerja Profesional',
+            description: 'Kami menciptakan budaya kerja yang kolaboratif dan mendukung perkembangan karier setiap karyawan.',
+            icon: '/images/benefit1.png',
+        },
+        {
+            title: 'Inovasi dan Teknologi',
+            description: 'Bergabunglah dengan tim yang selalu beradaptasi dengan teknologi terbaru dan menghadirkan solusi terbaik bagi pelanggan.',
+            icon: '/images/benefit2.png',
+        },
+        {
+            title: 'Benefit Kompetitif',
+            description: 'Kami menawarkan kompensasi dan tunjangan yang menarik sesuai dengan kinerja dan kontribusi Anda.',
+            icon: '/images/benefit3.png',
+        },
+        {
+            title: 'Kesempatan Berkembang',
+            description: 'Kami menyediakan pelatihan dan pengembangan berkelanjutan untuk meningkatkan keterampilan dan kompetensi Anda.',
+            icon: '/images/benefit4.png',
+        },
+    ];
+
+    const [bgIndex, setBgIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setBgIndex((prev) => (prev + 1) % backgroundImages.length);
+        }, 10000);
+        return () => clearInterval(interval);
+    }, [backgroundImages.length]);
 
     return (
         <>
             <Head title="Welcome">
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=outfit:300,400,500,600" rel="stylesheet" />
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
             </Head>
             <div className="min-h-screen bg-white text-gray-900">
-                {/* Header/Navigation */}
-                <header className="sticky top-0 z-10 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
-                    <div className="container mx-auto px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-600 shadow-md">
-                                    <span className="text-lg font-bold text-white">MKA</span>
-                                </div>
-                                <span className="text-lg font-semibold">PT MITRA KARYA ANALITIKA</span>
-                            </div>
-                            <nav className="hidden items-center space-x-8 md:flex">
-                                <a
-                                    href="#about"
-                                    onClick={() => scrollToSection('about')}
-                                    className="font-medium text-gray-600 transition-colors hover:text-blue-600"
+                {/* Navbar */}
+                <header className="fixed top-0 right-0 left-0 z-50 h-[80px] border-b border-gray-200 bg-white px-[20px] shadow">
+                    <div className="container mx-auto flex items-center justify-between px-6 py-4">
+                        <div className="text-[20px] font-bold text-gray-800">MITRA KARYA GROUP</div>
+
+                        <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex">
+                            <Link href="/" className="hover:text-blue-600">
+                                Beranda
+                            </Link>
+                            <Link href="/job-hiring-landing-page" className="hover:text-blue-600">
+                                Lowongan Pekerjaan
+                            </Link>
+                            <Link href="/about-us" className="hover:text-blue-600">
+                                Tentang Kami
+                            </Link>
+                            <Link href="/contact" className="hover:text-blue-600">
+                                Kontak
+                            </Link>
+                        </nav>
+                        <div className="flex items-center gap-4">
+                            {auth?.user ? (
+                                <Link
+                                    href={route('dashboard')}
+                                    className="rounded-md border border-blue-600 px-[16px] py-[10px] text-[14px] font-medium text-blue-600 hover:bg-blue-50"
                                 >
-                                    Tentang
-                                </a>
-                                <a
-                                    href="#jobs"
-                                    onClick={() => scrollToSection('jobs')}
-                                    className="font-medium text-gray-600 transition-colors hover:text-blue-600"
-                                >
-                                    Karir
-                                </a>
-                                <a
-                                    href="#contact"
-                                    onClick={() => scrollToSection('contact')}
-                                    className="font-medium text-gray-600 transition-colors hover:text-blue-600"
-                                >
-                                    Kontak
-                                </a>
-                            </nav>
-                            <div className="flex items-center space-x-4">
-                                {auth?.user ? (
-                                    <Link
-                                        href={route('dashboard')}
-                                        className="rounded-lg border border-blue-500 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50"
-                                    >
-                                        Dashboard
+                                    Dashboard
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">
+                                        Masuk
                                     </Link>
-                                ) : (
-                                    <>
-                                        <Link
-                                            href={route('login')}
-                                            className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
-                                        >
-                                            Masuk
-                                        </Link>
-                                        <Link
-                                            href={route('register')}
-                                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white shadow-md shadow-blue-200 transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200"
-                                        >
-                                            Daftar
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
+                                    <Link
+                                        href={route('register')}
+                                        className="rounded-md bg-blue-600 px-[16px] py-[10px] text-[14px] text-white hover:bg-blue-700"
+                                    >
+                                        Daftar
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 </header>
 
                 {/* Hero Section */}
-                <section className="bg-gradient-to-br from-blue-50 to-white py-20">
-                    <div className="container mx-auto px-6">
-                        <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-                            <div className="mb-6 inline-block rounded-xl bg-blue-100 p-2">
-                                <span className="px-3 text-sm font-medium text-blue-600">Kami Sedang Merekrut</span>
-                            </div>
-                            <h1 className="mb-6 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-4xl leading-tight font-bold text-transparent md:text-5xl lg:text-6xl">
-                                Temukan Karir Impian Anda di Mitra Karya Analitika
-                            </h1>
-                            <p className="mb-8 max-w-2xl text-lg text-gray-600">
-                                Bergabunglah dengan tim profesional berbasis data kami dan bantu membentuk masa depan analitik di Indonesia.
-                            </p>
-                            <div className="flex flex-col gap-4 sm:flex-row">
-                                <Button className="rounded-xl bg-blue-600 px-6 py-6 text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-200">
-                                    Lihat Posisi Terbuka
+                <section className="relative h-[1400px] pt-[128px] pb-[80px] text-center text-white">
+                    {/* Background image slideshow */}
+                    {backgroundImages.map((img, index) => (
+                        <div
+                            key={index}
+                            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${index === bgIndex ? 'z-0 opacity-100' : 'z-0 opacity-0'}`}
+                            style={{ backgroundImage: `url(${img})` }}
+                        />
+                    ))}
+                    {/* Black overlay */}
+                    <div className="absolute inset-0 z-10 bg-black opacity-60" />
+                    <div className="relative z-20 container mx-auto flex h-full flex-col items-center justify-center px-6">
+                        <h1 className="mb-[16px] text-[36px] font-bold md:text-[56px]">
+                            Selamat Datang di E-Recruitment
+                            <br />
+                            Mitra Karya Group
+                        </h1>
+                        <p className="mb-[32px] text-[18px]">Temukan Karier Impian Anda Bersama Kami</p>
+                        <div className="flex justify-center gap-4">
+                            <Link href="/job-hiring-landing-page">
+                                <Button
+                                    className="rounded-md bg-blue-600 px-[24px] py-[12px] text-white hover:bg-blue-700"
+                                    onClick={() => scrollToSection('lowongan')}
+                                >
+                                    Lihat Lowongan
                                 </Button>
-                                <Button className="rounded-xl border border-blue-300 bg-transparent px-6 py-6 text-blue-600 text-white hover:bg-blue-100">
-                                    Hubungi Kami
+                            </Link>
+                            <Link href="/about-us">
+                                <Button
+                                    variant="outline"
+                                    className="rounded-md border border-white px-[24px] py-[12px] text-white hover:bg-white hover:text-blue-600"
+                                >
+                                    Tentang Kami
                                 </Button>
-                            </div>
-
-                            <div className="mt-16 grid w-full max-w-xl grid-cols-3 gap-4">
-                                <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-md">
-                                    <div className="font-semibold text-blue-600">15+</div>
-                                    <div className="text-sm text-gray-500">Tahun Pengalaman</div>
-                                </div>
-                                <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-md">
-                                    <div className="font-semibold text-blue-600">200+</div>
-                                    <div className="text-sm text-gray-500">Profesional</div>
-                                </div>
-                                <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-md">
-                                    <div className="font-semibold text-blue-600">50+</div>
-                                    <div className="text-sm text-gray-500">Klien Utama</div>
-                                </div>
-                            </div>
+                            </Link>
                         </div>
                     </div>
                 </section>
 
-                {/* About Section */}
-                <section id="about" className="py-20">
+                {/* Section Kenapa Bergabung dengan Ikon Gambar */}
+                <section className="bg-white py-20 text-left">
                     <div className="container mx-auto px-6">
-                        <div className="mb-12 text-center">
-                            <div className="mb-6 inline-block rounded-xl bg-blue-100 p-2">
-                                <span className="px-3 text-sm font-medium text-blue-600">Tentang Kami</span>
-                            </div>
-                            <h2 className="mb-4 text-3xl font-bold">Mengapa Bergabung dengan PT MITRA KARYA ANALITIKA</h2>
-                            <p className="mx-auto max-w-2xl text-gray-600">
-                                Kami menawarkan tempat kerja yang dinamis di mana Anda dapat berkembang secara profesional sambil memberikan dampak
-                                nyata.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                            <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:border-blue-100 hover:shadow-md">
-                                <div className="mb-4 inline-block rounded-lg bg-blue-50 p-3 text-blue-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                                    </svg>
-                                </div>
-                                <h3 className="mb-3 text-xl font-medium">Pemimpin Industri</h3>
-                                <p className="text-gray-600">
-                                    Perusahaan analitik data terkemuka yang menyediakan solusi inovatif di seluruh Indonesia.
-                                </p>
-                            </div>
-
-                            <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:border-blue-100 hover:shadow-md">
-                                <div className="mb-4 inline-block rounded-lg bg-blue-50 p-3 text-blue-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M5 22h14"></path>
-                                        <path d="M5 2h14"></path>
-                                        <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path>
-                                        <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>
-                                    </svg>
-                                </div>
-                                <h3 className="mb-3 text-xl font-medium">Pertumbuhan Karir</h3>
-                                <p className="text-gray-600">Jalur yang jelas untuk kemajuan dan peluang pengembangan profesional.</p>
-                            </div>
-
-                            <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:border-blue-100 hover:shadow-md">
-                                <div className="mb-4 inline-block rounded-lg bg-blue-50 p-3 text-blue-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="9" cy="7" r="4"></circle>
-                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                    </svg>
-                                </div>
-                                <h3 className="mb-3 text-xl font-medium">Tim Kolaboratif</h3>
-                                <p className="text-gray-600">Bekerja dengan profesional berbakat dalam lingkungan yang mendukung dan inovatif.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Open Positions Section */}
-                <section id="jobs" className="bg-gradient-to-br from-white to-blue-50 py-20">
-                    <div className="container mx-auto px-6">
-                        <div className="mb-12 text-center">
-                            <div className="mb-6 inline-block rounded-xl bg-blue-100 p-2">
-                                <span className="px-3 text-sm font-medium text-blue-600">Karir</span>
-                            </div>
-                            <h2 className="mb-4 text-3xl font-bold">Posisi Terbuka</h2>
-                            <p className="mx-auto max-w-2xl text-gray-600">
-                                Bergabunglah dengan tim kami dan menjadi bagian dari sesuatu yang istimewa.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                            {vacancies.map((job, index) => (
+                        <h2 className="mb-[16px] text-center text-[24px] font-bold md:text-[32px]">MENGAPA BERGABUNG DENGAN MITRA KARYA GROUP?</h2>
+                        <p className="mx-auto mb-[48px] max-w-[672px] text-center text-[16px] text-gray-600">
+                            Kami menawarkan lingkungan kerja yang mendukung, peluang pengembangan karier, serta benefit kompetitif.
+                        </p>
+                        <div className="grid grid-cols-1 justify-center gap-[100px] px-[100px] sm:grid-cols-2 md:grid-cols-4">
+                            {benefitCards.map((card, index) => (
                                 <div
                                     key={index}
-                                    className="flex flex-col justify-between rounded-xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
+                                    className="flex h-[261px] w-full max-w-[245px] flex-col justify-start rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
                                 >
-                                    <div>
-                                        <h3 className="mb-2 text-xl font-semibold text-blue-900">{job.title}</h3>
-                                        <div className="mb-6 flex items-center space-x-2 text-gray-500">
-                                            <span className="inline-block rounded-md bg-blue-50 px-2 py-1 text-xs text-blue-600">
-                                                {job.department}
-                                            </span>
-                                            <span>•</span>
-                                            <span className="text-sm">{job.location}</span>
-                                        </div>
-                                        <ul className="mb-4 list-inside list-disc text-gray-600">
-                                            {job.requirements.map((requirement, reqIndex) => (
-                                                <li key={reqIndex}>{requirement}</li>
-                                            ))}
-                                            {job.benefits && job.benefits.length > 0 && <li className="">Benefit: {job.benefits.join(', ')}</li>}
-                                        </ul>
+                                    <img src={card.icon} alt={card.title} className="mb-3 h-10 w-10 object-contain" />
+                                    <h3 className="mb-2 font-semibold text-gray-800">{card.title}</h3>
+                                    <p className="text-sm leading-relaxed text-gray-600">{card.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+                {/* Perusahaan Kami & Lowongan */}
+                <section className="py-[80px] text-center">
+                    <div className="container mx-auto px-6">
+                        <h2 className="mb-[40px] text-[24px] font-bold md:text-[32px]">Perusahaan Kami</h2>
+                        <div className="mb-[40px] flex flex-col justify-center gap-[60px] md:flex-row">
+                            <div className="mx-auto flex w-[528px] items-start gap-4 text-left">
+                                <img src="/images/autentik-logo.png" alt="PT AUTENTIK" className="mt-1 h-[60px] w-[60px]" />
+                                <div>
+                                    <h3 className="mb-1 font-semibold">PT AUTENTIK KARYA ANALITIKA</h3>
+                                    <p className="text-sm text-gray-600">
+                                        Adalah perusahaan teknologi pintar yang senantiasa berkomitmen untuk memberikan dan meningkatkan kepuasan
+                                        pelanggan
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mx-auto flex w-[528px] items-start gap-4 text-left">
+                                <img src="/images/mitra-logo.png" alt="PT AUTENTIK" className="mt-1 h-[60px] w-[60px]" />
+                                <div>
+                                    <h3 className="mb-1 font-semibold">PT MITRA KARYA ANALITIKA</h3>
+                                    <p className="text-sm text-gray-600">
+                                        Bergerak dibidang Distribusi Kebutuhan Laboratorium, Cleanroom, Water and Waste Water Treatment Plant.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <Link href="/about-us">
+                            <Button className="rounded-md border border-blue-600 bg-white px-[24px] py-[12px] text-blue-600 hover:bg-blue-50">
+                                Tentang Kami →
+                            </Button>
+                        </Link>
+                    </div>
+                </section>
+
+                <section className="bg-[#f6fafe] py-[80px] text-center">
+                    <div className="container mx-auto px-6">
+                        <h2 className="mb-[16px] text-[24px] font-bold md:text-[32px]">LOWONGAN PEKERJAAN TERSEDIA</h2>
+                        <p className="mx-auto mb-[40px] max-w-[672px] text-[16px] text-gray-600">
+                            Temukan posisi yang sesuai dengan minat dan keahlian Anda di PT Mitra Karya Analitika. Kami membuka peluang karier di
+                            berbagai bidang, seperti:
+                        </p>
+                        <div className="mb-[40px] grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+                            {vacancies.map((job) => (
+                                <div
+                                    key={job.id}
+                                    className="mx-auto flex h-auto w-[400px] flex-col rounded-xl border border-gray-200 bg-white px-6 pt-6 pb-4 text-left shadow hover:shadow-md"
+                                >
+                                    <div className="mb-1 flex items-center justify-between">
+                                        <h3 className="text-[18px] font-semibold">{job.title}</h3>
+                                        <span className="rounded bg-blue-100 px-2 py-[2px] text-[12px] font-medium text-blue-600">
+                                            {job.department}
+                                        </span>
                                     </div>
-                                    <Button className="mt-4 w-full rounded-xl bg-blue-600 px-6 py-3 text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-200">
-                                        Lihat detail
+                                    <div className="mb-3 text-[12px] text-gray-600">
+                                        {job.company.name} • Lamar Sebelum: {job.deadline}
+                                    </div>
+                                    <p className="mb-4 text-sm text-gray-700">{job.description}</p>
+                                    <Button className="w-full rounded bg-[#1976f2] py-[10px] text-sm text-white hover:bg-[#125bd1]">
+                                        Lihat Detail
                                     </Button>
                                 </div>
                             ))}
                         </div>
-
-                        {/* <div className="mt-12 text-center">
-                            <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-6 rounded-xl shadow-md text-white">Lihat Semua Posisi</Button>
-                        </div> */}
+                        <Link href="/job-hiring-landing-page">
+                            <Button className="rounded-md bg-blue-100 px-[24px] py-[12px] text-blue-600 hover:bg-blue-200">
+                                Lihat Semua Lowongan →
+                            </Button>
+                        </Link>
                     </div>
                 </section>
 
-                {/* Contact Section */}
-                <section id="contact" className="py-20">
+                {/* Cara Mendaftar */}
+                <section className="bg-white py-[80px] text-center">
+                    <div className="relative container mx-auto px-6">
+                        <h2 className="mb-4 text-[24px] font-bold md:text-[32px]">Cara Mendaftar</h2>
+                        <p className="mx-auto mb-16 max-w-[768px] text-[16px] text-gray-600">
+                            Mohon persiapkan terlebih dahulu seluruh data pribadi Anda termasuk pendidikan, pengalaman kerja, organisasi, serta data
+                            penunjang lainnya
+                        </p>
+
+                        {/* Wrapper dengan garis horizontal */}
+                        {/* Wrapper dengan garis horizontal dibatasi antara step 1 dan step 4 */}
+                        <div className="relative grid grid-cols-1 items-start gap-10 md:grid-cols-4">
+                            {/* Garis horizontal hanya antara step 1–4 */}
+                            <div className="absolute top-[22px] right-[12.5%] left-[12.5%] z-0 hidden h-[2px] bg-gradient-to-r from-purple-400 to-violet-500 md:block" />
+
+                            {[
+                                {
+                                    number: 1,
+                                    title: 'Daftar & Buat Profil',
+                                    desc: 'Klik tombol Daftar dan buat CV Anda dengan melengkapi bagian profil',
+                                },
+                                {
+                                    number: 2,
+                                    title: 'Cari Lowongan',
+                                    desc: 'Temukan posisi yang sesuai dengan minat dan kualifikasi Anda.',
+                                },
+                                {
+                                    number: 3,
+                                    title: 'Kirim Lamaran',
+                                    desc: 'Ajukan lamaran Anda secara online dengan mudah dan cepat.',
+                                },
+                                {
+                                    number: 4,
+                                    title: 'Proses Seleksi',
+                                    desc: 'Jika memenuhi kriteria, tim HR kami akan menghubungi Anda untuk tahap seleksi lebih lanjut.',
+                                },
+                            ].map((step) => (
+                                <div key={step.number} className="relative z-10 flex flex-col items-center px-2 text-center">
+                                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-violet-500 font-bold text-white">
+                                        {step.number}
+                                    </div>
+                                    <h3 className="mb-2 text-[16px] font-semibold">{step.title}</h3>
+                                    <p className="max-w-[240px] text-sm text-gray-600">{step.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="py-[80px]">
                     <div className="container mx-auto px-6">
-                        <div className="mx-auto max-w-3xl rounded-2xl bg-blue-600 p-10 text-center shadow-xl shadow-blue-200">
-                            <h2 className="mb-4 text-3xl font-bold text-white">Siap Bergabung dengan Tim Kami?</h2>
-                            <p className="mx-auto mb-8 max-w-lg text-blue-100">
-                                Ambil langkah pertama menuju karir yang memuaskan di PT MITRA KARYA ANALITIKA.
-                            </p>
-                            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-                                <Button className="rounded-xl bg-white px-6 py-6 text-blue-600 hover:bg-blue-50">Lamar Sekarang</Button>
-                                <Button className="rounded-xl border border-blue-300 bg-transparent px-6 py-6 text-white hover:bg-blue-700">
-                                    Hubungi Kami
-                                </Button>
+                        <div className="relative overflow-hidden rounded-[24px] bg-black">
+                            <img src="/images/siap-bergabung.png" alt="Bergabung" className="h-[300x] w-full object-cover opacity-60" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
+                                <h2 className="mb-4 text-[28px] font-bold md:text-[36px]">Siap untuk Bergabung?</h2>
+                                <p className="mb-6 max-w-[560px] text-[14px] md:text-[16px]">
+                                    Jangan lewatkan kesempatan untuk menjadi bagian dari tim PT Mitra Karya Analitika.
+                                </p>
+                                <div className="flex flex-wrap justify-center gap-4">
+                                    <Link href="/job-hiring-landing-page">
+                                        <Button className="rounded-md bg-white px-6 py-3 text-blue-600 hover:bg-blue-50">Lihat Lowongan</Button>
+                                    </Link>
+                                    <Link href="/about-us">
+                                        <Button className="rounded-md bg-blue-600 px-6 py-3 text-white hover:bg-blue-700">Tentang Kami</Button>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* Footer */}
-                <footer className="border-t border-gray-100 bg-gray-50 py-10">
-                    <div className="container mx-auto px-6">
-                        <div className="flex flex-col items-center justify-between md:flex-row">
-                            <div className="mb-6 flex items-center space-x-2 md:mb-0">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600">
-                                    <span className="font-bold text-white">MKA</span>
-                                </div>
-                                <span className="font-semibold">PT MITRA KARYA ANALITIKA</span>
-                            </div>
-                            <div className="mb-6 flex gap-8 md:mb-0">
-                                <a href="#about" className="text-sm text-gray-600 transition-colors hover:text-blue-600">
-                                    Tentang
+                <footer className="bg-[#f6fafe] py-16">
+                    <div className="container mx-auto grid grid-cols-1 gap-10 px-6 md:grid-cols-3">
+                        {/* Kolom 1 */}
+                        <div>
+                            <h4 className="mb-2 text-[16px] font-bold">MITRA KARYA GROUP</h4>
+                            <p className="mb-6 text-sm text-gray-700">
+                                Kami adalah perusahaan teknologi pintar yang senantiasa berkomitmen untuk memberikan dan meningkatkan kepuasan
+                                pelanggan
+                            </p>
+                            <div className="flex space-x-4 text-xl text-blue-600">
+                                <a href="#">
+                                    <i className="fab fa-instagram"></i>
                                 </a>
-                                <a href="#jobs" className="text-sm text-gray-600 transition-colors hover:text-blue-600">
-                                    Karir
+                                <a href="#">
+                                    <i className="fab fa-x-twitter"></i>
                                 </a>
-                                <a href="#contact" className="text-sm text-gray-600 transition-colors hover:text-blue-600">
-                                    Kontak
+                                <a href="#">
+                                    <i className="fab fa-linkedin-in"></i>
                                 </a>
-                            </div>
-                            <div className="flex space-x-6">
-                                <a href="#" className="text-blue-500 transition-colors hover:text-blue-700">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                                        <rect x="2" y="9" width="4" height="12"></rect>
-                                        <circle cx="4" cy="4" r="2"></circle>
-                                    </svg>
+                                <a href="#">
+                                    <i className="fab fa-youtube"></i>
                                 </a>
-                                <a href="#" className="text-blue-500 transition-colors hover:text-blue-700">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
-                                    </svg>
-                                </a>
-                                <a href="#" className="text-blue-500 transition-colors hover:text-blue-700">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                                    </svg>
+                                <a href="#">
+                                    <i className="fab fa-whatsapp"></i>
                                 </a>
                             </div>
                         </div>
-                        <div className="mt-8 border-t border-gray-200 pt-6 text-center">
-                            <span className="text-sm text-gray-500">
-                                © {new Date().getFullYear()} PT MITRA KARYA ANALITIKA. Semua hak dilindungi.
-                            </span>
+
+                        {/* Kolom 2 */}
+                        <div>
+                            <h4 className="mb-2 text-[16px] font-bold">Perusahaan Kami</h4>
+                            <ul className="space-y-1 text-sm text-gray-700">
+                                <li>PT MITRA KARYA ANALITIKA</li>
+                                <li>PT AUTENTIK KARYA ANALITIKA</li>
+                            </ul>
+                        </div>
+
+                        {/* Kolom 3 */}
+                        <div>
+                            <h4 className="mb-4 text-[16px] font-bold">Contact</h4>
+                            <ul className="space-y-2 text-sm text-gray-700">
+                                <li className="flex items-start gap-2">
+                                    <i className="fas fa-phone mt-1 text-blue-600" />
+                                    <div>
+                                        Rudy Alfiansyah: 082137384029
+                                        <br />
+                                        Deden Dermawan: 081807700111
+                                    </div>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <i className="fas fa-envelope text-blue-600" />
+                                    <span>autentik.info@gmail.com</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <i className="fas fa-map-marker-alt mt-1 text-blue-600" />
+                                    <span>
+                                        Jl. Klipang Ruko Amsterdam No.9E, Sendangmulyo,
+                                        <br />
+                                        Kec. Tembalang, Kota Semarang, Jawa Tengah 50272
+                                    </span>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </footer>

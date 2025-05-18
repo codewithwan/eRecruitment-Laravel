@@ -1,102 +1,298 @@
-import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Search, Eye, Pencil, Filter, Trash, PlusCircle, AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SearchBar } from '@/components/searchbar';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
-import QuestionTable, { type Question } from '@/components/question-table';
 import { type BreadcrumbItem } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface Question {
+  id: number;
+  question_text: string;
+  options: string[];
+  correct_answer: string;
+  created_at: string;
+  updated_at: string;
+  question_packs?: { id: number; pack_name: string }[];
+}
+
+interface Props {
+  questions: Question[];
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Question Set', href: '/dashboard/questions/question-set' },
+  { title: 'Test & Assessment', href: '#' },
+  { title: 'Question Sets', href: '/dashboard/questions/questions-set' },
 ];
 
-interface Props {
-  questions: {
-    data: Question[];
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-  };
-}
-
-export default function QuestionSet({ questions }: Props) {
+export default function QuestionSet({ questions = [] }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  const handlePageChange = (page: number) => {
-    setIsLoading(true);
-    window.location.href = `/dashboard/questions/question-set?page=${page}`;
-  };
-
-  const handlePerPageChange = (perPage: number) => {
-    setIsLoading(true);
-    window.location.href = `/dashboard/questions/question-set?per_page=${perPage}`;
-  };
-
-  const handleView = (id: number) => console.log(`View question with ID: ${id}`);
-
-  const handleEdit = (id: number) => {
-    window.location.href = `/dashboard/questions/questions-set/edit-questions/${id}`;
-  };
-
-  const handleDelete = (id: number) => console.log(`Delete question with ID: ${id}`);
-
-  const filteredQuestions = (questions?.data || []).filter((q) =>
+  const [filterUsed, setFilterUsed] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Filter questions based on search query
+  const filteredQuestions = questions.filter((q) => 
     q.question_text.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const effectivePagination = {
-    total: filteredQuestions.length,
-    per_page: questions?.per_page ?? 10,
-    current_page: questions?.current_page ?? 1,
-    last_page: questions?.last_page ?? 1,
+  const handleAddQuestion = () => {
+    router.visit('/dashboard/questions/questions-set/add-questions');
+  };
+
+  const handleEditQuestion = (id: number) => {
+    router.visit(`/dashboard/questions/questions-set/edit-questions/${id}`);
+  };
+
+  const handleViewQuestion = (id: number) => {
+    router.visit(`/dashboard/questions/questions-set/view/${id}`);
+  };
+
+  const openDeleteDialog = (id: number) => {
+    setQuestionToDelete(id);
+    setErrorMessage(null);
+    setDeleteDialogOpen(true);
+  };
+  
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setErrorMessage(null);
+  };
+
+  const handleDeleteQuestion = () => {
+    if (!questionToDelete) return;
+    
+    setIsLoading(true);
+    setErrorMessage(null);
+    
+    router.delete(`/dashboard/questions/${questionToDelete}`, {
+      onSuccess: () => {
+        setIsLoading(false);
+        setDeleteDialogOpen(false);
+        setQuestionToDelete(null);
+        // Success message will be shown by the backend flash message
+      },
+      onError: (errors) => {
+        console.error('Error deleting question:', errors);
+        setIsLoading(false);
+        setErrorMessage('Failed to delete the question. Please try again.');
+      },
+    });
+  };
+  
+  // Advanced filtering logic
+  const clearFilters = () => {
+    setSearchQuery('');
+    setFilterUsed(false);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFilterUsed(searchQuery.trim() !== '');
+  };
+
+  const getQuestionText = () => {
+    if (!questionToDelete) return '';
+    const question = questions.find(q => q.id === questionToDelete);
+    return question ? question.question_text : '';
   };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Question Set" />
-      <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Question Set</h2>
-          <Link href="/dashboard/questions/questions-set/add-questions">
-            <Button className="rounded-md bg-blue-500 px-6 py-2 text-white hover:bg-blue-600">
-              + Add Question
+      <Head title="Question Sets" />
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={closeDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this question? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="rounded-md bg-red-50 p-4 border border-red-100">
+              <p className="text-sm text-red-800 font-medium">Question:</p>
+              <p className="text-sm text-gray-700 mt-1">{getQuestionText()}</p>
+            </div>
+            
+            {errorMessage && (
+              <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md text-sm">
+                {errorMessage}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeDeleteDialog}
+              className="flex-1"
+            >
+              Cancel
             </Button>
-          </Link>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteQuestion}
+              className="flex-1 bg-red-500 hover:bg-red-600"
+              disabled={isLoading}
+            >
+              {isLoading ? "Deleting..." : "Delete Question"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <div className="flex h-full flex-1 flex-col gap-6 p-4">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">Question Sets</h2>
+            <p className="text-gray-500 text-sm">Manage questions for assessments and tests</p>
+          </div>
+          <Button 
+            className="bg-blue-500 hover:bg-blue-600 gap-2" 
+            onClick={handleAddQuestion}
+          >
+            <PlusCircle className="h-4 w-4" /> Add Question
+          </Button>
         </div>
 
         <Card>
           <CardHeader className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
               <CardTitle>Question List</CardTitle>
-              <CardDescription>Manage all questions in the system</CardDescription>
+              <CardDescription>
+                {filteredQuestions.length} {filteredQuestions.length === 1 ? 'question' : 'questions'} available
+              </CardDescription>
             </div>
-
-            <SearchBar
-              icon={<Search className="h-4 w-4" />}
-              placeholder="Search question..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-64"
-            />
+            
+            <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto">
+              <div className="relative flex-1">
+                <Search className="absolute top-2.5 left-2 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Search questions..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                title="Clear filters"
+                disabled={!filterUsed}
+                onClick={clearFilters}
+                className="h-10 w-10"
+              >
+                ×
+              </Button>
+            </form>
           </CardHeader>
 
           <CardContent>
-            <QuestionTable
-              questions={filteredQuestions}
-              pagination={effectivePagination}
-              onView={handleView}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onPageChange={handlePageChange}
-              onPerPageChange={handlePerPageChange}
-              isLoading={isLoading}
-            />
+            <div className="rounded-md border">
+              <div className="grid grid-cols-12 bg-gray-50 p-4 font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                <div className="col-span-1">No</div>
+                <div className="col-span-8">Question</div>
+                <div className="col-span-3 text-right">Action</div>
+              </div>
+
+              {isLoading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="mt-2 text-gray-500">Loading questions...</p>
+                </div>
+              ) : filteredQuestions.length === 0 ? (
+                <div className="p-8 text-center">
+                  {filterUsed ? (
+                    <>
+                      <p className="text-gray-500 font-medium">No matching questions found</p>
+                      <p className="text-gray-400 text-sm mt-1">Try adjusting your search query</p>
+                      <Button 
+                        variant="link" 
+                        onClick={clearFilters} 
+                        className="mt-2 text-blue-500"
+                      >
+                        Clear search
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-gray-500 font-medium">No questions available</p>
+                      <p className="text-gray-400 text-sm mt-1">Get started by creating your first question</p>
+                      <Button 
+                        variant="link" 
+                        onClick={handleAddQuestion} 
+                        className="mt-2 text-blue-500"
+                      >
+                        Add a question
+                      </Button>
+                    </>
+                  )}
+                </div>
+              ) : (
+                filteredQuestions.map((question, index) => (
+                  <div
+                    key={question.id}
+                    className={`grid grid-cols-12 border-t p-4 ${index % 2 === 1 ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
+                  >
+                    <div className="col-span-1">{(index + 1).toString().padStart(2, '0')}</div>
+                    <div className="col-span-8 truncate">{question.question_text || 'Question without text'}</div>
+                    <div className="col-span-3 flex justify-end space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-blue-500"
+                        onClick={() => handleViewQuestion(question.id)}
+                        title="View"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-blue-500"
+                        onClick={() => handleEditQuestion(question.id)}
+                        title="Edit"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-500"
+                        onClick={() => openDeleteDialog(question.id)}
+                        title="Delete"
+                        disabled={isLoading}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

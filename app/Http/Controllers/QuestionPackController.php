@@ -24,7 +24,7 @@ class QuestionPackController extends Controller
             'packs' => $questionPacks->toArray()
         ]);
 
-        return Inertia::render('admin/questions/questionpack-management', [
+        return Inertia::render('admin/questions/questions-packs/question-packs', [
             'questionPacks' => $questionPacks
         ]);
     }
@@ -35,9 +35,9 @@ class QuestionPackController extends Controller
     public function create()
     {
         // Fetch all questions with their text
-        $questions = Question::select('id', 'question_text as question', 'question_type')->get();
+        $questions = Question::select('id', 'question_text', 'question_type')->get();
 
-        return inertia('admin/questions/add-questionpacks', [
+        return inertia('admin/questions/questions-packs/add-question-packs', [
             'questions' => $questions
         ]);
     }
@@ -45,6 +45,7 @@ class QuestionPackController extends Controller
     /**
      * Store a newly created question pack in storage.
      */
+
     public function store(Request $request)
     {
         Log::info('QuestionPack data received:', $request->all());
@@ -54,21 +55,29 @@ class QuestionPackController extends Controller
             'pack_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'test_type' => 'required|string',
-            'duration' => 'required|numeric|min:0',
-            'question_ids' => 'nullable|array',
+            'duration' => 'required|string',
+            'question_ids' => 'required|array',
             'question_ids.*' => 'exists:questions,id',
         ]);
 
-        // Get the raw duration value directly from the request to avoid any potential modification
-        $rawDuration = $request->input('duration');
-
-        // Ensure we have a valid duration with a minimum of 60 minutes if not provided
-        $duration = ($rawDuration && $rawDuration > 0) ? (int)$rawDuration : 60;
-
+        // Get the duration string in HH:MM:SS format
+        $durationStr = $request->input('duration');
+        
+        // Convert HH:MM:SS string to minutes for storage
+        $durationParts = explode(':', $durationStr);
+        $hours = (int) $durationParts[0];
+        $minutes = (int) $durationParts[1];
+        $seconds = (int) $durationParts[2];
+        
+        // Calculate total minutes - this is what we'll store
+        $duration = ($hours * 60) + $minutes + ($seconds / 60);
+        
         Log::info('Duration processing:', [
-            'raw_input' => $rawDuration,
-            'parsed_value' => $duration,
-            'data_type' => gettype($rawDuration)
+            'raw_input' => $durationStr,
+            'hours' => $hours,
+            'minutes' => $minutes,
+            'seconds' => $seconds,
+            'total_minutes' => $duration
         ]);
 
         // Create the question pack with the validated duration
@@ -118,7 +127,7 @@ class QuestionPackController extends Controller
     {
         $questionpack->load('questions');
 
-        return inertia('admin/questions/ViewQuestionPack', [
+        return inertia('admin/questions/questions-packs/view-question-pack', [
             'questionPack' => $questionpack
         ]);
     }
@@ -129,9 +138,9 @@ class QuestionPackController extends Controller
     public function edit(QuestionPack $questionpack)
     {
         $questionpack->load('questions');
-        $allQuestions = Question::all();
+        $allQuestions = Question::select('id', 'question_text', 'question_type')->get();
 
-        return inertia('admin/questions/EditQuestionPack', [
+        return inertia('admin/questions/questions-packs/edit-question-packs', [
             'questionPack' => $questionpack,
             'allQuestions' => $allQuestions
         ]);

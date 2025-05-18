@@ -22,7 +22,7 @@ class QuestionController extends Controller
         // Log the questions for debugging
         Log::info('Questions retrieved for management page:', ['count' => $questions->count()]);
 
-        return inertia('admin/questions/question-management', [
+        return inertia('admin/questions/questions-set/question-set', [
             'questions' => $questions
         ]);
     }
@@ -37,9 +37,8 @@ class QuestionController extends Controller
             $questionPack = QuestionPack::find($request->pack_id);
         }
 
-        return inertia('admin/questions/add-questions', [
-            'questionPack' => $questionPack,
-            'tempQuestions' => []
+        return inertia('admin/questions/questions-set/add-questions', [
+            'questionPack' => $questionPack
         ]);
     }
 
@@ -51,12 +50,16 @@ class QuestionController extends Controller
         Log::info('Received question data:', $request->all());
 
         $request->validate([
-            'questions' => 'required|string',
+            'questions' => 'required|array',
+            'questions.*.question_text' => 'required|string',
+            'questions.*.options' => 'required|array',
+            'questions.*.options.*' => 'required|string',
+            'questions.*.correct_answer' => 'required|string',
         ]);
 
         try {
-            // Decode the JSON string to an array
-            $questionsData = json_decode($request->questions, true);
+            // Use the questions directly from the request
+            $questionsData = $request->questions;
 
             if (!is_array($questionsData) || count($questionsData) === 0) {
                 return redirect()->back()->with('error', 'Invalid question data format.');
@@ -83,7 +86,7 @@ class QuestionController extends Controller
 
                 // Create the question
                 $question = Question::create([
-                    'question_text' => $questionData['question'] ?? '',
+                    'question_text' => $questionData['question_text'] ?? '',
                     'options' => $validOptions,
                     'correct_answer' => $questionData['correct_answer'] ?? $validOptions[0],
                     'question_type' => 'multiple_choice'
@@ -104,13 +107,13 @@ class QuestionController extends Controller
                 }
 
                 DB::commit();
-                return redirect()->route('admin.questions.info')->with('success', 'Questions added to pack successfully!');
+                return redirect()->route('admin.questions.question-set')->with('success', 'Questions added to pack successfully!');
             }
 
             // If we don't have a pack, redirect directly to question list
             DB::commit();
 
-            return redirect()->route('admin.questions.info')->with('success', 'Questions created successfully!');
+            return redirect()->route('admin.questions.question-set')->with('success', 'Questions created successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating questions: ' . $e->getMessage());
@@ -123,11 +126,16 @@ class QuestionController extends Controller
      */
     public function show($id)
     {
-        $question = Question::with('questionPacks')->findOrFail($id);
+        try {
+            $question = Question::with('questionPacks')->findOrFail($id);
 
-        return inertia('admin/questions/view-question', [
-            'question' => $question
-        ]);
+            return inertia('admin/questions/questions-set/view-question', [
+                'question' => $question
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error showing question: ' . $e->getMessage());
+            return redirect()->route('admin.questions.question-set')->with('error', 'Question not found.');
+        }
     }
 
     /**
@@ -135,46 +143,69 @@ class QuestionController extends Controller
      */
     public function edit($id)
     {
-        $question = Question::with('questionPacks')->findOrFail($id);
+        try {
+            $question = Question::with('questionPacks')->findOrFail($id);
 
-        return inertia('admin/questions/edit-questions', [
-            'question' => $question
-        ]);
+            return inertia('admin/questions/questions-set/edit-questions', [
+                'question' => $question
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error editing question: ' . $e->getMessage());
+            return redirect()->route('admin.questions.question-set')->with('error', 'Question not found.');
+        }
     }
 
     /**
      * Update the specified question in storage.
      */
-    public function update(Request $request, Question $question)
+    public function update(Request $request, $id)
     {
         $request->validate([
-            'question_text' => 'nullable|string',
-            'options' => 'required|array',
+            'question_text' => 'required|string',
+            'options' => 'required|array|min:2',
             'options.*' => 'required|string',
             'correct_answer' => 'required|string',
         ]);
 
-        $question->update([
-            'question_text' => $request->question_text,
-            'options' => $request->options,
-            'correct_answer' => $request->correct_answer,
-        ]);
+        try {
+            $question = Question::findOrFail($id);
+            
+            // Validate that correct_answer exists in options
+            if (!in_array($request->correct_answer, $request->options)) {
+                return redirect()->back()->with('error', 'The correct answer must be one of the options.');
+            }
 
-        return redirect()->route('admin.questions.info')->with('success', 'Question updated successfully!');
+            $question->update([
+                'question_text' => $request->question_text,
+                'options' => $request->options,
+                'correct_answer' => $request->correct_answer,
+            ]);
+
+            return redirect()->route('admin.questions.question-set')->with('success', 'Question updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error updating question: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update question: ' . $e->getMessage());
+        }
     }
 
     /**
      * Remove the specified question from storage.
      */
-    public function destroy(Question $question)
+    public function destroy($id)
     {
         try {
+            $question = Question::findOrFail($id);
+            
+            // First, detach the question from all question packs
+            $question->questionPacks()->detach();
+            
+            // Then delete the question
             $question->delete();
 
-            return redirect()->back()->with('success', 'Question deleted successfully!');
+            return redirect()->route('admin.questions.question-set')->with('success', 'Question deleted successfully!');
         } catch (\Exception $e) {
             Log::error('Error deleting question: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to delete question'], 500);
+            return redirect()->route('admin.questions.question-set')->with('error', 'Failed to delete question: ' . $e->getMessage());
         }
     }
 }

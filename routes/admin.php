@@ -68,23 +68,23 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
         Route::prefix('questions')
             ->name('questions.')
             ->group(function () {
-                Route::get('/', [QuestionController::class, 'index'])->name('info'); // This route needs to match the file name exactly
-                Route::get('/add-questions/{pack_id?}', [QuestionController::class, 'create'])->name('create'); // Added {pack_id?} parameter
-                Route::get('/edit/{question}', [QuestionController::class, 'edit'])->name('edit'); // Changed {assessment} to {question}
-                Route::post('/', [QuestionController::class, 'store'])->name('store'); // Changed from AssessmentController to QuestionController
-                Route::put('/{question}', [QuestionController::class, 'update'])->name('update'); // Changed {assessment} to {question}
-                Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('remove');
+                // Question Set routes
+                Route::get('/', [QuestionController::class, 'index'])->name('question-set');
+                Route::get('/questions-set', [QuestionController::class, 'index'])->name('question-set');
+                Route::get('/questions-set/add-questions', [QuestionController::class, 'create'])->name('create');
+                Route::get('/questions-set/view/{question}', [QuestionController::class, 'show'])->name('show');
+                Route::get('/questions-set/edit-questions/{question}', [QuestionController::class, 'edit'])->name('edit');
+                Route::post('/questions-set', [QuestionController::class, 'store'])->name('store');
+                Route::put('/{question}', [QuestionController::class, 'update'])->name('update');
+                Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('delete');
             });
 
         // Add QuestionPacks routes
         Route::prefix('questionpacks')
             ->name('questionpacks.')
             ->group(function () {
-                Route::get('/', [QuestionPackController::class, 'index'])->name('index'); // Ensure this matches the frontend link
-
-                // Use the controller method to fetch questions
+                Route::get('/', [QuestionPackController::class, 'index'])->name('index');
                 Route::get('/create', [QuestionPackController::class, 'create'])->name('create');
-
                 Route::post('/', [QuestionPackController::class, 'store'])->name('store');
                 Route::get('/{questionpack}', [QuestionPackController::class, 'show'])->name('show');
                 Route::get('/{questionpack}/edit', [QuestionPackController::class, 'edit'])->name('edit');

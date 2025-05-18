@@ -1,121 +1,234 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Test & Assessment', href: '#' },
-  { title: 'Edit Test', href: '/dashboard/questions/edit-questions' },
+  { title: 'Question Sets', href: '/dashboard/questions/questions-set' },
+  { title: 'Edit Question', href: '#' },
 ];
 
 interface QuestionItem {
-  id?: number;
+  id: number;
   question_text: string;
   options: string[];
-}
-
-interface Assessment {
-  id: number;
-  title: string;
-  description: string;
-  test_type: string;
-  duration: string;
-  questions: QuestionItem[];
+  correct_answer: string;
+  question_type: string;
+  created_at: string;
+  updated_at: string;
+  question_packs?: { id: number; pack_name: string }[];
 }
 
 interface Props {
-  assessment: Assessment;
+  question: QuestionItem;
 }
 
-export default function EditQuestionsPage({ assessment }: Props) {
-  const [questions, setQuestions] = useState<QuestionItem[]>(assessment.questions);
+export default function EditQuestionPage({ question }: Props) {
+  const [questionText, setQuestionText] = useState(question.question_text);
+  const [options, setOptions] = useState([...question.options]);
+  const [correctAnswer, setCorrectAnswer] = useState(question.correct_answer);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
-  const handleQuestionChange = (index: number, value: string) => {
-    const updated = [...questions];
-    updated[index].question_text = value;
-    setQuestions(updated);
+  // Set isDirty when there's a change from the original data
+  useEffect(() => {
+    const isChanged = 
+      questionText !== question.question_text ||
+      JSON.stringify(options) !== JSON.stringify(question.options) ||
+      correctAnswer !== question.correct_answer;
+    
+    setIsDirty(isChanged);
+  }, [questionText, options, correctAnswer, question]);
+
+  const handleOptionChange = (index: number, value: string) => {
+    const newOptions = [...options];
+    newOptions[index] = value;
+    setOptions(newOptions);
+
+    // If the correct answer was this option before the change, update it
+    if (question.options[index] === correctAnswer) {
+      setCorrectAnswer(value);
+    }
   };
 
-  const handleOptionChange = (qIndex: number, oIndex: number, value: string) => {
-    const updated = [...questions];
-    updated[qIndex].options[oIndex] = value;
-    setQuestions(updated);
+  const addOption = () => {
+    setOptions([...options, '']);
   };
 
-  const addOption = (qIndex: number) => {
-    const updated = [...questions];
-    updated[qIndex].options.push('');
-    setQuestions(updated);
+  const removeOption = (index: number) => {
+    if (options.length <= 2) {
+      alert('At least 2 options are required');
+      return;
+    }
+
+    const newOptions = [...options];
+    
+    // If the correct answer was the removed option, reset it
+    if (options[index] === correctAnswer) {
+      setCorrectAnswer(newOptions[0]);
+    }
+    
+    newOptions.splice(index, 1);
+    setOptions(newOptions);
+  };
+
+  const validateForm = () => {
+    if (!questionText.trim()) {
+      alert('Question text is required');
+      return false;
+    }
+
+    if (options.some(opt => !opt.trim())) {
+      alert('All options must have content');
+      return false;
+    }
+
+    if (!correctAnswer || !options.includes(correctAnswer)) {
+      alert('You must select a valid correct answer');
+      return false;
+    }
+
+    return true;
   };
 
   const handleSave = () => {
-    router.put(`/dashboard/questions/question-set/${assessment.id}`, {
-      title: assessment.title,
-      description: assessment.description,
-      test_type: assessment.test_type,
-      duration: assessment.duration,
-      questions: JSON.stringify(questions),
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    router.put(`/dashboard/questions/${question.id}`, {
+      question_text: questionText,
+      options: options,
+      correct_answer: correctAnswer,
     }, {
       onSuccess: () => {
-        router.visit('/dashboard/questions/question-set');
+        router.visit('/dashboard/questions/questions-set');
+      },
+      onError: (errors) => {
+        console.error('Error updating question:', errors);
+        setIsSubmitting(false);
+        alert('Failed to update the question. Please check the form and try again.');
       }
     });
   };
 
+  const handleCancel = () => {
+    if (isDirty) {
+      if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        router.visit('/dashboard/questions/questions-set');
+      }
+    } else {
+      router.visit('/dashboard/questions/questions-set');
+    }
+  };
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Edit Test" />
-      <div className="flex flex-1 flex-col gap-6 rounded-xl p-4">
-        <Card className="p-6">
-          {questions.map((question, qIndex) => (
-            <div key={qIndex} className="mb-6 border-b pb-6">
-              <h4 className="mb-2 text-base font-semibold text-gray-800">Question {qIndex + 1}</h4>
+      <Head title="Edit Question" />
+      <div className="flex flex-col p-6 gap-6">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleCancel}
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Questions
+          </Button>
+          
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => router.visit(`/dashboard/questions/questions-set/view/${question.id}`)}
+            >
+              View Question
+            </Button>
+          </div>
+        </div>
 
-              <div className="relative mb-4">
-                <label className="absolute top-2 left-3 text-sm text-blue-500">Question</label>
-                <input
-                  type="text"
-                  value={question.question_text}
-                  onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
-                  placeholder="Enter question"
-                  className="w-full rounded-md border border-blue-300 px-3 pt-6 pb-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit Question</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
+                <textarea
+                  value={questionText}
+                  onChange={(e) => setQuestionText(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px]"
+                  placeholder="Enter question text"
                 />
               </div>
 
-              <label className="mb-2 block text-sm text-gray-600">Answer Choices:</label>
-              {question.options.map((option, oIndex) => (
-                <div key={oIndex} className="relative mb-2">
-                  <label className="absolute top-2 left-3 text-sm text-blue-500">Option {oIndex + 1}</label>
-                  <input
-                    type="text"
-                    value={option}
-                    onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                    placeholder="Enter answer"
-                    className="w-full rounded-md border border-blue-300 px-3 pt-6 pb-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Options</label>
+                <p className="text-xs text-gray-500 mb-2">Select the radio button next to the correct answer</p>
+                
+                {options.map((option, index) => (
+                  <div key={index} className="flex items-center gap-3 mb-2">
+                    <input
+                      type="radio"
+                      name="correctAnswer"
+                      checked={option === correctAnswer}
+                      onChange={() => setCorrectAnswer(option)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(index, e.target.value)}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder={`Option ${String.fromCharCode(65 + index)}`}
+                    />
+                    {options.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeOption(index)}
+                        className="text-red-500 h-8 w-8 p-0"
+                      >
+                        ×
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addOption}
+                  className="mt-2"
+                >
+                  + Add Option
+                </Button>
+              </div>
+            </div>
 
+            <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => addOption(qIndex)}
-                className="mt-2 text-blue-500 border-blue-300"
+                onClick={handleCancel}
               >
-                + Add Option
+                Cancel
+              </Button>
+              <Button
+                className="bg-blue-500 text-white hover:bg-blue-600"
+                onClick={handleSave}
+                disabled={isSubmitting || !isDirty}
+              >
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
-          ))}
-
-          <div className="mt-6 flex justify-end">
-            <Button className="bg-blue-500 text-white hover:bg-blue-600" onClick={handleSave}>
-              Save Changes
-            </Button>
-          </div>
+          </CardContent>
         </Card>
       </div>
     </AppLayout>

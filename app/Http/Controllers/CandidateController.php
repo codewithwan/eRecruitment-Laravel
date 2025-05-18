@@ -20,4 +20,10 @@ class CandidateController extends Controller
     {
         return Inertia::render('candidate/profile/candidate-profile');
     }
+
+    public function show()
+    {
+        // $candidates = Candidate::all();
+        return Inertia::render('admin/candidates/candidate-list');
+    }
 }

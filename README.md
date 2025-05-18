@@ -82,3 +82,7 @@ Proyek ini dilindungi oleh lisensi **MIT**.
 ---
 
 Made with ❤️ by **Tim e-Recruitment** 🚀
+
+<a href="https://github.com/codewithwan/eRecruitment-Laravel/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=codewithwan/eRecruitment-Laravel" />
+</a>

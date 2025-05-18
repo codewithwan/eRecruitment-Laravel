@@ -55,7 +55,6 @@ export default function JobLists(props: JobListsProps) {
     if (flash?.error) {
         toast.error(flash.error);
     }
-
     const hasApplied = (jobId: number): boolean => {
         return appliedVacancyIds.includes(jobId);
     };

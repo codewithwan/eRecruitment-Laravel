@@ -1,4 +1,5 @@
-import { JobTable } from '@/components/job-table';
+import { JobTable, type Job } from '@/components/job-table';
+import { SearchBar } from '@/components/searchbar';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,13 +15,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Job } from '@/types/job';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { useState } from 'react';
+import { Filter, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface JobProps {
     vacancies: Job[];
@@ -32,7 +35,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
     {
-        title: 'Jobs Management',
+        title: 'Job Management',
         href: '/dashboard/jobs',
     },
 ];
@@ -40,6 +43,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Jobs(props: JobProps) {
     const jobs = props.vacancies || [];
     const [jobsList, setJobsList] = useState<Job[]>(jobs);
+    const [filteredJobs, setFilteredJobs] = useState<Job[]>(jobs);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -47,6 +51,16 @@ export default function Jobs(props: JobProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [departmentFilter, setDepartmentFilter] = useState('all');
+    const [locationFilter, setLocationFilter] = useState('all');
+    const [isFilterActive, setIsFilterActive] = useState(false);
+
+    // Get unique departments and locations for filters
+    const departments = ['all', ...Array.from(new Set(jobs.map((job) => job.department)))];
+    const locations = ['all', ...Array.from(new Set(jobs.map((job) => job.location)))];
 
     // New job form state
     const [newJob, setNewJob] = useState({
@@ -66,6 +80,36 @@ export default function Jobs(props: JobProps) {
         requirements: '',
         benefits: '',
     });
+
+    // Apply filters whenever filter states change
+    useEffect(() => {
+        let result = jobsList;
+
+        // Apply search filter
+        if (searchQuery) {
+            result = result.filter(
+                (job) =>
+                    job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    job.location.toLowerCase().includes(searchQuery.toLowerCase()),
+            );
+        }
+
+        // Apply department filter
+        if (departmentFilter && departmentFilter !== 'all') {
+            result = result.filter((job) => job.department === departmentFilter);
+        }
+
+        // Apply location filter
+        if (locationFilter && locationFilter !== 'all') {
+            result = result.filter((job) => job.location === locationFilter);
+        }
+
+        setFilteredJobs(result);
+
+        // Set filter active state
+        setIsFilterActive(searchQuery !== '' || departmentFilter !== 'all' || locationFilter !== 'all');
+    }, [searchQuery, departmentFilter, locationFilter, jobsList]);
 
     const handleViewJob = (jobId: number) => {
         const job = jobsList.find((job) => job.id === jobId);
@@ -174,24 +218,98 @@ export default function Jobs(props: JobProps) {
         }
     };
 
+    const resetFilters = () => {
+        setSearchQuery('');
+        setDepartmentFilter('all');
+        setLocationFilter('all');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Jobs Management" />
+            <Head title="Job Management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-2xl font-semibold">Jobs Management</h2>
-                        <Button className="mx-10 px-10" onClick={handleAddJob}>
-                            Add Job
-                        </Button>
+                        <h2 className="text-2xl font-semibold">Job Management</h2>
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex items-center"></div>
+                            <Button className="px-6" onClick={handleAddJob}>
+                                + Add Job
+                            </Button>
+                        </div>
                     </div>
                     <Card>
-                        <CardHeader>
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div>
                             <CardTitle>Jobs List</CardTitle>
-                            <CardDescription>Manage all job openings in the system</CardDescription>
+                            <CardDescription>Manage all jobs in the system</CardDescription>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <SearchBar
+                            icon={<Search className="w-4 h-4" />}
+                            placeholder="Search Jobs..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                            <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={isFilterActive ? 'default' : 'outline'}
+                                size="icon"
+                                className="relative"
+                                >
+                                <Filter className="h-4 w-4" />
+                                {isFilterActive && (
+                                    <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>
+                                )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                                <div className="space-y-4">
+                                    <h4 className="font-medium">Filters</h4>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="department-filter">Department</Label>
+                                        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                                            <SelectTrigger id="department-filter">
+                                                <SelectValue placeholder="Filter by department" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {departments.map((dept) => (
+                                                    <SelectItem key={dept} value={dept}>
+                                                        {dept === 'all' ? 'All Departments' : dept}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="location-filter">Location</Label>
+                                        <Select value={locationFilter} onValueChange={setLocationFilter}>
+                                            <SelectTrigger id="location-filter">
+                                                <SelectValue placeholder="Filter by location" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {locations.map((loc) => (
+                                                    <SelectItem key={loc} value={loc}>
+                                                        {loc === 'all' ? 'All Locations' : loc}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
+                                            Reset Filters
+                                        </Button>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                            </Popover>
+                        </div>
                         </CardHeader>
                         <CardContent>
-                            <JobTable jobs={jobsList} onView={handleViewJob} onEdit={handleEditJob} onDelete={handleDeleteJob} />
+                            <JobTable jobs={filteredJobs} onView={handleViewJob} onEdit={handleEditJob} onDelete={handleDeleteJob} isLoading={isLoading} perPage={10} />
                         </CardContent>
                     </Card>
                 </div>

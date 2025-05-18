@@ -16,7 +16,6 @@ class JobsController extends Controller
     public function index()
     {
         $vacancies = Vacancies::all();
-
         $appliedVacancyIds = [];
         if (Auth::check()) {
             $appliedVacancyIds = Candidate::where('user_id', Auth::id())
@@ -37,7 +36,6 @@ class JobsController extends Controller
 
         try {
             Vacancies::findOrFail($id);
-
             // Check if user has already applied to this vacancy
             $existingApplication = Candidate::where('user_id', Auth::id())
                 ->where('vacancy_id', $id)

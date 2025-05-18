@@ -102,9 +102,9 @@ export default function JobHiringPage() {
             <div className="text-[20px] font-bold text-gray-800">MITRA KARYA GROUP</div>
             <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex">
               <Link href="/" className="hover:text-blue-600">Beranda</Link>
-              <Link href="/lowongan-pekerjaan" className="hover:text-blue-600">Lowongan Pekerjaan</Link>
+              <Link href="/job-hiring-landing-page" className="hover:text-blue-600">Lowongan Pekerjaan</Link>
               <Link href="/about-us" className="hover:text-blue-600">Tentang Kami</Link>
-              <Link href="/kontak" className="hover:text-blue-600">Kontak</Link>
+              <Link href="/contact" className="hover:text-blue-600">Kontak</Link>
             </nav>
             <div className="flex items-center gap-4">
               {auth?.user ? (

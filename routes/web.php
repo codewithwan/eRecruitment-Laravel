@@ -6,27 +6,36 @@ use App\Http\Controllers\CandidateController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('job-hiring');
 Route::get('/application-history', function () {
     return Inertia::render('candidate/jobs/application-history');
 })->name('application-history');
-Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
 
 Route::get('/data-pribadi', function () {
         return Inertia::render('DataPribadiForm');
     })->name('data.pribadi');
-// Redirect based on role
-Route::middleware(['auth', 'verified'])->get('/redirect', function () {
-    return Auth::user()->role === UserRole::HR
-    ? redirect()->route('admin.dashboard')
-    : redirect()->route('user.dashboard');
-})->name('dashboard');
 
+Route::get('/lowongan-pekerjaan', function () {
+        return Inertia::render('landing-page/job-hiring-landing-page');
+    })->name('job-hiring');
+Route::get('/kontak', function () {
+        return Inertia::render('landing-page/kontak');
+    })->name('contact');
+// Redirect based on role
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/redirect', function () {
+        return Auth::user()->role === UserRole::HR
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('candidate.profile');
+    })->name('redirect');
+});
 Route::post('/candidate/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])
     ->name('candidate.profile.store');
+Route::post('/register', [RegisteredUserController::class, 'store'])->name('register');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

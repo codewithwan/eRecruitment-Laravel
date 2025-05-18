@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 type LoginForm = {
     email: string;
     password: string;
+    remember: boolean;
 };
 
 interface LoginProps {
@@ -22,6 +23,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     const { data, setData, post, processing, errors, reset } = useForm<Required<LoginForm>>({
         email: '',
         password: '',
+        remember: false,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -35,9 +37,15 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         <div className="flex flex-col min-h-screen bg-white">
             <Head title="Masuk" />
 
+            {status && (
+                <div className="mb-4 text-center text-sm font-medium text-green-600 bg-green-50 p-4 rounded">
+                    {status}
+                </div>
+            )}
+
             <header className="py-4 px-6 shadow">
                 <div className="container mx-auto flex justify-between items-center">
-                        <div className="font-bold text-xl text-blue-600 ml-8">MITRA KARYA GROUP</div>
+                        <div className="font-bold text-xl text-black ml-8">MITRA KARYA GROUP</div>
                     <div className="flex items-center gap-x-4">
                         <Link
                             href={route('register')}
@@ -97,6 +105,19 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     className="w-full bg-gray-100 text-black"
                                 />
                                 <InputError message={errors.password} />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        name="remember"
+                                        checked={data.remember}
+                                        onChange={e => setData('remember', e.target.checked)}
+                                        className="rounded border-gray-300 text-blue-600 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                    />
+                                    <span className="text-sm text-gray-600">Remember me</span>
+                                </label>
                             </div>
 
                             <Button

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -30,17 +31,34 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // Check rate limiting
+        if (RateLimiter::tooManyAttempts('login', 5)) {
+            return back()->withErrors([
+                'email' => 'Too many login attempts. Please try again later.',
+            ])->withInput($request->except('password'));
+        }
+        
         $request->authenticate();
 
+        // Reset rate limiter after successful login
+        RateLimiter::clear('login');
+        
         $request->session()->regenerate();
 
         // Redirect berdasarkan role user
         $user = Auth::user();
-        if ($user && $user->role === UserRole::CANDIDATE->value) {
-            return redirect()->intended(route('user.dashboard')); // Sesuaikan dengan nama route di candidate.php
+        
+        // Jika email belum terverifikasi, arahkan ke halaman verifikasi
+        if (!$user->hasVerifiedEmail()) {
+            return redirect('/email/verify');
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Jika email sudah terverifikasi
+        if ($user->role === UserRole::CANDIDATE->value) {
+            return redirect()->intended('/candidate/profile');
+        }
+
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     /**

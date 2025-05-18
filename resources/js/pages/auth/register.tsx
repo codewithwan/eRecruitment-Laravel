@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 
 type RegisterForm = {
     ektp: string;
-    nama: string;
+    name: string;
     email: string;
     password: string;
 };
@@ -22,7 +22,7 @@ interface RegisterProps {
 export default function Register({ status }: RegisterProps) {
     const { data, setData, post, processing, errors, reset } = useForm<Required<RegisterForm>>({
         ektp: '',
-        nama: '',
+        name: '',
         email: '',
         password: '',
     });
@@ -40,7 +40,7 @@ export default function Register({ status }: RegisterProps) {
             
             <header className="py-4 px-6 shadow">
                 <div className="container mx-auto flex justify-between items-center">
-                    <div className="font-bold text-xl text-blue-600 ml-8">MITRA KARYA GROUP</div>
+                    <div className="font-bold text-xl text-black ml-8">MITRA KARYA GROUP</div>
                     <div className="flex items-center gap-x-4">
                         <Link
                             href={route('login')}
@@ -97,12 +97,12 @@ export default function Register({ status }: RegisterProps) {
                                     type="text"
                                     required
                                     tabIndex={2}
-                                    value={data.nama}
-                                    onChange={(e) => setData('nama', e.target.value)}
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
                                     placeholder="Masukkan nama lengkap Anda"
                                     className="w-full bg-gray-100 text-black"
                                 />
-                                <InputError message={errors.nama} />
+                                <InputError message={errors.name} />
                             </div>
 
                             <div className="space-y-2">

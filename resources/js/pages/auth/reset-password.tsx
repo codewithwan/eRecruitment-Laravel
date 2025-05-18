@@ -8,13 +8,15 @@ import InputError from '@/components/input-error';
 import { Label } from '@/components/ui/label';
 
 interface ResetPasswordProps {
-    token: string; // Token tetap dibutuhkan untuk keamanan saat reset password
+    token: string;
+    email: string;
     status?: string;
 }
 
-export default function ResetPassword({ token, status }: ResetPasswordProps) {
+export default function ResetPassword({ token, email, status }: ResetPasswordProps) {
     const { data, setData, post, processing, errors } = useForm({
         token,
+        email,
         password: '',
         password_confirmation: '',
     });
@@ -49,6 +51,20 @@ export default function ResetPassword({ token, status }: ResetPasswordProps) {
                     </div>
 
                     <form onSubmit={submit} className="flex flex-col gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                required
+                                value={data.email}
+                                onChange={(e) => setData('email', e.target.value)}
+                                placeholder="Masukkan email Anda"
+                                className="w-full bg-gray-100"
+                            />
+                            <InputError message={errors.email} />
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="password">Kata sandi baru</Label>
                             <Input

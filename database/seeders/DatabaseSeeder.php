@@ -14,7 +14,11 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             SuperAdminSeeder::class,
+            CompanySeeder::class,
+            QuestionSeeder::class,
+            QuestionPackSeeder::class,
             VacanciesSeeder::class,
+            PeriodSeeder::class, // This will now create the periods and associate them with vacancies
             CandidateSeeder::class,
         ]);
     }

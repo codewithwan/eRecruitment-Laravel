@@ -57,7 +57,7 @@ export default function AddQuestionsPage() {
       alert('Please complete all questions, options, and correct answers before saving.');
       return;
     }
-  
+
     router.post('/dashboard/questions/question-set/store', {
       questions: questions as any,
     });

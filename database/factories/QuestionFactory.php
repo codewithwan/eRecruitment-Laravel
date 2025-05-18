@@ -23,7 +23,6 @@ class QuestionFactory extends Factory
     public function definition()
     {
         return [
-            'assessment_id' => Assessment::factory(),
             'question_text' => $this->faker->sentence(10, true).'?',
             'options' => $this->generateOptions(),
         ];

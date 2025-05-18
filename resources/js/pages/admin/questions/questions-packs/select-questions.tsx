@@ -35,7 +35,7 @@ export default function SelectQuestions({ questions, tempAssessment }: Props) {
   const handleAdd = () => {
     if (!tempAssessment) {
       alert('Assessment data is missing');
-      return;   
+      return;
     }
 
     setIsLoading(true);

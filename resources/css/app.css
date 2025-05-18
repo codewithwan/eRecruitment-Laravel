@@ -156,4 +156,27 @@
     body {
         @apply bg-background text-foreground;
     }
+    
+    /* Remove sidebar bullet points */
+    [data-sidebar="menu"] {
+        list-style-type: none;
+    }
+    
+    [data-sidebar="menu-item"] {
+        list-style-type: none;
+    }
+    
+    /* Prevent horizontal scrolling in sidebar */
+    [data-sidebar="sidebar"] {
+        overflow-x: hidden;
+    }
+    
+    [data-sidebar="content"],
+    [data-sidebar="group-content"],
+    [data-sidebar="menu"],
+    [data-sidebar="menu-item"] {
+        overflow-x: hidden;
+        word-break: break-word;
+        white-space: normal;
+    }
 }

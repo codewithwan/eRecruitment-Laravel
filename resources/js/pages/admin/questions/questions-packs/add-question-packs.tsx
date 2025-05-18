@@ -76,10 +76,10 @@ export default function AddQuestionPacks() {
 
               <div className="space-y-2">
                 <Label htmlFor="duration" className="text-blue-500">
-                    Test Duration
+                  Test Duration
                 </Label>
                 <div className="flex items-center gap-2 border rounded-lg px-4 py-2 w-full max-w-xs">
-                    <input
+                  <input
                     type="number"
                     min="0"
                     max="23"
@@ -87,11 +87,11 @@ export default function AddQuestionPacks() {
                     className="w-10 text-center text-gray-500 outline-none bg-transparent"
                     value={duration.hours}
                     onChange={(e) =>
-                        setDuration((prev) => ({ ...prev, hours: e.target.value }))
+                      setDuration((prev) => ({ ...prev, hours: e.target.value }))
                     }
-                    />
-                    <span className="text-gray-400">:</span>
-                    <input
+                  />
+                  <span className="text-gray-400">:</span>
+                  <input
                     type="number"
                     min="0"
                     max="59"
@@ -99,11 +99,11 @@ export default function AddQuestionPacks() {
                     className="w-10 text-center text-gray-500 outline-none bg-transparent"
                     value={duration.minutes}
                     onChange={(e) =>
-                        setDuration((prev) => ({ ...prev, minutes: e.target.value }))
+                      setDuration((prev) => ({ ...prev, minutes: e.target.value }))
                     }
-                    />
-                    <span className="text-gray-400">:</span>
-                    <input
+                  />
+                  <span className="text-gray-400">:</span>
+                  <input
                     type="number"
                     min="0"
                     max="59"
@@ -111,29 +111,29 @@ export default function AddQuestionPacks() {
                     className="w-10 text-center text-gray-500 outline-none bg-transparent"
                     value={duration.seconds}
                     onChange={(e) =>
-                        setDuration((prev) => ({ ...prev, seconds: e.target.value }))
+                      setDuration((prev) => ({ ...prev, seconds: e.target.value }))
                     }
-                    />
+                  />
                 </div>
-                </div>
+              </div>
 
             </div>
 
             <div className="flex justify-end mt-4">
-            <Button
-            onClick={() => {
-                router.post('/dashboard/questions/question-packs/temp-store', {
-                title,
-                description,
-                test_type: type,
-                duration: `${duration.hours.padStart(2, '0')}:${duration.minutes.padStart(2, '0')}:${duration.seconds.padStart(2, '0')}`,
-                });
-            }}
-            className="bg-blue-500 text-white hover:bg-blue-600"
-            disabled={!title || !description || !type}
-            >
-            Next
-            </Button>
+              <Button
+                onClick={() => {
+                  router.post('/dashboard/questions/question-packs/temp-store', {
+                    title,
+                    description,
+                    test_type: type,
+                    duration: `${duration.hours.padStart(2, '0')}:${duration.minutes.padStart(2, '0')}:${duration.seconds.padStart(2, '0')}`,
+                  });
+                }}
+                className="bg-blue-500 text-white hover:bg-blue-600"
+                disabled={!title || !description || !type}
+              >
+                Next
+              </Button>
             </div>
           </CardContent>
         </Card>

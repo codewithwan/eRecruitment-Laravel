@@ -1,154 +1,147 @@
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { NavItem } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { File, Github, LayoutGrid, LucideFileQuestion, SearchIcon, User, FileText, Package, FileAxis3D } from 'lucide-react'; // Tambahkan ikon untuk submenu
+import { ClipboardList, FileBarChart, Github, LayoutGrid, LucideFileQuestion, MessageSquare, Package, SearchIcon, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
-import { useState } from 'react';
 
-const dashboardNavItems: NavItem[] = [
+// Add CSS to remove bullet points
+import '../../../resources/css/app.css';
+
+const dashboardNavItems: NavItem[] = [{ title: 'Dashboard', href: '/dashboard', icon: LayoutGrid }];
+
+// Remove periods from shared subitems
+const sharedSubItems: NavItem[] = [
+    { title: 'Administration', href: '/dashboard/company/administration', icon: LayoutGrid },
+    { title: 'Assessment', href: '/dashboard/assessment', icon: ClipboardList },
+    { title: 'Interview', href: '/dashboard/interview', icon: MessageSquare },
+    { title: 'Reports & Analytics', href: '/dashboard/reports', icon: FileBarChart },
+];
+
+// Test and assessment submenu items
+const testAssessmentItems: NavItem[] = [
+    { title: 'Question Sets', href: '/dashboard/questions', icon: ClipboardList },
+    { title: 'Question Packs', href: '/dashboard/questionpacks', icon: Package },
+];
+
+// Updated main navigation items
+const mainNavItems: { name: string; icon: React.ElementType; href?: string; items?: NavItem[] }[] = [
+    { name: 'User Management', href: '/dashboard/users', icon: User },
+    { name: 'Job Management', href: '/dashboard/jobs', icon: SearchIcon },
+    { name: 'Test & Assessment', icon: LucideFileQuestion, items: testAssessmentItems },
+];
+
+const footerNavItems: NavItem[] = [{ title: 'Github', href: 'https://github.com/codewithwan/eRecruitment-Laravel', icon: Github }];
+
+// Updated company items with IDs
+const companyNavItems: { id: number; name: string; icon: React.ElementType; items: NavItem[] }[] = [
     {
-        title: 'Dashboard',
-        href: '/dashboard',
+        id: 1,
+        name: 'Mitra Karya Analitika',
         icon: LayoutGrid,
-    },
-];
-
-const candidateNavItems: NavItem[] = [
-    {
-        title: 'Candidates',
-        href: '/dashboard/candidates',
-        icon: File,
+        items: sharedSubItems,
     },
     {
-        title: 'Reports & Analytics',
-        href: '/dashboard/reports',
-        icon: FileAxis3D,
-    },
-];
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'User Management',
-        href: '/dashboard/users',
-        icon: User,
-    },
-    {
-        title: 'Job Management',
-        href: '/dashboard/jobs',
-        icon: SearchIcon,
-    },
-    {
-        title: 'Test & Assessment',
-        href: '/dashboard/questions/question-set',
-        icon: LucideFileQuestion,
-        children: [
-            {
-                title: 'Question Set',
-                href: '/dashboard/questions/question-set',
-                icon: FileText, 
-            },
-            {
-                title: 'Question Packs',
-                href: '/dashboard/questions/question-packs',
-                icon: Package, 
-            },
-        ],
+        id: 2,
+        name: 'Autentik Karya Analitika',
+        icon: ClipboardList,
+        items: sharedSubItems,
     },
 ];
 
 
 
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Github',
-        href: 'https://github.com/codewithwan/eRecruitment-Laravel',
-        icon: Github,
-    },
-];
-
-// Custom Nav function that highlights active items
-function NavMain(title: string, { items }: { items: NavItem[] }) {
+function SidebarNavGroup({ title, items }: { title: string; items: NavItem[] }) {
     const { url } = usePage();
-    const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+
+    const isActive = (href: string) => url === href || (href === '/dashboard' && (url === '/' || url === '/dashboard'));
 
     return (
-        <SidebarMenu>
-            <div className="px-4 py-2">
-                <h2 className="text-muted-foreground px-2 text-xs font-semibold tracking-tight">{title}</h2>
-            </div>
-            {items.map((item) => {
-                // Perbaiki logika isActive
-                const isActive = item.children
-                    ? false // Menu utama tidak pernah aktif
-                    : url.startsWith(item.href); // Aktif jika URL cocok dengan menu utama (tanpa submenu)
-
-                const isExpanded = expandedMenu === item.title || (item.children && item.children.some((subItem) => url.startsWith(subItem.href)));
-
-                return (
+        <SidebarGroup>
+            <SidebarGroupLabel>{title}</SidebarGroupLabel>
+            <SidebarGroupContent>
+                {items.map((item) => (
                     <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
                             asChild
-                            className={
-                                isActive
-                                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-100 hover:text-blue-600'
-                                    : 'hover:bg-blue-50 hover:text-blue-500'
-                            }
-                            onClick={(e) => {
-                                if (item.children) {
-                                    e.preventDefault();
-                                    setExpandedMenu(isExpanded ? null : item.title);
-
-                                    // Navigate to the default child (Question Set) if not expanded
-                                    if (!isExpanded) {
-                                        router.visit(item.children[0].href); // Default to the first child
-                                    }
-                                }
-                            }}
+                            className={isActive(item.href) ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-500'}
                         >
-                            <Link href={item.href} prefetch>
+                            <Link href={item.href}>
                                 {item.icon && <item.icon className="mr-2 h-4 w-4" />}
                                 <span>{item.title}</span>
                             </Link>
                         </SidebarMenuButton>
-
-                        {/* Render submenu if expanded */}
-                        {item.children && isExpanded && (
-                            <SidebarMenuSub>
-                                {item.children.map((subItem) => (
-                                    <SidebarMenuSubItem key={subItem.href}>
-                                        <SidebarMenuSubButton
-                                            href={subItem.href}
-                                            className={
-                                                url.startsWith(subItem.href)
-                                                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-100 hover:text-blue-600'
-                                                    : 'hover:bg-blue-50 hover:text-blue-500'
-                                            }
-                                        >
-                                            {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />}
-                                            {subItem.title}
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                ))}
-                            </SidebarMenuSub>
-                        )}
                     </SidebarMenuItem>
-                );
-            })}
-        </SidebarMenu>
+                ))}
+            </SidebarGroupContent>
+        </SidebarGroup>
     );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], sharedSubItems: NavItem[] }) {
+    const { url } = usePage();
+    const [activeCompany, setActiveCompany] = useState<string | null>(null);
+    const [activeManagementItem, setActiveManagementItem] = useState<string | null>(null);
+
+    // Use useEffect to determine which sections should be active based on the current URL
+    useEffect(() => {
+        // If URL contains certain paths, activate the correct company submenu
+        if (url.includes('/periods') || url.includes('/administration') || 
+            url.includes('/assessment') || url.includes('/interview') || 
+            url.includes('/reports')) {
+
+            // Extract companyId from URL if present
+            const urlParams = new URLSearchParams(window.location.search);
+            const companyId = urlParams.get('companyId');
+            
+            if (companyId === '1') {
+                setActiveCompany('Mitra Karya Analitika');
+            } else if (companyId === '2') {
+                setActiveCompany('Autentik Karya Analitika');
+            }
+        }
+
+        // If URL contains questions or questionpacks, activate the Test & Assessment section
+        if (url.includes('/questions') || url.includes('/questionpacks')) {
+            setActiveManagementItem('Test & Assessment');
+        }
+    }, [url]);
+
+    const toggleCompany = (companyName: string, companyId: number) => {
+        // Update this to navigate with a full page load instead of just updating state
+        window.location.href = `/dashboard/periods?companyId=${companyId}`;
+        
+        // Keep this for UI toggling if needed
+        setActiveCompany((prev) => (prev === companyName ? null : companyName));
+    };
+
+    const toggleManagementItem = (itemName: string) => {
+        setActiveManagementItem((prev) => (prev === itemName ? null : itemName));
+    };
+
+    const isActive = (href: string) => url === href || (href === '/dashboard' && (url === '/' || url === '/dashboard'));
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch>
+                            <Link href="/dashboard">
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -157,9 +150,115 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                {NavMain('Dashboard', { items: dashboardNavItems })}
-                {NavMain('Candidate', { items: candidateNavItems })}
-                {NavMain('Management', { items: mainNavItems })}
+                <SidebarNavGroup title="Dashboard" items={dashboardNavItems} />
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Company</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        {companyNavItems.map((company) => (
+                            <SidebarMenuItem key={company.name}>
+                                {/* Company name now navigates to periods page AND toggles submenu */}
+                                <SidebarMenuButton
+                                    onClick={() => toggleCompany(company.name, company.id)}
+                                    className={
+                                        activeCompany === company.name
+                                            ? 'bg-blue-100 text-blue-600 hover:bg-blue-100'
+                                            : 'hover:bg-blue-50 hover:text-blue-500'
+                                    }
+                                >
+                                    {company.icon && <company.icon className="mr-2 h-4 w-4" />}
+                                    <span>{company.name}</span>
+                                </SidebarMenuButton>
+
+                                {activeCompany === company.name && (
+                                    <SidebarGroupContent>
+                                        <div className="pt-0 pl-1">
+                                            {company.items.map((item) => (
+                                                <SidebarMenuItem as="div" key={item.href}>
+                                                    <SidebarMenuButton
+                                                        asChild
+                                                        className={`ml-5 ${
+                                                            url.includes(item.href.split('?')[0]) 
+                                                                ? 'bg-blue-100 text-blue-600' 
+                                                                : 'hover:bg-blue-50 hover:text-blue-500'
+                                                        }`}
+                                                    >
+                                                        <Link href={`${item.href}?companyId=${company.id}`}>
+                                                            {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                                                            <span>{item.title}</span>
+                                                        </Link>
+                                                    </SidebarMenuButton>
+                                                </SidebarMenuItem>
+                                            ))}
+                                        </div>
+                                    </SidebarGroupContent>
+                                )}
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                {/* Management Section with nested Test & Assessment */}
+                <SidebarGroup>
+                    <SidebarGroupLabel>Management</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        {mainNavItems.map((item) => (
+                            <SidebarMenuItem key={item.name}>
+                                {/* If the item has a dropdown (like Test & Assessment) */}
+                                {item.items ? (
+                                    <>
+                                        <SidebarMenuButton
+                                            onClick={() => toggleManagementItem(item.name)}
+                                            className={
+                                                activeManagementItem === item.name
+                                                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-100'
+                                                    : 'hover:bg-blue-50 hover:text-blue-500'
+                                            }
+                                        >
+                                            {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                                            <span>{item.name}</span>
+                                        </SidebarMenuButton>
+
+                                        {activeManagementItem === item.name && (
+                                            <SidebarGroupContent>
+                                                <div className="pt-0 pl-1">
+                                                    {item.items.map((subItem) => (
+                                                        <SidebarMenuItem as="div" key={subItem.href}>
+                                                            <SidebarMenuButton
+                                                                asChild
+                                                                className={`ml-5 ${
+                                                                    isActive(subItem.href)
+                                                                        ? 'bg-blue-100 text-blue-600'
+                                                                        : 'hover:bg-blue-50 hover:text-blue-500'
+                                                                }`}
+                                                            >
+                                                                <Link href={subItem.href}>
+                                                                    {subItem.icon && <subItem.icon className="mr-2 h-4 w-4" />}
+                                                                    <span>{subItem.title}</span>
+                                                                </Link>
+                                                            </SidebarMenuButton>
+                                                        </SidebarMenuItem>
+                                                    ))}
+                                                </div>
+                                            </SidebarGroupContent>
+                                        )}
+                                    </>
+                                ) : (
+                                    /* Regular menu item without dropdown */
+                                    <SidebarMenuButton
+                                        asChild
+                                        className={isActive(item.href!) ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-500'}
+                                    >
+                                        <Link href={item.href!}>
+                                            {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                                            <span>{item.name}</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                )}
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarGroupContent>
+                </SidebarGroup>
             </SidebarContent>
 
             <SidebarFooter>
@@ -169,3 +268,5 @@ export function AppSidebar() {
         </Sidebar>
     );
 }
+
+export default AppSidebar;

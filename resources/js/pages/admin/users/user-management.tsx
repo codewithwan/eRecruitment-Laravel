@@ -18,11 +18,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UserTable } from '@/components/user-table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { PaginationData, User } from '@/types/user';
+import { User } from '@/types/user';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { Filter, Search } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+
+interface PaginationData {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+}
 
 interface UserManagementProps {
     users?: User[];
@@ -277,7 +284,7 @@ export default function UserManagement(props: UserManagementProps) {
                             <div className="flex items-center gap-4">
                                 <SearchBar
                                     icon={<Search className="h-4 w-4" />}
-                                    placeholder="Search user..."
+                                    placeholder="Cari user..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />

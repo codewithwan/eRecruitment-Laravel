@@ -11,25 +11,21 @@ use Inertia\Inertia;
 
 class QuestionController extends Controller
 {
-    public function index(Request $request)
-{
-    $questions = Question::select('id', 'question_text', 'correct_answer', 'question_type', 'created_at', 'updated_at')
-        ->paginate($request->get('per_page', 10));
+    /**
+     * Display a listing of the questions.
+     */
+    public function index()
+    {
+        // Load questions with their related question packs
+        $questions = Question::with('questionPacks')->get();
 
-        return inertia('admin/questions/questions-set/question-set', [
+        // Log the questions for debugging
+        Log::info('Questions retrieved for management page:', ['count' => $questions->count()]);
+
+        return inertia('admin/questions/question-management', [
             'questions' => $questions
         ]);
-}
-
-
-public function indexPack(Request $request)
-{
-    $questionPacks = []; 
-
-    return Inertia::render('admin/questions/questions-packs/question-packs', [
-        'tests' => $questionPacks
-    ]);
-}
+    }
 
     /**
      * Show the form for creating a new question.
@@ -41,7 +37,7 @@ public function indexPack(Request $request)
             $questionPack = QuestionPack::find($request->pack_id);
         }
 
-        return inertia('admin/questions/questions-set/add-questions', [
+        return inertia('admin/questions/add-questions', [
             'questionPack' => $questionPack,
             'tempQuestions' => []
         ]);

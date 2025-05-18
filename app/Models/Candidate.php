@@ -6,6 +6,7 @@ use App\Enums\CandidatesStage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Candidate extends Model
 {
@@ -30,6 +31,8 @@ class Candidate extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Removed administration relationship as per requirements
 
     /**
      * Get the vacancy associated with the candidate.

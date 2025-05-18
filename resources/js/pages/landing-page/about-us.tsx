@@ -90,7 +90,7 @@ const CompanySlider: React.FC<CompanySliderProps> = ({ title, description, image
 };
 
 export default function AboutUs(props: WelcomeProps) {
-    const { auth } = usePage<{ auth: { user: any } }>().props;
+    const { auth } = usePage<{ auth: { user: unknown } }>().props;
 
     return (
         <>

@@ -7,7 +7,8 @@ use App\Http\Controllers\CandidatesWorkExperiencesController; // Pastikan contro
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\ApplicationHistoryController;
 use App\Http\Controllers\AboutUsController;
 
@@ -16,6 +17,9 @@ Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('j
 Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacanciesLandingPage'])->name('job-hiring-landing-page');
 Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('application-history');
 Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
+Route::get('/application-history', function () {
+    return Inertia::render('candidate/jobs/application-history');
+})->name('application-history');
 
 // Seharusnya menggunakan controller untuk mengambil data
 Route::get('/data-pribadi', [CandidateController::class, 'profile'])->name('data.pribadi');
@@ -29,13 +33,21 @@ Route::get('/about-us', [AboutUsController::class, 'index'])->name('about-us');
 
 Route::get('/job-detail/{id}', [VacanciesController::class, 'show'])->name('job.detail');
 
-// Redirect based on role
-Route::middleware(['auth', 'verified'])->get('/redirect', function () {
-    return Auth::user()->role === UserRole::HR
-    ? redirect()->route('admin.dashboard')
-    : redirect()->route('user.profile');
-})->name('dashboard');
 
+Route::get('/lowongan-pekerjaan', function () {
+        return Inertia::render('landing-page/job-hiring-landing-page');
+    })->name('job-hiring');
+Route::get('/kontak', function () {
+        return Inertia::render('landing-page/kontak');
+    })->name('contact');
+// Redirect based on role
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/redirect', function () {
+        return Auth::user()->role === UserRole::HR
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('user.profile');
+    })->name('redirect');
+});
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/candidate/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])
         ->name('candidate.profile.store');
@@ -92,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/candidate/organization/{id}', [CandidateController::class, 'updateOrganization'])
         ->name('candidate.organization.update');
 });
+Route::post('/register', [RegisteredUserController::class, 'store'])->name('register');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

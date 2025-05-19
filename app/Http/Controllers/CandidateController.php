@@ -15,11 +15,19 @@ use Inertia\Inertia;
 
 class CandidateController extends Controller
 {
+    // public function dashboard()
+    // {
+    //     $user = Auth::user();
+
+    //     return Inertia::render('candidate/dashboard', [
+    //         'users' => $user,
+    //     ]);
+    // }
     public function dashboard()
     {
         $user = Auth::user();
 
-        return Inertia::render('candidate/dashboard/candidate-dashboard', [
+        return Inertia::render('DataPribadiForm', [
             'users' => $user,
         ]);
     }

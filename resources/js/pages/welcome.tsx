@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -26,8 +27,82 @@ const scrollToSection = (id: string) => {
 
 export default function Welcome(props: WelcomeProps) {
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { vacancies } = props;
     const { auth } = usePage<SharedData>().props;
+
+    const backgroundImages = [
+        "/images/slider1.png",
+        "/images/slider2.png",
+        "/images/slider3.png",
+        "/images/slider4.png",
+    ];
+
+    const jobList = [
+        {
+          title: "Data Analyst",
+          department: "Data",
+          deadline: "25 Maret 2025"
+        },
+        {
+          title: "Software Engineer",
+          department: "Engineering",
+          deadline: "30 Maret 2025"
+        },
+        {
+          title: "Game Developer",
+          department: "Creative",
+          deadline: "5 April 2025"
+        },
+        {
+          title: "Penetration Tester",
+          department: "Security",
+          deadline: "10 April 2025"
+        },
+        {
+          title: "UI/UX Designer",
+          department: "Design",
+          deadline: "15 April 2025"
+        },
+        {
+          title: "Project Manager",
+          department: "Management",
+          deadline: "20 April 2025"
+        },
+      ];
+
+      const benefitCards = [
+        {
+          title: "Lingkungan Kerja Profesional",
+          description: "Kami menciptakan budaya kerja yang kolaboratif dan mendukung perkembangan karier setiap karyawan.",
+          icon: "/images/benefit1.png"
+        },
+        {
+          title: "Inovasi dan Teknologi",
+          description: "Bergabunglah dengan tim yang selalu beradaptasi dengan teknologi terbaru dan menghadirkan solusi terbaik bagi pelanggan.",
+          icon: "/images/benefit2.png"
+        },
+        {
+          title: "Benefit Kompetitif",
+          description: "Kami menawarkan kompensasi dan tunjangan yang menarik sesuai dengan kinerja dan kontribusi Anda.",
+          icon: "/images/benefit3.png"
+        },
+        {
+          title: "Kesempatan Berkembang",
+          description: "Kami menyediakan pelatihan dan pengembangan berkelanjutan untuk meningkatkan keterampilan dan kompetensi Anda.",
+          icon: "/images/benefit4.png"
+        },
+      ];
+
+
+    const [bgIndex, setBgIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setBgIndex((prev) => (prev + 1) % backgroundImages.length);
+        }, 10000);
+        return () => clearInterval(interval);
+    }, [backgroundImages.length]);
 
     const backgroundImages = ['/images/slider1.png', '/images/slider2.png', '/images/slider3.png', '/images/slider4.png'];
 
@@ -101,9 +176,7 @@ export default function Welcome(props: WelcomeProps) {
                                 </Link>
                             ) : (
                                 <>
-                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">
-                                        Masuk
-                                    </Link>
+                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">Masuk</Link>
                                     <Link
                                         href={route('register')}
                                         className="rounded-md bg-blue-600 px-[16px] py-[10px] text-[14px] text-white hover:bg-blue-700"

@@ -28,7 +28,11 @@ class UserController extends Controller
             return $job_applications->count();
         });
 
-        return Inertia::render('admin/dashboard', ['users' => $users, 'traffic' => $traffic, 'job_applied' => $job_applied]);
+       return Inertia::render('candidate/profile', [
+        'users' => $users,
+        'traffic' => $traffic,
+        'job_applied' => $job_applied
+    ]);
     }
 
     public function store(Request $request)

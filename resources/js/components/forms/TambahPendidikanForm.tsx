@@ -1,61 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChangeEvent, FormEvent } from 'react';
 import InputField from '../InputField';
 import SelectField from '../SelectField';
 
+interface Education {
+    id?: number;
+    education_level: string;
+    faculty: string;
+    major: string;
+    institution_name: string;
+    gpa: string;
+    year_in: string;
+    year_out: string;
+}
+
 interface TambahPendidikanFormProps {
-    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+    formData: Education;
     onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    onSubmit: (e: FormEvent<HTMLFormElement>) => void | Promise<void>;
     onBack: () => void;
 }
 
-interface PendidikanFormData {
-    tingkatPendidikan: string;
-    fakultas?: string;
-    programStudi?: string;
-    namaInstitusi: string;
-    ipk: string;
-    tahunMasuk: string;
-    tahunKeluar: string;
-}
-
 const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
-    onSubmit,
+    formData,
     onChange,
+    onSubmit,
     onBack
 }) => {
-    const [formData, setFormData] = useState<PendidikanFormData>({
-        tingkatPendidikan: '',
-        namaInstitusi: '',
-        ipk: '',
-        tahunMasuk: '',
-        tahunKeluar: ''
-    });
+    const [localFormData, setLocalFormData] = useState<Education>(formData);
     const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    useEffect(() => {
+        if (formData.education_level) {
+            setShowAdditionalFields(true);
+        }
+        setLocalFormData(formData);
+    }, [formData]);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setLocalFormData(prev => ({
             ...prev,
             [name]: value
         }));
-        onChange(e); // Pass the event to parent's onChange
+        onChange(e);
+    };
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        console.log('Data yang dikirim:', localFormData); // Tambahkan log ini
+        try {
+            await onSubmit(e);
+            setMessage({
+                type: 'success',
+                text: 'Data pendidikan berhasil disimpan!'
+            });
+
+            // Scroll to top to show notification
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+
+            // Auto-hide notification after 3 seconds
+            setTimeout(() => {
+                setMessage(null);
+            }, 3000);
+        } catch (error) {
+            setMessage({
+                type: 'error',
+                text: 'Terjadi kesalahan saat menyimpan data'
+            });
+        }
     };
 
     return (
         <div className="bg-white rounded-lg shadow-sm">
             <div className="p-6 border-b">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-blue-600">Pendidikan</h2>
-                </div>
+                <h2 className="text-2xl font-bold text-blue-600">Pendidikan</h2>
                 <p className="text-sm text-gray-600 mt-2">Lengkapi pendidikan dari pendidikan terakhir</p>
+
+                {message && (
+                    <div
+                        className={`p-4 mt-4 rounded-lg flex items-center ${message.type === 'success'
+                            ? 'bg-green-100 text-green-700 border border-green-400'
+                            : 'bg-red-100 text-red-700 border border-red-400'
+                            }`}
+                        role="alert"
+                    >
+                        {message.type === 'success' ? (
+                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                        ) : (
+                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        )}
+                        <p>{message.text}</p>
+                    </div>
+                )}
             </div>
 
-            <form onSubmit={onSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 <SelectField
                     label="Pendidikan"
-                    name="tingkatPendidikan"
-                    value={formData.tingkatPendidikan}
+                    name="education_level"
+                    value={localFormData.education_level}
                     onChange={handleChange}
                     options={["SD", "SMP", "SMA/SMK", "D3", "S1", "S2", "S3"]}
                 />
@@ -74,32 +126,32 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
                     <>
                         <SelectField
                             label="Fakultas"
-                            name="fakultas"
-                            value={formData.fakultas || ''}
+                            name="faculty"
+                            value={localFormData.faculty}
                             onChange={handleChange}
-                            options={["Pilih fakultas"]}
+                            options={["Pilih fakultas", "Fakultas Teknik", "Fakultas Ekonomi"]}
                         />
 
                         <SelectField
                             label="Program Studi"
-                            name="programStudi"
-                            value={formData.programStudi || ''}
+                            name="major"
+                            value={localFormData.major}
                             onChange={handleChange}
-                            options={["Pilih program studi"]}
+                            options={["Pilih program studi", "Teknik Informatika", "Sistem Informasi"]}
                         />
 
                         <InputField
                             label="Nama Institusi"
-                            name="namaInstitusi"
-                            value={formData.namaInstitusi}
+                            name="institution_name"
+                            value={localFormData.institution_name}
                             onChange={handleChange}
                             placeholder="Masukkan nama institusi"
                         />
 
                         <InputField
                             label="IPK"
-                            name="ipk"
-                            value={formData.ipk}
+                            name="gpa"
+                            value={localFormData.gpa}
                             onChange={handleChange}
                             placeholder="Masukkan IPK"
                             type="number"
@@ -110,8 +162,8 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
 
                         <SelectField
                             label="Tahun Masuk"
-                            name="tahunMasuk"
-                            value={formData.tahunMasuk}
+                            name="year_in"
+                            value={localFormData.year_in}
                             onChange={handleChange}
                             options={Array.from(
                                 { length: 50 },
@@ -121,8 +173,8 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
 
                         <SelectField
                             label="Tahun Keluar"
-                            name="tahunKeluar"
-                            value={formData.tahunKeluar}
+                            name="year_out"
+                            value={localFormData.year_out}
                             onChange={handleChange}
                             options={Array.from(
                                 { length: 50 },

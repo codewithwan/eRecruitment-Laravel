@@ -17,7 +17,7 @@ class CreateApplicationsTable extends Migration
 
             // Foreign keys
             $table->foreign('job_type_id')->references('id')->on('job_types')->onDelete('cascade');
-            $table->foreign('candidate_id')->references('id')->on('candidate_profiles')->onDelete('cascade');
+            $table->foreign('candidate_id')->references('id')->on('candidates_profiles')->onDelete('cascade');
             $table->foreign('reviewed_by')->references('id')->on('users')->onDelete('set null');
         });
     }

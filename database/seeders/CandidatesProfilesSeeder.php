@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\CandidatesProfiles;
 use Illuminate\Database\Seeder;
 
-class CandidateProfileSeeder extends Seeder
+class CandidatesProfilesSeeder extends Seeder
 {
     /**
      * Run the database seeds.

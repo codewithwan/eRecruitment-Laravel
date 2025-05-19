@@ -54,10 +54,17 @@ class Vacancies extends Model
     }
     
     /**
-     * Get the applicants associated with this vacancy.
+     * Get the applicants associated with this vacancy through the vacancy_period table.
      */
     public function applicants()
     {
-        return $this->hasMany(Applicant::class, 'vacancy_id');
+        return $this->hasManyThrough(
+            Applicant::class,
+            VacancyPeriod::class,
+            'vacancy_id', // Foreign key on vacancy_period table
+            'vacancy_period_id', // Foreign key on applicants table
+            'id', // Local key on vacancies table
+            'id' // Local key on vacancy_period table
+        );
     }
 }

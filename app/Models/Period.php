@@ -27,10 +27,17 @@ class Period extends Model
     }
     
     /**
-     * Get the applicants that belong to this period.
+     * Get the applicants that belong to this period through the vacancy_period table.
      */
     public function applicants()
     {
-        return $this->hasMany(Applicant::class, 'period_id');
+        return $this->hasManyThrough(
+            Applicant::class,
+            VacancyPeriod::class,
+            'period_id', // Foreign key on vacancy_period table
+            'vacancy_period_id', // Foreign key on applicants table
+            'id', // Local key on periods table
+            'id' // Local key on vacancy_period table
+        );
     }
 }

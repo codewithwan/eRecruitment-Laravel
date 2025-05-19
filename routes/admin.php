@@ -2,11 +2,11 @@
 
 use App\Enums\UserRole;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionPackController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacanciesController;
-use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -91,4 +91,18 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
                 Route::put('/{questionpack}', [QuestionPackController::class, 'update'])->name('update');
                 Route::delete('/{questionpack}', [QuestionPackController::class, 'destroy'])->name('destroy');
             });
+            
+        // Period routes
+        Route::resource('periods', PeriodController::class);
+        
+        // Period company routes
+        Route::prefix('periods')->name('periods.')->group(function () {
+            Route::get('/company', [PeriodController::class, 'company'])->name('company');
+            Route::get('/company/administration', [PeriodController::class, 'administration'])->name('company.administration');
+        });
+            
+        // Company administration filtered by period
+        Route::get('/company/{companyId}/administration', [PeriodController::class, 'administration'])
+            ->name('company.administration');
+            
     });

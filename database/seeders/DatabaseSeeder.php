@@ -18,8 +18,8 @@ class DatabaseSeeder extends Seeder
             QuestionSeeder::class,
             QuestionPackSeeder::class,
             VacanciesSeeder::class,
-            PeriodSeeder::class, // This will now create the periods and associate them with vacancies
-            CandidateSeeder::class,
+            PeriodSeeder::class,
+            ApplicantSeeder::class, // Add applicant seeder at the end
         ]);
     }
 }

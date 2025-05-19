@@ -17,9 +17,8 @@ class Applicant extends Model
      */
     protected $fillable = [
         'user_id',
-        'vacancy_id',
+        'vacancy_period_id',
         'status_id',
-        'period_id',
         'application_data',
         'test_results',
         'interview_notes',
@@ -47,11 +46,20 @@ class Applicant extends Model
     }
     
     /**
-     * Get the vacancy that the user applied to.
+     * Get the vacancy-period combination that the user applied to.
      */
-    public function vacancy(): BelongsTo
+    public function vacancyPeriod(): BelongsTo
     {
-        return $this->belongsTo(Vacancies::class, 'vacancy_id');
+        return $this->belongsTo(VacancyPeriod::class, 'vacancy_period_id');
+    }
+    
+    /**
+     * Get the vacancy that the user applied to (through the vacancy_period relation)
+     */
+    public function vacancy()
+    {
+        // We need to use hasManyThrough or a dynamic property here
+        return $this->vacancyPeriod ? $this->vacancyPeriod->vacancy : null;
     }
     
     /**
@@ -63,10 +71,11 @@ class Applicant extends Model
     }
     
     /**
-     * Get the recruitment period for this application.
+     * Get the recruitment period for this application (through the vacancy_period relation)
      */
-    public function period(): BelongsTo
+    public function period()
     {
-        return $this->belongsTo(Period::class);
+        // We need to use hasManyThrough or a dynamic property here
+        return $this->vacancyPeriod ? $this->vacancyPeriod->period : null;
     }
 }

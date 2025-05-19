@@ -12,8 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
-import { format } from 'date-fns';
 
 // Add a type for the company prop
 type Company = {
@@ -28,6 +28,11 @@ type PeriodData = {
   description?: string;
   start_date?: string;
   end_date?: string;
+  status?: string;
+  title?: string;
+  department?: string;
+  question_pack?: string;
+  applicants_count?: number;
 };
 
 // Update the Period type to include id as number for consistency
@@ -36,14 +41,22 @@ type Period = {
     name: string;
     startTime: string;
     endTime: string;
+    status: string;
     description?: string;
+    title?: string;
+    department?: string;
+    questionPack?: string;
+    applicantsCount?: number;
 };
 
-// Add a type for vacancy date ranges
-type VacancyPeriod = {
+// Add a type for vacancy data
+type VacancyData = {
     id: number;
-    start_date: string;
-    end_date: string;
+    title: string;
+    department: string;
+    company?: string;
+    start_date?: string;
+    end_date?: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -87,6 +100,17 @@ const formatSimpleDate = (dateString: string) => {
     }
 };
 
+// Format dates for HTML date input (YYYY-MM-DD format)
+const formatDateForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+    } catch (e) {
+        return dateString || '';
+    }
+};
+
 // Fix props by adding proper types
 export default function PeriodsDashboard({ 
     periods: propPeriods = [], 
@@ -97,16 +121,40 @@ export default function PeriodsDashboard({
     periods: PeriodData[]; 
     filtering?: boolean; 
     company?: Company | null; 
-    vacancies?: VacancyPeriod[] 
+    vacancies?: VacancyData[] 
 }) {
     // Convert prop periods to internal format if provided with proper type check
-    const initialPeriods = Array.isArray(propPeriods) ? propPeriods.map(p => ({
-        id: String(p.id || ''),
-        name: p.name || '',
-        startTime: p.start_date ? formatSimpleDate(p.start_date) : '',
-        endTime: p.end_date ? formatSimpleDate(p.end_date) : '',
-        description: p.description || '',
-    })) : [];
+    const initialPeriods = Array.isArray(propPeriods) ? propPeriods.map(p => {
+        // Calculate status if not provided from backend
+        let status = p.status || 'Not Set';
+        
+        if (!status && p.start_date && p.end_date) {
+            const now = new Date();
+            const startDate = new Date(p.start_date);
+            const endDate = new Date(p.end_date);
+            
+            if (now < startDate) {
+                status = 'Upcoming';
+            } else if (now > endDate) {
+                status = 'Closed';
+            } else {
+                status = 'Open';
+            }
+        }
+        
+        return {
+            id: String(p.id || ''),
+            name: p.name || '',
+            startTime: p.start_date ? formatSimpleDate(p.start_date) : '',
+            endTime: p.end_date ? formatSimpleDate(p.end_date) : '',
+            description: p.description || '',
+            status: status,
+            title: p.title || '',
+            department: p.department || '',
+            questionPack: p.question_pack || '',
+            applicantsCount: p.applicants_count || 0,
+        };
+    }) : [];
 
     const [periods, setPeriods] = useState<Period[]>(initialPeriods);
     const [selectedPeriodId, setSelectedPeriodId] = useLocalStorage<string | null>('selectedPeriodId', null);
@@ -118,15 +166,19 @@ export default function PeriodsDashboard({
     // New state for Add Period dialog
     const [isAddPeriodDialogOpen, setIsAddPeriodDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [availableVacancyPeriods, setAvailableVacancyPeriods] = useState<VacancyPeriod[]>(vacancies);
+    const [availableVacancies, setAvailableVacancies] = useState<VacancyData[]>(vacancies);
     const [editingPeriodId, setEditingPeriodId] = useState<string | null>(null);
+    const [deletingPeriodId, setDeletingPeriodId] = useState<string | null>(null);
 
     // New period form state
     const [newPeriod, setNewPeriod] = useState({
         name: '',
         description: '',
-        vacancies_id: '',
+        start_time: '',
+        end_time: '',
+        vacancies_ids: [] as string[],
     });
 
     // When periods change, update filtered periods
@@ -134,13 +186,13 @@ export default function PeriodsDashboard({
         setFilteredPeriods(periods);
     }, [periods]);
 
-    // Fetch vacancies with date ranges when component mounts if none provided
+    // Fetch vacancies with details when component mounts if none provided
     useEffect(() => {
         if (vacancies.length === 0) {
             const fetchVacancies = async () => {
                 try {
-                    const response = await axios.get('/api/vacancies/periods');
-                    setAvailableVacancyPeriods(response.data);
+                    const response = await axios.get('/api/vacancies');
+                    setAvailableVacancies(response.data);
                 } catch (error) {
                     console.error('Error fetching vacancies:', error);
                 }
@@ -178,21 +230,45 @@ export default function PeriodsDashboard({
         setNewPeriod({
             name: '',
             description: '',
-            vacancies_id: '',
+            start_time: '',
+            end_time: '',
+            vacancies_ids: [],
         });
         setIsAddPeriodDialogOpen(true);
     };
 
-    const handleEditPeriod = (periodId: string) => {
+    const handleEditPeriod = async (periodId: string) => {
         const period = periods.find(p => p.id === periodId);
         if (period) {
-            setNewPeriod({
-                name: period.name,
-                description: period.description || '',
-                vacancies_id: '', // This would need to be populated from the backend
-            });
-            setEditingPeriodId(periodId);
-            setIsEditDialogOpen(true);
+            // Fetch the period details including vacancies
+            try {
+                const response = await axios.get(`/dashboard/periods/${periodId}/edit`);
+                const periodData = response.data.period;
+                
+                // Use our shared formatDateForInput function
+                
+                setNewPeriod({
+                    name: periodData.name,
+                    description: periodData.description || '',
+                    start_time: formatDateForInput(periodData.start_time) || '',
+                    end_time: formatDateForInput(periodData.end_time) || '',
+                    vacancies_ids: periodData.vacancies_ids || [],
+                });
+                setEditingPeriodId(periodId);
+                setIsEditDialogOpen(true);
+            } catch (error) {
+                console.error('Error fetching period details:', error);
+                // Fallback to using just the data we have
+                setNewPeriod({
+                    name: period.name,
+                    description: period.description || '',
+                    start_time: '',
+                    end_time: '',
+                    vacancies_ids: [],
+                });
+                setEditingPeriodId(periodId);
+                setIsEditDialogOpen(true);
+            }
         }
     };
 
@@ -202,15 +278,24 @@ export default function PeriodsDashboard({
             const response = await axios.post('/dashboard/periods', newPeriod);
             
             // Properly format the data that comes back from the API
-            const periodData = response.data.period;
+            // Handle both response formats: {period: {...}} or direct {...}
+            const periodData = response.data.period || response.data;
+            
+            // Log the response to debug
+            console.log('Period creation response:', response.data);
             
             // Create a new period object in the format our UI expects
             const newPeriodFormatted: Period = {
-                id: String(periodData.id),
-                name: periodData.name,
-                startTime: periodData.start_date ? formatSimpleDate(periodData.start_date) : '',
-                endTime: periodData.end_date ? formatSimpleDate(periodData.end_date) : '',
+                id: String(periodData.id || ''),
+                name: periodData.name || '',
+                startTime: periodData.start_date || '',
+                endTime: periodData.end_date || '', 
                 description: periodData.description || '',
+                title: periodData.title || '',
+                department: periodData.department || '',
+                status: periodData.status || 'Not Set',
+                questionPack: periodData.question_pack || '',
+                applicantsCount: periodData.applicants_count || 0,
             };
             
             // Update both state arrays with the new period
@@ -221,14 +306,52 @@ export default function PeriodsDashboard({
             setNewPeriod({
                 name: '',
                 description: '',
-                vacancies_id: '',
+                start_time: '',
+                end_time: '',
+                vacancies_ids: [],
             });
             setIsAddPeriodDialogOpen(false);
             
+            // Show success message
+            alert('Period created successfully');
+            
         } catch (error) {
             console.error('Error creating period:', error);
+            alert('Failed to create period. Please check all fields and try again.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleDeletePeriod = (periodId: string) => {
+        setDeletingPeriodId(periodId);
+        setIsDeleteDialogOpen(true);
+    };
+    
+    const confirmDeletePeriod = async () => {
+        if (!deletingPeriodId) return;
+        
+        try {
+            setIsLoading(true);
+            const response = await axios.delete(`/dashboard/periods/${deletingPeriodId}`);
+            
+            // Log the response for debugging
+            console.log('Period deletion response:', response.data);
+            
+            // Remove the deleted period from both arrays
+            setPeriods(prevPeriods => prevPeriods.filter(p => p.id !== deletingPeriodId));
+            setFilteredPeriods(prevFiltered => prevFiltered.filter(p => p.id !== deletingPeriodId));
+            
+            setIsDeleteDialogOpen(false);
+            
+            // Show success message
+            alert('Period deleted successfully');
+        } catch (error) {
+            console.error('Error deleting period:', error);
+            alert('Failed to delete period');
+        } finally {
+            setIsLoading(false);
+            setDeletingPeriodId(null);
         }
     };
 
@@ -239,18 +362,25 @@ export default function PeriodsDashboard({
         try {
             const response = await axios.put(`/dashboard/periods/${editingPeriodId}`, newPeriod);
             
-            // Get the updated period data
-            const periodData = response.data.period;
+            // Get the updated period data and handle both response formats
+            const periodData = response.data.period || response.data;
             
-            // Update the periods array with the edited period
+            // Log the response to debug
+            console.log('Period update response:', response.data);
+            
+            // Update the periods array with the edited period, with safeguards
             const updatedPeriods = periods.map(period => 
                 period.id === editingPeriodId 
                     ? { 
                         ...period, 
-                        name: periodData.name,
-                        description: periodData.description || '',
-                        startTime: formatSimpleDate(periodData.start_date || period.startTime),
-                        endTime: formatSimpleDate(periodData.end_date || period.endTime),
+                        name: periodData?.name || period.name,
+                        description: periodData?.description || period.description || '',
+                        startTime: periodData?.start_date || period.startTime,
+                        endTime: periodData?.end_date || period.endTime,
+                        title: periodData?.title || period.title,
+                        department: periodData?.department || period.department,
+                        status: periodData?.status || period.status,
+                        questionPack: periodData?.question_pack || period.questionPack,
                       }
                     : period
             );
@@ -259,8 +389,21 @@ export default function PeriodsDashboard({
             setPeriods(updatedPeriods);
             setFilteredPeriods(updatedPeriods);
             setIsEditDialogOpen(false);
+            
+            // Reset form
+            setNewPeriod({
+                name: '',
+                description: '',
+                start_time: '',
+                end_time: '',
+                vacancies_ids: [],
+            });
+            
+            // Show success message
+            alert('Period updated successfully');
         } catch (error) {
             console.error('Error updating period:', error);
+            alert('Failed to update period. Please check all fields and try again.');
         } finally {
             setIsLoading(false);
         }
@@ -295,8 +438,12 @@ export default function PeriodsDashboard({
                                     <tr>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">ID</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Name</th>
-                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Start Time</th>
-                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">End Time</th>
+                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Position</th>
+                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Department</th>
+                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Start Date</th>
+                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">End Date</th>
+                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Status</th>
+                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Applicants</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Action</th>
                                     </tr>
                                 </thead>
@@ -313,8 +460,20 @@ export default function PeriodsDashboard({
                                         >
                                             <td className="px-4 py-4 text-sm font-medium whitespace-nowrap text-gray-900">{period.id}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.name}</td>
-                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.startTime}</td>
-                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.endTime}</td>
+                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.title || '-'}</td>
+                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.department || '-'}</td>
+                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.startTime || '-'}</td>
+                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.endTime || '-'}</td>
+                                            <td className="px-4 py-4 text-sm whitespace-nowrap">
+                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                                    period.status === 'Open' ? 'bg-green-100 text-green-800' : 
+                                                    period.status === 'Closed' ? 'bg-red-100 text-red-800' : 
+                                                    period.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                    {period.status || 'Not Set'}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.applicantsCount || 0}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap">
                                                 <div className="flex items-center space-x-2">
                                                     <Button
@@ -334,6 +493,18 @@ export default function PeriodsDashboard({
                                                         <Edit size={16} />
                                                     </Button>
                                                     <Button
+                                                        onClick={() => handleDeletePeriod(period.id)}
+                                                        size="sm"
+                                                        variant="ghost" 
+                                                        className="h-8 w-8 p-0 text-red-500"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M3 6h18"></path>
+                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                                        </svg>
+                                                    </Button>
+                                                    <Button
                                                         onClick={() => handleSelectPeriod(period.id)}
                                                         size="sm"
                                                         variant="ghost"
@@ -347,7 +518,7 @@ export default function PeriodsDashboard({
                                     ))}
                                     {filteredPeriods.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                                            <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
                                                 No periods found
                                             </td>
                                         </tr>
@@ -361,12 +532,12 @@ export default function PeriodsDashboard({
 
             {/* Description Dialog */}
             <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md" aria-describedby="period-description-text">
                     <DialogHeader>
                         <DialogTitle>Period Description</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <p>{currentDescription}</p>
+                        <p id="period-description-text">{currentDescription}</p>
                     </div>
                     <DialogFooter>
                         <Button onClick={() => setIsViewDialogOpen(false)}>
@@ -378,11 +549,11 @@ export default function PeriodsDashboard({
 
             {/* Add Period Dialog */}
             <Dialog open={isAddPeriodDialogOpen} onOpenChange={setIsAddPeriodDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md" aria-describedby="add-period-form">
                     <DialogHeader>
                         <DialogTitle>Add Period</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
+                    <div className="space-y-4" id="add-period-form">
                         <div>
                             <Label htmlFor="name">Name</Label>
                             <Input 
@@ -394,22 +565,36 @@ export default function PeriodsDashboard({
                             />
                         </div>
                         <div>
-                            <Label htmlFor="period">Period</Label>
-                            <Select 
-                                value={newPeriod.vacancies_id} 
-                                onValueChange={(value) => setNewPeriod({...newPeriod, vacancies_id: value})}
-                            >
-                                <SelectTrigger id="period">
-                                    <SelectValue placeholder="Select a period" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableVacancyPeriods.map((vacancy) => (
-                                        <SelectItem key={vacancy.id} value={String(vacancy.id)}>
-                                            {`${vacancy.start_date || ''} - ${vacancy.end_date || ''}`}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Label htmlFor="vacancies">Vacancies</Label>
+                            <div className="space-y-2">
+                                {availableVacancies.map((vacancy) => (
+                                    <div key={vacancy.id} className="flex items-center gap-2">
+                                        <Checkbox 
+                                            id={`vacancy-${vacancy.id}`}
+                                            checked={newPeriod.vacancies_ids.includes(String(vacancy.id))}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setNewPeriod({
+                                                        ...newPeriod, 
+                                                        vacancies_ids: [...newPeriod.vacancies_ids, String(vacancy.id)]
+                                                    });
+                                                } else {
+                                                    setNewPeriod({
+                                                        ...newPeriod, 
+                                                        vacancies_ids: newPeriod.vacancies_ids.filter(id => id !== String(vacancy.id))
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                        <Label htmlFor={`vacancy-${vacancy.id}`} className="cursor-pointer text-sm">
+                                            {vacancy.title} - {vacancy.department} {vacancy.company ? `(${vacancy.company})` : ''}
+                                        </Label>
+                                    </div>
+                                ))}
+                                {availableVacancies.length === 0 && (
+                                    <p className="text-sm text-gray-500">No vacancies available</p>
+                                )}
+                            </div>
                         </div>
                         <div>
                             <Label htmlFor="description">Description</Label>
@@ -420,6 +605,26 @@ export default function PeriodsDashboard({
                                 value={newPeriod.description}
                                 onChange={(e) => setNewPeriod({...newPeriod, description: e.target.value})}
                                 rows={4}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="start_time">Start Date</Label>
+                            <Input
+                                id="start_time"
+                                name="start_time"
+                                type="date"
+                                value={newPeriod.start_time}
+                                onChange={(e) => setNewPeriod({...newPeriod, start_time: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="end_time">End Date</Label>
+                            <Input
+                                id="end_time"
+                                name="end_time"
+                                type="date"
+                                value={newPeriod.end_time}
+                                onChange={(e) => setNewPeriod({...newPeriod, end_time: e.target.value})}
                             />
                         </div>
                     </div>
@@ -436,11 +641,11 @@ export default function PeriodsDashboard({
 
             {/* Edit Period Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md" aria-describedby="edit-period-form">
                     <DialogHeader>
                         <DialogTitle>Edit Period</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
+                    <div className="space-y-4" id="edit-period-form">
                         <div>
                             <Label htmlFor="edit-name">Name</Label>
                             <Input 
@@ -450,6 +655,38 @@ export default function PeriodsDashboard({
                                 value={newPeriod.name} 
                                 onChange={(e) => setNewPeriod({...newPeriod, name: e.target.value})}
                             />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-vacancies">Vacancies</Label>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {availableVacancies.map((vacancy) => (
+                                    <div key={vacancy.id} className="flex items-center gap-2">
+                                        <Checkbox 
+                                            id={`edit-vacancy-${vacancy.id}`}
+                                            checked={newPeriod.vacancies_ids.includes(String(vacancy.id))}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setNewPeriod({
+                                                        ...newPeriod, 
+                                                        vacancies_ids: [...newPeriod.vacancies_ids, String(vacancy.id)]
+                                                    });
+                                                } else {
+                                                    setNewPeriod({
+                                                        ...newPeriod, 
+                                                        vacancies_ids: newPeriod.vacancies_ids.filter(id => id !== String(vacancy.id))
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                        <Label htmlFor={`edit-vacancy-${vacancy.id}`} className="cursor-pointer text-sm">
+                                            {vacancy.title} - {vacancy.department} {vacancy.company ? `(${vacancy.company})` : ''}
+                                        </Label>
+                                    </div>
+                                ))}
+                                {availableVacancies.length === 0 && (
+                                    <p className="text-sm text-gray-500">No vacancies available</p>
+                                )}
+                            </div>
                         </div>
                         <div>
                             <Label htmlFor="edit-description">Description</Label>
@@ -462,6 +699,26 @@ export default function PeriodsDashboard({
                                 rows={4}
                             />
                         </div>
+                        <div>
+                            <Label htmlFor="edit-start_time">Start Date</Label>
+                            <Input
+                                id="edit-start_time"
+                                name="start_time"
+                                type="date"
+                                value={newPeriod.start_time}
+                                onChange={(e) => setNewPeriod({...newPeriod, start_time: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-end_time">End Date</Label>
+                            <Input
+                                id="edit-end_time"
+                                name="end_time"
+                                type="date"
+                                value={newPeriod.end_time}
+                                onChange={(e) => setNewPeriod({...newPeriod, end_time: e.target.value})}
+                            />
+                        </div>
                     </div>
                     <DialogFooter className="sm:justify-end">
                         <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
@@ -469,6 +726,37 @@ export default function PeriodsDashboard({
                         </Button>
                         <Button onClick={handleUpdatePeriod} disabled={isLoading}>
                             {isLoading ? 'Updating...' : 'Update'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="sm:max-w-md" aria-describedby="delete-confirmation-text">
+                    <DialogHeader>
+                        <DialogTitle>Confirm Deletion</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p id="delete-confirmation-text" className="text-center text-gray-600">
+                            Are you sure you want to delete this period? This action cannot be undone.
+                            All applicants associated with this period will also be deleted.
+                        </p>
+                    </div>
+                    <DialogFooter className="sm:justify-end">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                            disabled={isLoading}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            variant="destructive"
+                            onClick={confirmDeletePeriod} 
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Deleting...' : 'Delete'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

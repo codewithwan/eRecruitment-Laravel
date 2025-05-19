@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CandidatesStage;
 use App\Enums\UserRole;
-use App\Models\Candidate;
+use App\Models\Applicant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +21,7 @@ class UserController extends Controller
             return $users->count();
         });
 
-        $job_applications = Candidate::where('status', CandidatesStage::ADMINISTRATIVE_SELECTION->value)->get();
+        $job_applications = Applicant::all();
         $job_applied = $job_applications->groupBy(function ($job_applications) {
             return $job_applications->applied_at->format('Y-m-d');
         })->map(function ($job_applications) {

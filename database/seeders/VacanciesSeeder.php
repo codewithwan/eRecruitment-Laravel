@@ -299,6 +299,27 @@ class VacanciesSeeder extends Seeder
                 'benefits' => ['Uang Transport', 'Sertifikat', 'Training'],
                 'user_id' => $user->id,
             ],
+            [
+                'title' => 'HARDWARE ENGINEER',
+                'department_id' => $departments['IT'],
+                'company_id' => $aka->id,
+                'type_id' => $fullTime->id,
+                'location' => 'Semarang',
+                'deadline' => now()->addDays(30),
+                'requirements' => [
+                    "Associate/Bachelor's degree in Electrical Engineering, Mechatronics, Electromechanics, or related fields;",
+                    "Advanced knowledge of robotics, embedded programming, PCB layout, and PCB design;",
+                    "Not color blind",
+                    "Willing to be placed in Semarang City"
+                ],
+                'job_description' => "An expert who designs, develops, and tests hardware, including PCB design and electronic component integration, for applications such as robotics and embedded systems.\n\nIf you are interested in electronics, robotics, and PCB design and want to work in an innovative environment, you are the right candidate for this position.",
+                'benefits' => [
+                    "Basic Salary",
+                    "Training",
+                    "Other benefits"
+                ],
+                'user_id' => $user->id,
+            ],
         ];
 
         foreach ($vacancies as $vacancy) {

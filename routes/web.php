@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\ApplicationHistoryController;
+use App\Http\Controllers\AboutUsController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('job-hiring');
@@ -23,10 +24,9 @@ Route::get('/contact', function () {
         return Inertia::render('landing-page/contact');
     })->name('job-hiring');
 
-Route::get('/about-us', function () {
-    return Inertia::render('landing-page/about-us');
-})->name('about-us');
+Route::get('/about-us', [AboutUsController::class, 'index'])->name('about-us');
 
+Route::get('/job-detail/{id}', [VacanciesController::class, 'show'])->name('job.detail');
 
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {

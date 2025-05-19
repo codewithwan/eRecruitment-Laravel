@@ -163,6 +163,7 @@ class VacanciesController extends Controller
             ]);
         }
     }
+
     public function getVacanciesLandingPage(Request $request)
     {
         try {
@@ -210,5 +211,20 @@ class VacanciesController extends Controller
                 'error' => 'Failed to load job vacancies',
             ]);
         }
+    }
+
+    public function show($id)
+    {
+        $vacancy = \App\Models\Vacancies::findOrFail($id);
+
+        $job = [
+            'job_description' => $vacancy->job_description ?? '',
+            'requirements' => $vacancy->requirements ?? [],
+            'benefits' => $vacancy->benefits ?? [],
+        ];
+
+        return \Inertia\Inertia::render('candidate/detail-job/detail-job', [
+            'job' => $job,
+        ]);
     }
 }

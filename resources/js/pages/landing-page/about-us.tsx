@@ -26,6 +26,23 @@ interface CompanySliderProps {
     infoLink: string;
 }
 
+interface AboutUsData {
+    id: number;
+    company_id: number;
+    vision: string;
+    mission: string;
+    created_at: string;
+    updated_at: string;
+    company?: {
+        id: number;
+        name: string;
+    };
+}
+
+interface AboutUsProps {
+    aboutUs: AboutUsData[];
+}
+
 const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 };
@@ -89,7 +106,7 @@ const CompanySlider: React.FC<CompanySliderProps> = ({ title, description, image
     );
 };
 
-export default function AboutUs(props: WelcomeProps) {
+export default function AboutUs(props: AboutUsProps) {
     const { auth } = usePage<{ auth: { user: unknown } }>().props;
 
     return (
@@ -136,8 +153,11 @@ export default function AboutUs(props: WelcomeProps) {
                 <div className="absolute inset-0 bg-black opacity-50"></div>
                 <div className="relative z-10 px-6 text-center">
                     <h1 className="mb-4 text-5xl font-bold">TENTANG KAMI</h1>
+                    <p className="mx-auto max-w-2xl text-lg mb-4">
+                        Mitra Karya Group adalah perusahaan yang bergerak di bidang teknologi dan layanan inovatif, berkomitmen untuk memberikan solusi terbaik bagi pelanggan di seluruh Indonesia.
+                    </p>
                     <p className="mx-auto max-w-2xl text-lg">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eleifend, lectus quis pellentesque dapibus.
+                        Kami percaya pada pentingnya inovasi, kualitas sumber daya manusia, dan kontribusi terhadap kemajuan teknologi untuk menciptakan nilai tambah bagi masyarakat dan mitra bisnis kami.
                     </p>
                 </div>
             </section>
@@ -146,11 +166,14 @@ export default function AboutUs(props: WelcomeProps) {
             <section className="relative bg-white pt-20 pb-20 text-gray-800">
                 <div className="relative z-10 px-6 text-center">
                     <h1 className="mb-4 text-5xl font-bold text-blue-600">MITRA KARYA GROUP</h1>
-                    <p className="mx-auto max-w-2xl text-lg">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eleifend, lectus quis pellentesque dapibus, dui felis
-                        fringilla justo, at sodales lorem purus sit amet libero. Aliquam erat volutpat. Fusce consectetur viverra massa et aliquet.
-                        Vivamus pulvinar pellentesque suscipit. Etiam ultrices mi id ullamcorper elementum.
-                    </p>
+                    {props.aboutUs[0] && (
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold mb-2">Visi</h2>
+                            <p className="mb-4">{props.aboutUs[0].vision}</p>
+                            <h2 className="text-2xl font-bold mb-2">Misi</h2>
+                            <p>{props.aboutUs[0].mission}</p>
+                        </div>
+                    )}
                 </div>
             </section>
 

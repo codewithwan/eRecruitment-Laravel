@@ -62,18 +62,30 @@ class PeriodController extends Controller
                 $data['status'] = 'Not Set';
             }
             
-            // Add vacancy and question pack information if available
+            // Include all vacancy positions and departments, not just the first one
             if ($period->vacancies->isNotEmpty()) {
+                // Still include the first vacancy for backward compatibility
                 $firstVacancy = $period->vacancies->first();
                 $data['title'] = $firstVacancy->title ?? null;
                 $data['department'] = $firstVacancy->department ?? null;
                 $data['question_pack'] = $firstVacancy->questionPack ? $firstVacancy->questionPack->pack_name : null;
+                
+                // Add all vacancies as a separate array
+                $data['vacancies_list'] = $period->vacancies->map(function ($vacancy) {
+                    return [
+                        'id' => $vacancy->id,
+                        'title' => $vacancy->title,
+                        'department' => $vacancy->department
+                    ];
+                })->toArray();
+                
                 // Count applicants for this period
                 $data['applicants_count'] = $period->applicants()->count();
             } else {
                 $data['title'] = null;
                 $data['department'] = null;
                 $data['question_pack'] = null;
+                $data['vacancies_list'] = [];
                 $data['applicants_count'] = 0;
             }
             

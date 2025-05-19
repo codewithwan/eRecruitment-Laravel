@@ -21,6 +21,13 @@ type Company = {
   name: string;
 };
 
+// Type for vacancy data in period
+type VacancyItem = {
+  id: number;
+  title: string;
+  department: string;
+};
+
 // Add proper types for the period prop
 type PeriodData = {
   id: number;
@@ -33,6 +40,7 @@ type PeriodData = {
   department?: string;
   question_pack?: string;
   applicants_count?: number;
+  vacancies_list?: VacancyItem[];
 };
 
 // Update the Period type to include id as number for consistency
@@ -47,6 +55,7 @@ type Period = {
     department?: string;
     questionPack?: string;
     applicantsCount?: number;
+    vacanciesList?: VacancyItem[];
 };
 
 // Add a type for vacancy data
@@ -153,6 +162,8 @@ export default function PeriodsDashboard({
             department: p.department || '',
             questionPack: p.question_pack || '',
             applicantsCount: p.applicants_count || 0,
+            // Include the full list of vacancies
+            vacanciesList: p.vacancies_list || [],
         };
     }) : [];
 
@@ -162,6 +173,11 @@ export default function PeriodsDashboard({
     const [searchQuery, setSearchQuery] = useState('');
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [currentDescription, setCurrentDescription] = useState('');
+    const [currentPeriodDetails, setCurrentPeriodDetails] = useState<{
+        title?: string; 
+        department?: string;
+        vacancies?: VacancyItem[];
+    }>({});
     
     // New state for Add Period dialog
     const [isAddPeriodDialogOpen, setIsAddPeriodDialogOpen] = useState(false);
@@ -221,8 +237,19 @@ export default function PeriodsDashboard({
         setSelectedPeriodId(periodId === selectedPeriodId ? null : periodId);
     };
 
-    const handleViewDescription = (description: string) => {
-        setCurrentDescription(description);
+    // Updated to include multiple positions and departments from vacancies
+    const handleViewDescription = (period: { 
+        description: string; 
+        title?: string; 
+        department?: string;
+        vacanciesList?: VacancyItem[];
+    }) => {
+        setCurrentDescription(period.description);
+        setCurrentPeriodDetails({
+            title: period.title || '-',
+            department: period.department || '-',
+            vacancies: period.vacanciesList || [],
+        });
         setIsViewDialogOpen(true);
     };
 
@@ -438,8 +465,6 @@ export default function PeriodsDashboard({
                                     <tr>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">ID</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Name</th>
-                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Position</th>
-                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Department</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Start Date</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">End Date</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Status</th>
@@ -460,8 +485,6 @@ export default function PeriodsDashboard({
                                         >
                                             <td className="px-4 py-4 text-sm font-medium whitespace-nowrap text-gray-900">{period.id}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.name}</td>
-                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.title || '-'}</td>
-                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.department || '-'}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.startTime || '-'}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{period.endTime || '-'}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap">
@@ -477,7 +500,12 @@ export default function PeriodsDashboard({
                                             <td className="px-4 py-4 text-sm whitespace-nowrap">
                                                 <div className="flex items-center space-x-2">
                                                     <Button
-                                                        onClick={() => handleViewDescription(period.description || 'No description available')}
+                                                        onClick={() => handleViewDescription({
+                                                            description: period.description || 'No description available',
+                                                            title: period.title,
+                                                            department: period.department,
+                                                            vacanciesList: period.vacanciesList
+                                                        })}
                                                         size="sm"
                                                         variant="ghost"
                                                         className="h-8 w-8 p-0 text-blue-500"
@@ -518,7 +546,7 @@ export default function PeriodsDashboard({
                                     ))}
                                     {filteredPeriods.length === 0 && (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
+                                            <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
                                                 No periods found
                                             </td>
                                         </tr>
@@ -530,14 +558,44 @@ export default function PeriodsDashboard({
                 </div>
             </div>
 
-            {/* Description Dialog */}
+            {/* Period Details Dialog */}
             <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-                <DialogContent className="sm:max-w-md" aria-describedby="period-description-text">
+                <DialogContent className="sm:max-w-md" aria-describedby="period-details-text">
                     <DialogHeader>
-                        <DialogTitle>Period Description</DialogTitle>
+                        <DialogTitle>Period Details</DialogTitle>
                     </DialogHeader>
-                    <div className="py-4">
-                        <p id="period-description-text">{currentDescription}</p>
+                    <div className="py-4 space-y-4">
+                        {/* Display positions and departments */}
+                        <div className="space-y-4">
+                            <div className="font-medium text-lg">Positions:</div>
+                            {currentPeriodDetails.vacancies && currentPeriodDetails.vacancies.length > 0 ? (
+                                <div className="rounded-md border border-gray-200 overflow-hidden">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-2 text-left font-medium text-gray-900">Title</th>
+                                                <th className="px-4 py-2 text-left font-medium text-gray-900">Department</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200">
+                                            {currentPeriodDetails.vacancies.map((vacancy, index) => (
+                                                <tr key={vacancy.id || index} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-2">{vacancy.title || '-'}</td>
+                                                    <td className="px-4 py-2">{vacancy.department || '-'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-gray-500 italic">No positions available.</div>
+                            )}
+                        </div>
+                        
+                        <div className="mt-4">
+                            <div className="font-medium mb-2">Description:</div>
+                            <p id="period-details-text" className="text-gray-700">{currentDescription}</p>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button onClick={() => setIsViewDialogOpen(false)}>

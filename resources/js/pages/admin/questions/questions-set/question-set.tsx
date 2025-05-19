@@ -1,20 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
-import { Search, Eye, Pencil, Filter, Trash, PlusCircle, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { Search, Eye, Pencil, Trash, PlusCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 interface Question {
   id: number;
@@ -30,6 +22,9 @@ interface Props {
   questions: Question[];
 }
 
+// Import ConfirmationDialog component
+import ConfirmationDialog from '@/components/confirmation-dialog';
+
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Test & Assessment', href: '#' },
@@ -42,7 +37,6 @@ export default function QuestionSet({ questions = [] }: Props) {
   const [filterUsed, setFilterUsed] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<number | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Filter questions based on search query
   const filteredQuestions = questions.filter((q) => 
@@ -63,20 +57,17 @@ export default function QuestionSet({ questions = [] }: Props) {
 
   const openDeleteDialog = (id: number) => {
     setQuestionToDelete(id);
-    setErrorMessage(null);
     setDeleteDialogOpen(true);
   };
   
   const closeDeleteDialog = () => {
     setDeleteDialogOpen(false);
-    setErrorMessage(null);
   };
 
   const handleDeleteQuestion = () => {
     if (!questionToDelete) return;
     
     setIsLoading(true);
-    setErrorMessage(null);
     
     router.delete(`/dashboard/questions/${questionToDelete}`, {
       onSuccess: () => {
@@ -88,7 +79,7 @@ export default function QuestionSet({ questions = [] }: Props) {
       onError: (errors) => {
         console.error('Error deleting question:', errors);
         setIsLoading(false);
-        setErrorMessage('Failed to delete the question. Please try again.');
+        alert('Failed to delete the question. Please try again.');
       },
     });
   };
@@ -104,63 +95,22 @@ export default function QuestionSet({ questions = [] }: Props) {
     setFilterUsed(searchQuery.trim() !== '');
   };
 
-  const getQuestionText = () => {
-    if (!questionToDelete) return '';
-    const question = questions.find(q => q.id === questionToDelete);
-    return question ? question.question_text : '';
-  };
-
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Question Sets" />
       
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={closeDeleteDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Confirm Deletion
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this question? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <div className="rounded-md bg-red-50 p-4 border border-red-100">
-              <p className="text-sm text-red-800 font-medium">Question:</p>
-              <p className="text-sm text-gray-700 mt-1">{getQuestionText()}</p>
-            </div>
-            
-            {errorMessage && (
-              <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md text-sm">
-                {errorMessage}
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter className="gap-2 sm:justify-start">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={closeDeleteDialog}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDeleteQuestion}
-              className="flex-1 bg-red-500 hover:bg-red-600"
-              disabled={isLoading}
-            >
-              {isLoading ? "Deleting..." : "Delete Question"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Question"
+        description="Are you sure you want to delete this question? This action cannot be undone."
+        confirmLabel={isLoading ? "Deleting..." : "Delete"}
+        cancelLabel="Cancel"
+        onConfirm={handleDeleteQuestion}
+        onCancel={closeDeleteDialog}
+        confirmVariant="destructive"
+      />
       
       <div className="flex h-full flex-1 flex-col gap-6 p-4">
         <div className="mb-4 flex items-center justify-between">

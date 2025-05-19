@@ -3,6 +3,28 @@ import InputField from '../InputField';
 import SelectField from '../SelectField';
 import axios from 'axios';
 
+const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }) => (
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+        <div className={`px-4 py-3 rounded-lg shadow-lg ${type === 'success'
+            ? 'bg-green-100 text-green-700 border border-green-400'
+            : 'bg-red-100 text-red-700 border border-red-400'
+            }`}>
+            <div className="flex items-center">
+                {type === 'success' ? (
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                ) : (
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                )}
+                <span>{message}</span>
+            </div>
+        </div>
+    </div>
+);
+
 interface PengalamanKerja {
     id: number;
     job_title: string;
@@ -29,6 +51,7 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
     const [formData, setFormData] = useState(experienceData);
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -41,19 +64,36 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setMessage(null);
 
         setLoading(true);
 
         try {
             const response = await axios.put(`/candidate/work-experience/${formData.id}`, formData);
 
-            setSuccessMessage('Data berhasil diperbarui!');
+            setMessage({
+                type: 'success',
+                text: 'Data berhasil diperbarui!'
+            });
+
+            // Scroll to top
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+
+            // Auto hide after 3 seconds and redirect
             setTimeout(() => {
-                setSuccessMessage(null);
-                onUpdate(response.data.data); // Kirim data yang diperbarui ke PengalamanKerjaForm
-            }, 2000);
+                setMessage(null);
+                onUpdate(response.data.data);
+            }, 3000);
         } catch (error: any) {
             console.error('Error updating experience:', error.response?.data);
+            setMessage({
+                type: 'error',
+                text: 'Terjadi kesalahan saat menyimpan data'
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             setLoading(false);
         }
@@ -61,10 +101,8 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
 
     return (
         <div>
-            {successMessage && (
-                <div className="bg-green-100 text-green-700 p-4 rounded mb-4">
-                    {successMessage}
-                </div>
+            {message && (
+                <Alert type={message.type} message={message.text} />
             )}
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -93,7 +131,7 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
                     value={formData.job_description}
                     onChange={handleChange}
                     placeholder="Masukkan deskripsi pekerjaan"
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-32"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-black h-32"
                 />
                 <div className="grid grid-cols-2 gap-6">
                     <SelectField

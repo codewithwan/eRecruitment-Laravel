@@ -59,6 +59,14 @@ Route::middleware(['auth'])->group(function () {
     // Rute untuk Edit Pengalaman Kerja
     Route::get('/candidate/work-experience/{id}/edit', [CandidateController::class, 'editWorkExperience'])
         ->name('candidate.work-experience.edit');
+    
+    // Achievement routes
+    Route::get('/candidate/achievements', [CandidateController::class, 'indexAchievements'])
+        ->name('candidate.achievements');
+    Route::post('/candidate/achievement', [CandidateController::class, 'storeAchievement'])
+        ->name('candidate.achievement.store');
+    Route::put('/candidate/achievement/{id}', [CandidateController::class, 'updateAchievement'])
+        ->name('candidate.achievement.update');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -79,6 +87,37 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.organization.store');
     Route::put('/candidate/organization/{id}', [CandidateController::class, 'updateOrganization'])
         ->name('candidate.organization.update');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // ...existing routes...
+    Route::get('/candidate/achievements', [CandidateController::class, 'indexAchievements']);
+    // ...existing routes...
+    Route::post('/candidate/organization', [CandidateController::class, 'storeOrganization']);
+    Route::put('/candidate/organization/{id}', [CandidateController::class, 'updateOrganization']);
+    // ...existing routes...
+    Route::post('/candidate/achievement', [CandidateController::class, 'storeAchievement']);
+    Route::put('/candidate/achievement/{id}', [CandidateController::class, 'updateAchievement']);
+});
+
+Route::middleware(['auth'])->group(function () {
+    // ...existing routes...
+    Route::put('/candidate/achievement/{id}', [CandidateController::class, 'updateAchievement'])
+        ->name('candidate.achievement.update');
+    Route::get('/candidate/achievement/{id}', [CandidateController::class, 'showAchievement']);
+});
+
+Route::middleware(['auth'])->group(function () {
+    // ...existing routes...
+    Route::get('/candidate/achievement/{id}', [CandidateController::class, 'showAchievement'])
+        ->name('candidate.achievement.show');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // ...existing routes...
+    Route::get('/candidate/social-media', [CandidateController::class, 'indexSocialMedia']);
+    Route::post('/candidate/social-media', [CandidateController::class, 'storeSocialMedia']);
+    Route::put('/candidate/social-media/{id}', [CandidateController::class, 'updateSocialMedia']);
 });
 
 require __DIR__.'/settings.php';

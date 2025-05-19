@@ -1,38 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
+import OrganisasiListForm from './OrganisasiListForm';
+import TambahOrganisasiForm from './TambahOrganisasiForm';
 
-interface OrganisasiFormProps {
-    onTambahOrganisasi: () => void;
+interface OrganisasiData {
+    id: number;
+    organization_name: string;
+    position: string;
+    description: string;
+    is_active: boolean;
+    start_month: string;
+    start_year: number;
+    end_month: string | null;
+    end_year: number | null;
 }
 
-const OrganisasiForm: React.FC<OrganisasiFormProps> = ({ onTambahOrganisasi }) => {
+const OrganisasiForm: React.FC = () => {
+    const [isAdding, setIsAdding] = useState(false);
+    const [selectedOrganization, setSelectedOrganization] = useState<OrganisasiData | null>(null);
+    const [shouldRefresh, setShouldRefresh] = useState(false);
+
+    const handleAdd = () => {
+        setIsAdding(true);
+        setSelectedOrganization(null);
+    };
+
+    const handleEdit = (organization: OrganisasiData) => {
+        setSelectedOrganization(organization);
+        setIsAdding(true);
+    };
+
+    const handleBack = () => {
+        setIsAdding(false);
+        setSelectedOrganization(null);
+        setShouldRefresh(true);
+    };
+
+    if (isAdding) {
+        return (
+            <TambahOrganisasiForm
+                organizationData={selectedOrganization}
+                onBack={handleBack}
+                onSuccess={handleBack}
+            />
+        );
+    }
+
     return (
-        <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-6 border-b">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-blue-600">Organisasi</h2>
-                </div>
-                <p className="text-sm text-gray-600 mt-2">
-                    Apakah Anda memiliki pengalaman dalam berorganisasi? Jika iya, beritahu kami
-                </p>
-            </div>
-
-            <div className="p-6 space-y-6">
-                <button
-                    type="button"
-                    onClick={onTambahOrganisasi}
-                    className="text-blue-600 flex items-center space-x-2 hover:text-blue-700"
-                >
-                    <span>+ Tambah Organisasi</span>
-                </button>
-
-                <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                >
-                    Save & Next
-                </button>
-            </div>
-        </div>
+        <OrganisasiListForm
+            onAdd={handleAdd}
+            onEdit={handleEdit}
+            refresh={shouldRefresh}
+            onRefreshComplete={() => setShouldRefresh(false)}
+        />
     );
 };
 

@@ -48,29 +48,35 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log('Data yang dikirim:', localFormData); // Tambahkan log ini
+        setMessage(null);
+
         try {
             await onSubmit(e);
+
             setMessage({
                 type: 'success',
-                text: 'Data pendidikan berhasil disimpan!'
+                text: formData.id ? 'Data berhasil diperbarui!' : 'Data berhasil disimpan!'
             });
 
-            // Scroll to top to show notification
+            // Scroll to top
             window.scrollTo({
                 top: 0,
                 behavior: 'smooth'
             });
 
-            // Auto-hide notification after 3 seconds
+            // Auto hide after 3 seconds
             setTimeout(() => {
                 setMessage(null);
+                // Optional: navigate back or refresh data
             }, 3000);
+
         } catch (error) {
+            console.error('Error submitting form:', error);
             setMessage({
                 type: 'error',
                 text: 'Terjadi kesalahan saat menyimpan data'
             });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 

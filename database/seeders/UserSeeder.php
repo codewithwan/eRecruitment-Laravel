@@ -15,6 +15,9 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Hapus user HR jika sudah ada
+        User::where('email', 'hr@gmail.com')->delete();
+
         // Create custom HR user
         User::factory()->create([
             'name' => 'HR User',
@@ -23,8 +26,12 @@ class UserSeeder extends Seeder
             'role' => UserRole::HR,
         ]);
 
+        // Delete existing Candidate user with id 1
+        User::where('id', 1)->delete();
+
         // Create custom Candidate user
-        User::factory()->create([
+        User::create([
+            'id' => 1,
             'name' => 'Candidate User',
             'email' => 'candidate@gmail.com',
             'password' => Hash::make('password'),

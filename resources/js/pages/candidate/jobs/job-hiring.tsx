@@ -99,9 +99,9 @@ interface FilterButtonProps {
 }
 
 const FilterButton = styled.button<FilterButtonProps>`
-  background: ${(props) => (props.active ? '#1DA1F2' : '#fff')};
-  color: ${(props) => (props.active ? '#fff' : '#1DA1F2')};
-  border: 1px solid #1DA1F2;
+  background: ${(props) => (props.active ? '#0088FF' : '#fff')};
+  color: ${(props) => (props.active ? '#fff' : '#0088FF')};
+  border: 1px solid #0088FF;
   border-radius: 20px;
   padding: 8px 20px;  // Adjusted padding
   font-size: 14px;
@@ -111,7 +111,7 @@ const FilterButton = styled.button<FilterButtonProps>`
   white-space: nowrap;  // Prevent text wrapping
 
   &:hover {
-    background: ${(props) => (props.active ? '#1A91DA' : '#E5F1FB')};
+    background: ${(props) => (props.active ? '#0077E6' : '#E6F4FF')};
   }
 `;
 

@@ -31,7 +31,7 @@ export default function Welcome(props: WelcomeProps) {
 
     const backgroundImages = ['/images/slider1.png', '/images/slider2.png', '/images/slider3.png', '/images/slider4.png'];
 
-    
+
     const benefitCards = [
         {
             title: 'Lingkungan Kerja Profesional',

@@ -28,6 +28,20 @@ class CandidateSeeder extends Seeder
             return;
         }
 
+        // Pastikan user dan vacancy pertama ada
+        $firstUser = $candidateUsers->first();
+        $firstVacancy = $vacancies->first();
+
+        if ($firstUser && $firstVacancy && !Candidate::where('id', 1)->exists()) {
+            Candidate::create([
+                'id' => 1,
+                'user_id' => $firstUser->id,
+                'vacancy_id' => $firstVacancy->id,
+                'applied_at' => Carbon::now(),
+                'status' => CandidatesStage::ADMINISTRATIVE_SELECTION->value,
+            ]);
+        }
+
         // Application traffic distribution over the last 7 days
         $dayDistribution = [
             1 => 10,  // Yesterday: 10 applications

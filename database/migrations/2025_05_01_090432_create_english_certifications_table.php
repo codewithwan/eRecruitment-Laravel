@@ -10,7 +10,7 @@ class CreateEnglishCertificationsTable extends Migration
     {
         Schema::create('english_certifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('data_tambahan_id')->constrained('data_tambahan')->onDelete('cascade');
+            $table->foreignId('data_tambahan_id')->constrained('additional_data')->onDelete('cascade');
             $table->string('test_name');
             $table->string('score');
             $table->timestamps();

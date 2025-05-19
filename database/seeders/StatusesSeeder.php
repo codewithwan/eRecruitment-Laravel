@@ -6,22 +6,23 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class JobTypesTableSeeder extends Seeder
+class StatusesSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        DB::table('job_types')->delete();
-
-        DB::table('job_types')->insert([
+        DB::table('statuses_id')->insert([
             [
-                'id' => 1,
-                'name' => 'Full Time',
+                'name' => 'Pending',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
-                'id' => 2,
-                'name' => 'Internship',
+                'name' => 'Accepted',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'name' => 'Rejected',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],

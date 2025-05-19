@@ -13,17 +13,15 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
-            SuperAdminSeeder::class,
+            CompaniesTableSeeder::class,
             DepartmentsTableSeeder::class,
+            StatusesSeeder::class,
+            JobTypesTableSeeder::class,
+            VacanciesSeeder::class,         // <-- tambahkan ini jika ada seeder vacancies
             CandidateSeeder::class,
             CandidateProfileSeeder::class,
-            CompaniesTableSeeder::class,
-            JobTypesTableSeeder::class,
-            VacanciesSeeder::class,
-            // VacanciesTableSeeder::class,
-
-
-
+            ApplicationSeeder::class,
+            ApplicationHistorySeeder::class,
         ]);
     }
 }

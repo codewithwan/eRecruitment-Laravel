@@ -11,7 +11,7 @@ class CreateCandidatesProfilesTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('no_ektp');
-            $table->enum('gender', ['male', 'female'])->nullable(); // sesuaikan dengan enum sebenarnya
+            $table->enum('gender', ['Laki-laki', 'Perempuan']);
             $table->string('phone_number')->nullable();
             $table->string('npwp')->nullable();
             $table->text('about_me')->nullable();

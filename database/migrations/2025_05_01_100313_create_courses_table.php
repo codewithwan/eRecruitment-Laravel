@@ -10,7 +10,7 @@ class CreateCoursesTable extends Migration
     {
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('data_tambahan_id')->constrained('data_tambahan')->onDelete('cascade');
+            $table->foreignId('data_tambahan_id')->constrained('additional_data')->onDelete('cascade');
             $table->string('course_name');
             $table->year('year');
         });

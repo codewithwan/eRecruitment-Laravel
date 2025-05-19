@@ -16,12 +16,11 @@ class CreateApplicationHistoryTable extends Migration
             $table->unsignedBigInteger('company_id');
             $table->unsignedBigInteger('department_id');
             $table->text('job_description')->nullable();
-            $table->enum('work_type', ['Full Time', 'Part Time', 'Contract', 'Internship'])->default('Full Time');
+            $table->string('work_type')->nullable();
             $table->string('work_location')->nullable();
-            $table->date('application_deadline')->nullable();
+            $table->dateTime('application_deadline')->nullable();
             $table->unsignedBigInteger('status_id');
-            $table->timestamp('applied_at')->useCurrent();
-
+            $table->dateTime('applied_at')->nullable();
             $table->timestamps();
 
             // Foreign Keys

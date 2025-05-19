@@ -7,13 +7,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\ApplicationHistoryController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('job-hiring');
-Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacancies'])->name('job-hiring-landing-page');
-Route::get('/application-history', function () {
-    return Inertia::render('candidate/jobs/application-history');
-})->name('application-history');
+Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacanciesLandingPage'])->name('job-hiring-landing-page');
+Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('application-history');
 Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
 
 Route::get('/data-pribadi', function () {

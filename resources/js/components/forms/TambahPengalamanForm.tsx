@@ -1,73 +1,171 @@
 import React, { ChangeEvent, FormEvent, useState } from 'react';
 import InputField from '../InputField';
 import SelectField from '../SelectField';
+import axios from 'axios';
 
 interface TambahPengalamanFormProps {
-    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-    onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+    experienceData?: {
+        id?: number; // Tambahkan ID untuk mendukung update
+        job_title: string;
+        employment_status: string;
+        job_description: string;
+        start_month: number;
+        start_year: number;
+        end_month: number | null;
+        end_year: number | null;
+        is_current_job: boolean;
+    } | null;
     onBack: () => void;
-}
 
-interface PengalamanFormState {
-    namaPekerjaan: string;
-    statusPekerjaan: string;
-    deskripsi: string;
-    bulanMasuk: string;
-    tahunMasuk: string;
-    bulanKeluar: string;
-    tahunKeluar: string;
+    onSubmit: (updatedData: any) => void; // Callback untuk submit data
 }
 
 const TambahPengalamanForm: React.FC<TambahPengalamanFormProps> = ({
+    onBack,
+    experienceData,
     onSubmit,
-    onChange,
-    onBack
 }) => {
-    const [isCurrentJob, setIsCurrentJob] = useState(false);
-    const [formData, setFormData] = useState<PengalamanFormState>({
-        namaPekerjaan: '',
-        statusPekerjaan: '',
-        deskripsi: '',
-        bulanMasuk: '',
-        tahunMasuk: '',
-        bulanKeluar: '',
-        tahunKeluar: ''
+    const [formData, setFormData] = useState({
+        namaPekerjaan: experienceData?.job_title || '',
+        statusPekerjaan: experienceData?.employment_status || '',
+        deskripsi: experienceData?.job_description || '',
+        bulanMasuk: experienceData?.start_month || null,
+        tahunMasuk: experienceData?.start_year?.toString() || '',
+        bulanKeluar: experienceData?.end_month || null,
+        tahunKeluar: experienceData?.end_year?.toString() || '',
+        isCurrentJob: experienceData?.is_current_job || false,
     });
+
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: name === 'bulanMasuk' || name === 'bulanKeluar' ? (value ? parseInt(value) : null) : value,
         }));
-        onChange(e); // Pass the event to parent component
+
+        setErrors((prev) => ({
+            ...prev,
+            [name]: '',
+        }));
+    };
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+
+        if (!formData.namaPekerjaan.trim()) {
+            newErrors.namaPekerjaan = 'Nama pekerjaan wajib diisi.';
+        }
+
+        if (!formData.statusPekerjaan.trim()) {
+            newErrors.statusPekerjaan = 'Status pekerjaan wajib dipilih.';
+        }
+
+        // Ubah validasi deskripsi pekerjaan menjadi minimal 10 karakter
+        if (!formData.deskripsi.trim() || formData.deskripsi.length < 10) {
+            newErrors.deskripsi = 'Deskripsi pekerjaan minimal 10 karakter.';
+        }
+
+        if (!formData.bulanMasuk) {
+            newErrors.bulanMasuk = 'Bulan masuk wajib dipilih.';
+        }
+
+        if (!formData.tahunMasuk.trim()) {
+            newErrors.tahunMasuk = 'Tahun masuk wajib dipilih.';
+        }
+
+        if (!formData.isCurrentJob && formData.bulanKeluar === null) {
+            newErrors.bulanKeluar = 'Bulan keluar wajib dipilih jika Anda tidak sedang bekerja di tempat ini.';
+        }
+
+        if (!formData.isCurrentJob && !formData.tahunKeluar.trim()) {
+            newErrors.tahunKeluar = 'Tahun keluar wajib dipilih jika Anda tidak sedang bekerja di tempat ini.';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const payload = {
+                job_title: formData.namaPekerjaan,
+                employment_status: formData.statusPekerjaan,
+                job_description: formData.deskripsi,
+                start_month: formData.bulanMasuk,
+                start_year: parseInt(formData.tahunMasuk),
+                end_month: formData.bulanKeluar ? formData.bulanKeluar : null,
+                end_year: formData.tahunKeluar ? parseInt(formData.tahunKeluar) : null,
+                is_current_job: formData.isCurrentJob,
+            };
+
+            if (experienceData?.id) {
+                await axios.put(`/candidate/work-experience/${experienceData.id}`, payload);
+                setSuccessMessage('Data berhasil diperbarui!');
+            } else {
+                await axios.post('/candidate/work-experience', payload);
+                setSuccessMessage('Data berhasil disimpan!');
+            }
+
+            setTimeout(() => {
+                setSuccessMessage(null);
+                onSubmit(payload);
+            }, 2000);
+        } catch (err: any) {
+            console.error('Error:', err.response?.data);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-6 border-b">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-blue-600">Pengalaman Kerja</h2>
+        <div>
+            {successMessage && (
+                <div className="bg-green-100 text-green-700 p-4 rounded mb-4">
+                    {successMessage}
                 </div>
-                <p className="text-sm text-gray-600 mt-2">Lengkapi pengalaman kerja Anda dari yang paling terbaru</p>
-            </div>
+            )}
 
-            <form onSubmit={onSubmit} className="p-6 space-y-6">
-                <InputField
-                    label="Nama Pekerjaan"
-                    name="namaPekerjaan"
-                    value={formData.namaPekerjaan}
-                    onChange={handleChange}
-                    placeholder="Masukkan nama pekerjaan"
-                />
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <div>
+                    <InputField
+                        label="Nama Pekerjaan"
+                        name="namaPekerjaan"
+                        value={formData.namaPekerjaan}
+                        onChange={handleChange}
+                        placeholder="Masukkan nama pekerjaan"
+                    />
+                    {errors.namaPekerjaan && <p className="text-red-500 text-sm">{errors.namaPekerjaan}</p>}
+                </div>
 
-                <SelectField
-                    label="Status Pekerjaan"
-                    name="statusPekerjaan"
-                    value={formData.statusPekerjaan}
-                    onChange={handleChange}
-                    options={["Pilih status pekerjaan", "Full Time", "Part Time", "Freelance", "Kontrak"]}
-                />
+                <div>
+                    <SelectField
+                        label="Status Pekerjaan"
+                        name="statusPekerjaan"
+                        value={formData.statusPekerjaan}
+                        onChange={handleChange}
+                        options={[
+                            { value: '', label: 'Pilih status pekerjaan' },
+                            { value: 'Full Time', label: 'Full Time' },
+                            { value: 'Part Time', label: 'Part Time' },
+                            { value: 'Freelance', label: 'Freelance' },
+                            { value: 'Kontrak', label: 'Kontrak' },
+                        ]}
+                    />
+                    {errors.statusPekerjaan && <p className="text-red-500 text-sm">{errors.statusPekerjaan}</p>}
+                </div>
 
                 <div>
                     <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -81,6 +179,7 @@ const TambahPengalamanForm: React.FC<TambahPengalamanFormProps> = ({
                         className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-32 
                             focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     />
+                    {errors.deskripsi && <p className="text-red-500 text-sm">{errors.deskripsi}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -93,8 +192,8 @@ const TambahPengalamanForm: React.FC<TambahPengalamanFormProps> = ({
                                 type="radio"
                                 name="isCurrentJob"
                                 value="ya"
-                                checked={isCurrentJob}
-                                onChange={() => setIsCurrentJob(true)}
+                                checked={formData.isCurrentJob}
+                                onChange={() => setFormData((prev) => ({ ...prev, isCurrentJob: true }))}
                                 className="mr-2"
                             />
                             <span className="text-sm">Ya</span>
@@ -104,8 +203,8 @@ const TambahPengalamanForm: React.FC<TambahPengalamanFormProps> = ({
                                 type="radio"
                                 name="isCurrentJob"
                                 value="tidak"
-                                checked={!isCurrentJob}
-                                onChange={() => setIsCurrentJob(false)}
+                                checked={!formData.isCurrentJob}
+                                onChange={() => setFormData((prev) => ({ ...prev, isCurrentJob: false }))}
                                 className="mr-2"
                             />
                             <span className="text-sm">Tidak</span>
@@ -118,15 +217,25 @@ const TambahPengalamanForm: React.FC<TambahPengalamanFormProps> = ({
                         <SelectField
                             label="Bulan Masuk"
                             name="bulanMasuk"
-                            value={formData.bulanMasuk}
+                            value={formData.bulanMasuk?.toString() || ''} // Konversi ke string untuk ditampilkan di <select>
                             onChange={handleChange}
                             options={[
-                                "MMMM",
-                                "Januari", "Februari", "Maret", "April",
-                                "Mei", "Juni", "Juli", "Agustus",
-                                "September", "Oktober", "November", "Desember"
+                                { value: '', label: 'Pilih Bulan' },
+                                { value: 1, label: 'Januari' },
+                                { value: 2, label: 'Februari' },
+                                { value: 3, label: 'Maret' },
+                                { value: 4, label: 'April' },
+                                { value: 5, label: 'Mei' },
+                                { value: 6, label: 'Juni' },
+                                { value: 7, label: 'Juli' },
+                                { value: 8, label: 'Agustus' },
+                                { value: 9, label: 'September' },
+                                { value: 10, label: 'Oktober' },
+                                { value: 11, label: 'November' },
+                                { value: 12, label: 'Desember' },
                             ]}
                         />
+                        {errors.bulanMasuk && <p className="text-red-500 text-sm">{errors.bulanMasuk}</p>}
                     </div>
                     <div>
                         <SelectField
@@ -136,57 +245,75 @@ const TambahPengalamanForm: React.FC<TambahPengalamanFormProps> = ({
                             onChange={handleChange}
                             options={Array.from(
                                 { length: 50 },
-                                (_, i) => (new Date().getFullYear() - i).toString()
+                                (_, i) => {
+                                    const year = (new Date().getFullYear() - i).toString();
+                                    return { value: year, label: year };
+                                }
                             )}
                         />
+                        {errors.tahunMasuk && <p className="text-red-500 text-sm">{errors.tahunMasuk}</p>}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                    <div>
-                        <SelectField
-                            label="Bulan Keluar"
-                            name="bulanKeluar"
-                            value={formData.bulanKeluar}
-                            onChange={handleChange}
-                            options={[
-                                "MMMM",
-                                "Januari", "Februari", "Maret", "April",
-                                "Mei", "Juni", "Juli", "Agustus",
-                                "September", "Oktober", "November", "Desember"
-                            ]}
-                        />
+                {!formData.isCurrentJob && (
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <SelectField
+                                label="Bulan Keluar"
+                                name="bulanKeluar"
+                                value={formData.bulanKeluar?.toString() || ''} // Konversi ke string untuk ditampilkan di <select>
+                                onChange={handleChange}
+                                options={[
+                                    { value: '', label: 'Pilih Bulan' },
+                                    { value: 1, label: 'Januari' },
+                                    { value: 2, label: 'Februari' },
+                                    { value: 3, label: 'Maret' },
+                                    { value: 4, label: 'April' },
+                                    { value: 5, label: 'Mei' },
+                                    { value: 6, label: 'Juni' },
+                                    { value: 7, label: 'Juli' },
+                                    { value: 8, label: 'Agustus' },
+                                    { value: 9, label: 'September' },
+                                    { value: 10, label: 'Oktober' },
+                                    { value: 11, label: 'November' },
+                                    { value: 12, label: 'Desember' },
+                                ]}
+                            />
+                            {errors.bulanKeluar && <p className="text-red-500 text-sm">{errors.bulanKeluar}</p>}
+                        </div>
+                        <div>
+                            <SelectField
+                                label="Tahun Keluar"
+                                name="tahunKeluar"
+                                value={formData.tahunKeluar}
+                                onChange={handleChange}
+                                options={Array.from(
+                                    { length: 50 },
+                                    (_, i) => {
+                                        const year = (new Date().getFullYear() - i).toString();
+                                        return { value: year, label: year };
+                                    }
+                                )}
+                            />
+                            {errors.tahunKeluar && <p className="text-red-500 text-sm">{errors.tahunKeluar}</p>}
+                        </div>
                     </div>
-                    <div>
-                        <SelectField
-                            label="Tahun Keluar"
-                            name="tahunKeluar"
-                            value={formData.tahunKeluar}
-                            onChange={handleChange}
-                            options={Array.from(
-                                { length: 50 },
-                                (_, i) => (new Date().getFullYear() - i).toString()
-                            )}
-                        />
-                    </div>
-                </div>
-
-                <div className="text-red-500 hover:text-red-700 cursor-pointer">
-                    - Hapus Pengalaman Kerja
-                </div>
+                )}
 
                 <div className="flex justify-between">
                     <button
                         type="button"
-                        className="text-blue-600 hover:text-blue-700"
+                        onClick={onBack}
+                        className="bg-gray-600 text-white px-8 py-2 rounded hover:bg-gray-700"
                     >
-                        + Tambah Pengalaman Kerja
+                        Kembali
                     </button>
                     <button
                         type="submit"
+                        disabled={loading}
                         className="bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700"
                     >
-                        Save & Next
+                        {loading ? 'Menyimpan...' : 'Simpan'}
                     </button>
                 </div>
             </form>

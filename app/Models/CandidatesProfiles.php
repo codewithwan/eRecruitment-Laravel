@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
+use Exception;
 
 class CandidatesProfiles extends Model
 {
     use HasFactory;
 
-    protected $table = 'candidate_profiles';
+    protected $table = 'candidates_profiles';  // Explicitly set the table name
 
     protected $fillable = [
         'user_id',
@@ -30,7 +32,7 @@ class CandidatesProfiles extends Model
     ];
 
     protected $casts = [
-        'date_of_birth' => 'date'
+        'date_of_birth' => 'date',
     ];
 
     /**
@@ -39,5 +41,39 @@ class CandidatesProfiles extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Store or update candidate profile data
+     */
+    public static function storeProfile($userData, $userId)
+    {
+        try {
+            DB::beginTransaction();
+
+            $profile = self::updateOrCreate(
+                ['user_id' => $userId],
+                array_merge($userData, ['user_id' => $userId])
+            );
+
+            DB::commit();
+            
+            \Log::info('Profile saved successfully:', $profile->toArray());
+            
+            return [
+                'success' => true,
+                'profile' => $profile,
+                'message' => 'Data pribadi berhasil disimpan'
+            ];
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            \Log::error('Error saving profile: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan data'
+            ];
+        }
     }
 }

@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\JobsController;
+use App\Http\Controllers\CandidateEducationController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -13,7 +14,7 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
     ->group(function () {
         Route::get('/', [CandidateController::class, 'index'])->name('info');
         Route::get('/profile', [CandidateController::class, 'profile'])->name('profile');
-        Route::post('/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])->name('profile.data-pribadi.store');
+        Route::post('/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])->name('candidate.profile.store');
         Route::get('/dashboard', [CandidateController::class, 'dashboard'])->name('dashboard');
 
         Route::prefix('jobs')
@@ -24,3 +25,6 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
             });
     });
 
+// Route::middleware(['auth'])->group(function () {
+//     Route::get('/candidate/education', [CandidateEducationController::class, 'getEducation']);
+// });

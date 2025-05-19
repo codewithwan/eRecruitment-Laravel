@@ -11,17 +11,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
+       $this->call([
             UserSeeder::class,
-            CompaniesTableSeeder::class,
+            SuperAdminSeeder::class,
             DepartmentsTableSeeder::class,
-            StatusesSeeder::class,
-            JobTypesTableSeeder::class,
-            VacanciesSeeder::class,         // <-- tambahkan ini jika ada seeder vacancies
             CandidateSeeder::class,
-            CandidateProfileSeeder::class,
+            StatusesSeeder::class,
+            CompaniesTableSeeder::class,
+            JobTypesTableSeeder::class,
+            VacanciesSeeder::class,
+            CandidateEducationSeeder::class,
+            CandidatesProfilesSeeder::class,
+            CandidatesWorkExperiencesSeeder::class,
             ApplicationSeeder::class,
             ApplicationHistorySeeder::class,
+
+
+
         ]);
     }
 }

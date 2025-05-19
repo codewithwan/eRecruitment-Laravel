@@ -5,7 +5,7 @@ import SelectField from "../components/SelectField";
 import SidebarNav from "../components/SidebarNav";
 import ProfileHeader from "../components/ProfileHeader";
 import NavbarHeader from "../components/NavbarHeader";
-import PendidikanForm from '../components/forms/PendidikanForm';
+import PendidikanForm from '../components/forms/ListPendidikanForm';
 import TambahPendidikanForm from '../components/forms/TambahPendidikanForm';
 import PengalamanKerjaForm from './PengalamanKerjaForm';
 import TambahPengalamanForm from '../components/forms/TambahPengalamanForm';
@@ -19,6 +19,40 @@ import DataTambahanForm from '../components/forms/DataTambahanForm';
 import TambahSkillsForm from '../components/forms/TambahSkillsForm';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
+
+// Tambahkan komponen Alert
+const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }) => (
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+        <div className={`px-4 py-3 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-100 text-green-700 border border-green-400'
+            : 'bg-red-100 text-red-700 border border-red-400'
+            }`}>
+            <div className="flex items-center">
+                {type === 'success' ? (
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                ) : (
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                )}
+                <span>{message}</span>
+            </div>
+        </div>
+    </div>
+);
+
+interface PengalamanKerja {
+    id?: number;
+    job_title: string;
+    employment_status: string;
+    job_description: string;
+    start_month: number;
+    start_year: number;
+    end_month: number | null;
+    end_year: number | null;
+    is_current_job: boolean;
+}
 
 interface Props {
     profile?: {
@@ -87,6 +121,7 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     const [activeForm, setActiveForm] = useState<FormType>(FormType.DATA_PRIBADI);
     const [subForm, setSubForm] = useState<SubFormType>(SubFormType.NONE);
     const [showTambahPengalaman, setShowTambahPengalaman] = useState(false);
+    const [selectedExperience, setSelectedExperience] = useState<PengalamanKerja | null>(null);
     const [showOrganisasiForm, setShowOrganisasiForm] = useState(false);
     const [showPrestasiForm, setShowPrestasiForm] = useState(false);
     const [hasPrestasiValue, setHasPrestasiValue] = useState<boolean | null>(null);
@@ -103,10 +138,45 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         }));
     };
 
+    const handleTambahPengalaman = () => {
+        setSelectedExperience(null); // Reset pengalaman kerja yang dipilih
+        setShowTambahPengalaman(true);
+    };
+
+    const handleEditPengalaman = (experience: PengalamanKerja) => {
+        setSelectedExperience(experience); // Set pengalaman kerja yang akan diedit
+        setShowTambahPengalaman(true);
+    };
+
+    const handleBack = () => {
+        setShowTambahPengalaman(false);
+        setSelectedExperience(null);
+    };
+
+    const handleSubmitPengalaman = async (updatedData: PengalamanKerja) => {
+        try {
+            if (updatedData.id) {
+                // Update pengalaman kerja
+                await axios.put(`/candidate/work-experience/${updatedData.id}`, updatedData);
+            } else {
+                // Tambah pengalaman kerja baru
+                await axios.post('/candidate/work-experience', updatedData);
+            }
+            setShowTambahPengalaman(false);
+            setSelectedExperience(null);
+        } catch (error) {
+            console.error('Error submitting pengalaman kerja:', error);
+        }
+    };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setMessage(null);
+
+        if (!form.village) {
+            alert('Kelurahan/Desa harus diisi');
+            return;
+        }
 
         try {
             const submitData = {
@@ -117,23 +187,42 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             };
 
             await router.post('/candidate/profile/data-pribadi', submitData, {
-                onSuccess: (page) => {
-                    // Update the form with the new data from the response
-                    const flash = page.props.flash as { profile?: typeof form } | undefined;
-                    if (flash?.profile) {
-                        setForm(prevForm => ({
-                            ...prevForm,
-                            ...flash?.profile,
-                            gender: convertGender((page.props.flash as { profile: typeof form }).profile.gender)
-                        }));
+                onSuccess: (page: any) => {
+                    const flash = page?.props?.flash;
+
+                    if (flash) {
+                        setMessage({
+                            type: flash.type,
+                            text: flash.message
+                        });
+
+                        // Scroll to top
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+
+                        // Auto hide after 3 seconds
+                        setTimeout(() => {
+                            setMessage(null);
+                        }, 3000);
                     }
-                    setMessage({ type: 'success', text: 'Data berhasil disimpan' });
                 },
-                preserveScroll: true
+                onError: (errors) => {
+                    setMessage({
+                        type: 'error',
+                        text: 'Terjadi kesalahan saat menyimpan data'
+                    });
+                },
+                preserveScroll: true,
+                preserveState: true
             });
         } catch (error) {
             console.error('Error submitting form:', error);
-            setMessage({ type: 'error', text: 'Terjadi kesalahan saat menyimpan data' });
+            setMessage({
+                type: 'error',
+                text: 'Terjadi kesalahan saat menyimpan data'
+            });
         }
     };
 
@@ -219,33 +308,26 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             if (showTambahPengalaman) {
                 return (
                     <TambahPengalamanForm
-                        onSubmit={handleSubmit}
-                        onChange={handleChange}
-                        onBack={() => setShowTambahPengalaman(false)}
+                        onSubmit={handleSubmitPengalaman}
+                        onBack={handleBack}
+                        experienceData={selectedExperience ?? undefined}
                     />
                 );
             }
             return (
                 <PengalamanKerjaForm
-                    onTambahPengalaman={() => setShowTambahPengalaman(true)}
+                    onTambahPengalaman={handleTambahPengalaman}
+                    onEditPengalaman={handleEditPengalaman}
                 />
             );
         }
         if (activeForm === FormType.PENDIDIKAN) {
-            if (subForm === SubFormType.TAMBAH_PENDIDIKAN) {
-                return (
-                    <TambahPendidikanForm
-                        onSubmit={handleSubmit}
-                        onChange={handleChange}
-                        onBack={() => setSubForm(SubFormType.NONE)}
-                    />
-                );
-            }
             return (
                 <PendidikanForm
+
                     onSubmit={handleSubmit}
                     onChange={handleChange}
-                    onTambahPendidikan={() => setSubForm(SubFormType.TAMBAH_PENDIDIKAN)}
+                    onTambahPendidikan={() => { }}
                 />
             );
         }
@@ -270,7 +352,10 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                                             name="gender"
                                             value={form.gender}
                                             onChange={handleChange}
-                                            options={["Pria", "Wanita"]}
+                                            options={[
+                                                { value: 'Pria', label: 'Pria' },
+                                                { value: 'Wanita', label: 'Wanita' }
+                                            ]}
                                         />
                                     </div>
                                     <div>
@@ -334,6 +419,7 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                                         <InputField label="Alamat" name="address" value={form.address} onChange={handleChange} />
                                         <InputField label="Provinsi" name="province" value={form.province} onChange={handleChange} />
                                         <InputField label="Kecamatan" name="district" value={form.district} onChange={handleChange} />
+                                        <InputField label="Kelurahan/Desa" name="village" value={form.village} onChange={handleChange} />
                                     </div>
                                     <div>
                                         <InputField label="Kota/Kabupaten" name="city" value={form.city} onChange={handleChange} />
@@ -344,13 +430,10 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                                     </div>
                                 </div>
 
-                                {message && (
-                                    <div className={`p-4 rounded ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {message.text}
-                                    </div>
-                                )}
-
-                                <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                                >
                                     Save & Next
                                 </button>
                             </form>
@@ -363,6 +446,9 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     return (
         <div className="min-h-screen bg-white">
             <NavbarHeader />
+            {message && (
+                <Alert type={message.type} message={message.text} />
+            )}
             <ProfileHeader
                 name={user.name}
                 email={user.email}

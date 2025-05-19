@@ -10,7 +10,7 @@ class CreateCandidatesWorkExperiencesTable extends Migration
     {
         Schema::create('candidates_work_experiences', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('candidates')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('job_title');
             $table->string('employment_status');
             $table->text('job_description')->nullable();

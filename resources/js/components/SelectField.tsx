@@ -3,9 +3,9 @@ import React, { ChangeEvent } from 'react';
 interface SelectFieldProps {
   label: string;
   name: string;
-  value: string;
+  value: string | number; // Ubah tipe menjadi string | number
   onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
-  options: string[];
+  options: { value: string | number; label: string }[]; // Ubah tipe menjadi string | number
   placeholder?: string;
 }
 
@@ -31,8 +31,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
     >
       <option value="">{placeholder || "Pilih..."}</option>
       {options.map(option => (
-        <option key={option} value={option} className="text-black">
-          {option}
+        <option key={option.value} value={option.value} className="text-black">
+          {option.label}
         </option>
       ))}
     </select>

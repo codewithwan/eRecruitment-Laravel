@@ -10,12 +10,12 @@ class CandidatesProfilesSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('candidate_profiles')->insert([
+        DB::table('candidates_profiles')->insert([
             [
                 'id' => 1,
                 'user_id' => 1,
                 'no_ektp' => '1234567890123456',
-                'gender' => 'Laki-laki',
+                'gender' => 'male',
                 'phone_number' => '081234567890',
                 'npwp' => '123456789012345',
                 'about_me' => 'Saya seorang kandidat yang berdedikasi.',

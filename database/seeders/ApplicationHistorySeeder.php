@@ -10,22 +10,33 @@ class ApplicationHistorySeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('application_history')->insert([
-            [
-                'application_id' => 1,
-                'candidate_id' => 1,
-                'position_name' => 'FRONTEND DEVELOPER',
-                'company_id' => 1,
-                'department_id' => 1,
-                'job_description' => 'Mengembangkan dan memelihara aplikasi web.',
-                'work_type' => 'Full Time',
-                'work_location' => 'Semarang',
-                'application_deadline' => Carbon::now()->addDays(30),
-                'status_id' => 1,
-                'applied_at' => Carbon::now()->subDays(2),
-                'created_at' => Carbon::now()->subDays(2),
-                'updated_at' => Carbon::now()->subDays(2),
-            ],
+        $candidate = \App\Models\Candidate::first();
+    $company = \App\Models\Companies::first();
+    $department = \App\Models\Department::first();
+    $status = \DB::table('statuses_id')->first();
+
+    if (!$candidate || !$company || !$department || !$status) {
+        // Tidak ada data yang dibutuhkan, skip seeder
+        return;
+    }
+
+    \DB::table('application_history')->insert([
+        [
+            'application_id' => 1,
+            'candidate_id' => $candidate->id,
+            'position_name' => 'FRONTEND DEVELOPER',
+            'company_id' => $company->id,
+            'department_id' => $department->id,
+            'job_description' => 'Mengembangkan dan memelihara aplikasi web.',
+            'work_type' => 'Full Time',
+            'work_location' => 'Semarang',
+            'application_deadline' => \Carbon\Carbon::now()->addDays(30),
+            'status_id' => $status->id,
+            'applied_at' => \Carbon\Carbon::now()->subDays(2),
+            'created_at' => \Carbon\Carbon::now()->subDays(2),
+            'updated_at' => \Carbon\Carbon::now()->subDays(2),
+        ],
+        // Tambahkan data lain sesuai kebutuhan
             [
                 'application_id' => 2,
                 'candidate_id' => 1,

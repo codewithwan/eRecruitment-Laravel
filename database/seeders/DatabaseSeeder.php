@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             VacanciesSeeder::class,
             CandidateEducationSeeder::class,
             CandidatesProfilesSeeder::class,
-            CandidateWorkExperienceSeeder::class,
+            CandidatesWorkExperiencesSeeder::class,
         ]);
     }
 }

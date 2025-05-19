@@ -43,6 +43,7 @@ const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }
 );
 
 interface PengalamanKerja {
+    id?: number;
     job_title: string;
     employment_status: string;
     job_description: string;
@@ -137,9 +138,35 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         }));
     };
 
+    const handleTambahPengalaman = () => {
+        setSelectedExperience(null); // Reset pengalaman kerja yang dipilih
+        setShowTambahPengalaman(true);
+    };
+
+    const handleEditPengalaman = (experience: PengalamanKerja) => {
+        setSelectedExperience(experience); // Set pengalaman kerja yang akan diedit
+        setShowTambahPengalaman(true);
+    };
+
     const handleBack = () => {
         setShowTambahPengalaman(false);
         setSelectedExperience(null);
+    };
+
+    const handleSubmitPengalaman = async (updatedData: PengalamanKerja) => {
+        try {
+            if (updatedData.id) {
+                // Update pengalaman kerja
+                await axios.put(`/candidate/work-experience/${updatedData.id}`, updatedData);
+            } else {
+                // Tambah pengalaman kerja baru
+                await axios.post('/candidate/work-experience', updatedData);
+            }
+            setShowTambahPengalaman(false);
+            setSelectedExperience(null);
+        } catch (error) {
+            console.error('Error submitting pengalaman kerja:', error);
+        }
     };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -281,8 +308,7 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             if (showTambahPengalaman) {
                 return (
                     <TambahPengalamanForm
-                        onSubmit={handleSubmit}
-                        onChange={handleChange}
+                        onSubmit={handleSubmitPengalaman}
                         onBack={handleBack}
                         experienceData={selectedExperience ?? undefined}
                     />
@@ -290,7 +316,8 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             }
             return (
                 <PengalamanKerjaForm
-                    onTambahPengalaman={() => setShowTambahPengalaman(true)}
+                    onTambahPengalaman={handleTambahPengalaman}
+                    onEditPengalaman={handleEditPengalaman}
                 />
             );
         }
@@ -325,7 +352,10 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                                             name="gender"
                                             value={form.gender}
                                             onChange={handleChange}
-                                            options={["Pria", "Wanita"]}
+                                            options={[
+                                                { value: 'Pria', label: 'Pria' },
+                                                { value: 'Wanita', label: 'Wanita' }
+                                            ]}
                                         />
                                     </div>
                                     <div>

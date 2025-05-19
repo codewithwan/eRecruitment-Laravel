@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { ChangeEvent, FormEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import InputField from '../InputField';
 import SelectField from '../SelectField';
 
@@ -109,7 +108,16 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
                     name="education_level"
                     value={localFormData.education_level}
                     onChange={handleChange}
-                    options={["SD", "SMP", "SMA/SMK", "D3", "S1", "S2", "S3"]}
+                    options={[
+                        { value: 'SD', label: 'SD' },
+                        { value: 'SMP', label: 'SMP' },
+                        { value: 'SMA/SMK', label: 'SMA/SMK' },
+                        { value: 'D3', label: 'D3' },
+                        { value: 'S1', label: 'S1' },
+                        { value: 'S2', label: 'S2' },
+                        { value: 'S3', label: 'S3' }
+                    ]}
+                    placeholder="Pilih Pendidikan"
                 />
 
                 {!showAdditionalFields && (
@@ -124,20 +132,20 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
 
                 {showAdditionalFields && (
                     <>
-                        <SelectField
+                        <InputField
                             label="Fakultas"
                             name="faculty"
                             value={localFormData.faculty}
                             onChange={handleChange}
-                            options={["Pilih fakultas", "Fakultas Teknik", "Fakultas Ekonomi"]}
+                            placeholder="Masukkan fakultas"
                         />
 
-                        <SelectField
+                        <InputField
                             label="Program Studi"
                             name="major"
                             value={localFormData.major}
                             onChange={handleChange}
-                            options={["Pilih program studi", "Teknik Informatika", "Sistem Informasi"]}
+                            placeholder="Masukkan program studi"
                         />
 
                         <InputField
@@ -167,8 +175,12 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
                             onChange={handleChange}
                             options={Array.from(
                                 { length: 50 },
-                                (_, i) => (new Date().getFullYear() - i).toString()
+                                (_, i) => ({
+                                    value: (new Date().getFullYear() - i).toString(),
+                                    label: (new Date().getFullYear() - i).toString()
+                                })
                             )}
+                            placeholder="Pilih Tahun Masuk"
                         />
 
                         <SelectField
@@ -178,8 +190,12 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
                             onChange={handleChange}
                             options={Array.from(
                                 { length: 50 },
-                                (_, i) => (new Date().getFullYear() - i).toString()
+                                (_, i) => ({
+                                    value: (new Date().getFullYear() - i).toString(),
+                                    label: (new Date().getFullYear() - i).toString()
+                                })
                             )}
+                            placeholder="Pilih Tahun Keluar"
                         />
 
                         <div className="flex space-x-4">

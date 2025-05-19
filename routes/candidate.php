@@ -22,6 +22,6 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::CANDIDATE->value])
             });
     });
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/candidate/education', [CandidateEducationController::class, 'getEducation']);
-});
+// Route::middleware(['auth'])->group(function () {
+//     Route::get('/candidate/education', [CandidateEducationController::class, 'getEducation']);
+// });

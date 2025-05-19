@@ -29,10 +29,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('candidate.profile.store');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::post('/candidate/education', [CandidateEducationController::class, 'store'])
-        ->name('candidate.education.store');
-});
+// Route::middleware(['auth', 'verified'])->group(function () {
+//     Route::post('/candidate/education', [CandidateEducationController::class, 'store'])
+//         ->name('candidate.education.store');
+// });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Rute yang memerlukan autentikasi dan verifikasi email
@@ -55,6 +55,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.work-experience.delete');
     Route::get('/candidate/work-experiences', [CandidateController::class, 'indexWorkExperiences'])
         ->name('candidate.work-experiences');
+    
+    // Rute untuk Edit Pengalaman Kerja
+    Route::get('/candidate/work-experience/{id}/edit', [CandidateController::class, 'editWorkExperience'])
+        ->name('candidate.work-experience.edit');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -67,6 +71,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/candidate/education', [CandidateController::class, 'storeEducation'])
         ->name('candidate.education.store');
     Route::get('/candidate/education/data', [CandidateController::class, 'getEducation']);
+    
+    // Organization routes
+    Route::get('/candidate/organizations', [CandidateController::class, 'indexOrganizations'])
+        ->name('candidate.organizations');
+    Route::post('/candidate/organization', [CandidateController::class, 'storeOrganization'])
+        ->name('candidate.organization.store');
+    Route::put('/candidate/organization/{id}', [CandidateController::class, 'updateOrganization'])
+        ->name('candidate.organization.update');
 });
 
 require __DIR__.'/settings.php';

@@ -1,55 +1,84 @@
-import React, { ChangeEvent, FormEvent, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useState, useEffect } from 'react';
+import axios from 'axios';
 import InputField from '../InputField';
 import SelectField from '../SelectField';
 
-interface TambahOrganisasiFormProps {
-    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-    onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-    onBack: () => void;
+interface OrganisasiData {
+    id?: number;
+    organization_name: string;
+    position: string;
+    description: string;
+    is_active: boolean;
+    start_month: string;  // Tambahkan ini
+    start_year: number;
+    end_month: string | null;  // Tambahkan ini
+    end_year: number | null;
 }
 
-interface OrganisasiFormState {
-    namaOrganisasi: string;
-    posisiOrganisasi: string;
-    deskripsi: string;
-    isActive: boolean;
-    bulanMasuk: string;
-    tahunMasuk: string;
-    bulanKeluar: string;
-    tahunKeluar: string;
-}
-
-const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
-    onSubmit,
-    onChange,
-    onBack
-}) => {
-    const [formData, setFormData] = useState<OrganisasiFormState>({
-        namaOrganisasi: '',
-        posisiOrganisasi: '',
-        deskripsi: '',
-        isActive: false,
-        bulanMasuk: '',
-        tahunMasuk: '',
-        bulanKeluar: '',
-        tahunKeluar: ''
+const TambahOrganisasiForm: React.FC = () => {
+    const [formData, setFormData] = useState<OrganisasiData>({
+        organization_name: '',
+        position: '',
+        description: '',
+        is_active: false,
+        start_month: '',  // Tambahkan ini
+        start_year: new Date().getFullYear(),
+        end_month: null,  // Tambahkan ini
+        end_year: null
     });
+    const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [existingData, setExistingData] = useState<OrganisasiData | null>(null);
+
+    useEffect(() => {
+        const fetchOrganizations = async () => {
+            try {
+                const response = await axios.get('/candidate/organizations');
+                if (response.data.length > 0) {
+                    setExistingData(response.data[0]); // Assuming one organization per user
+                    setFormData(response.data[0]);
+                }
+            } catch (error) {
+                console.error('Error fetching organizations:', error);
+            }
+        };
+
+        fetchOrganizations();
+    }, []);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
-        if (type === 'radio') {
-            const radioInput = e.target as HTMLInputElement;
-            setFormData(prev => ({
-                ...prev,
-                isActive: radioInput.value === 'Ya'
-            }));
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                [name]: value
-            }));
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'radio' ? value === 'Ya' : value
+        }));
+    };
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            let response;
+            if (existingData?.id) {
+                // Update existing data
+                response = await axios.put(`/candidate/organization/${existingData.id}`, formData);
+                setSuccessMessage('Data berhasil diperbarui!');
+            } else {
+                // Create new data
+                response = await axios.post('/candidate/organization', formData);
+                setSuccessMessage('Data berhasil disimpan!');
+                setExistingData(response.data.data);
+            }
+
+            setTimeout(() => {
+                setSuccessMessage(null);
+            }, 2000);
+        } catch (error) {
+            console.error('Error saving organization:', error);
+        } finally {
+            setLoading(false);
         }
-        onChange(e);
     };
 
     return (
@@ -61,19 +90,25 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                 <p className="text-sm text-gray-600 mt-2">Apakah Anda aktif dalam berorganisasi? Jika iya beritahu kami.</p>
             </div>
 
-            <form onSubmit={onSubmit} className="p-6 space-y-6">
+            {successMessage && (
+                <div className="bg-green-100 text-green-700 p-4 rounded mb-4">
+                    {successMessage}
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 <InputField
                     label="Nama Organisasi"
-                    name="namaOrganisasi"
-                    value={formData.namaOrganisasi}
+                    name="organization_name"
+                    value={formData.organization_name}
                     onChange={handleChange}
                     placeholder="Masukkan nama organisasi"
                 />
 
                 <InputField
                     label="Posisi dalam Organisasi"
-                    name="posisiOrganisasi"
-                    value={formData.posisiOrganisasi}
+                    name="position"
+                    value={formData.position}
                     onChange={handleChange}
                     placeholder="Masukkan posisi dalam organisasi"
                 />
@@ -83,8 +118,8 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                         Deskripsi Organisasi
                     </label>
                     <textarea
-                        name="deskripsi"
-                        value={formData.deskripsi}
+                        name="description"
+                        value={formData.description}
                         onChange={handleChange}
                         placeholder="Masukkan deskripsi organisasi min. 100 karakter"
                         className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-32 
@@ -100,9 +135,9 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                         <label className="inline-flex items-center">
                             <input
                                 type="radio"
-                                name="isActive"
+                                name="is_active"
                                 value="Ya"
-                                checked={formData.isActive}
+                                checked={formData.is_active}
                                 onChange={handleChange}
                                 className="mr-2"
                             />
@@ -111,9 +146,9 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                         <label className="inline-flex items-center">
                             <input
                                 type="radio"
-                                name="isActive"
+                                name="is_active"
                                 value="Tidak"
-                                checked={!formData.isActive}
+                                checked={!formData.is_active}
                                 onChange={handleChange}
                                 className="mr-2"
                             />
@@ -125,24 +160,36 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                 <div className="grid grid-cols-2 gap-6">
                     <SelectField
                         label="Bulan Masuk"
-                        name="bulanMasuk"
-                        value={formData.bulanMasuk}
+                        name="start_month"
+                        value={formData.start_month}
                         onChange={handleChange}
                         options={[
-                            "MMMM",
-                            "Januari", "Februari", "Maret", "April",
-                            "Mei", "Juni", "Juli", "Agustus",
-                            "September", "Oktober", "November", "Desember"
+                            { value: "", label: "MMMM" },
+                            { value: "Januari", label: "Januari" },
+                            { value: "Februari", label: "Februari" },
+                            { value: "Maret", label: "Maret" },
+                            { value: "April", label: "April" },
+                            { value: "Mei", label: "Mei" },
+                            { value: "Juni", label: "Juni" },
+                            { value: "Juli", label: "Juli" },
+                            { value: "Agustus", label: "Agustus" },
+                            { value: "September", label: "September" },
+                            { value: "Oktober", label: "Oktober" },
+                            { value: "November", label: "November" },
+                            { value: "Desember", label: "Desember" }
                         ]}
                     />
                     <SelectField
                         label="Tahun Masuk"
-                        name="tahunMasuk"
-                        value={formData.tahunMasuk}
+                        name="start_year"
+                        value={formData.start_year.toString()}
                         onChange={handleChange}
                         options={Array.from(
                             { length: 50 },
-                            (_, i) => (new Date().getFullYear() - i).toString()
+                            (_, i) => {
+                                const year = (new Date().getFullYear() - i).toString();
+                                return { value: year, label: year };
+                            }
                         )}
                     />
                 </div>
@@ -150,24 +197,36 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                 <div className="grid grid-cols-2 gap-6">
                     <SelectField
                         label="Bulan Keluar"
-                        name="bulanKeluar"
-                        value={formData.bulanKeluar}
+                        name="end_month"
+                        value={formData.end_month ? formData.end_month : ''}
                         onChange={handleChange}
                         options={[
-                            "MMMM",
-                            "Januari", "Februari", "Maret", "April",
-                            "Mei", "Juni", "Juli", "Agustus",
-                            "September", "Oktober", "November", "Desember"
+                            { value: "", label: "MMMM" },
+                            { value: "Januari", label: "Januari" },
+                            { value: "Februari", label: "Februari" },
+                            { value: "Maret", label: "Maret" },
+                            { value: "April", label: "April" },
+                            { value: "Mei", label: "Mei" },
+                            { value: "Juni", label: "Juni" },
+                            { value: "Juli", label: "Juli" },
+                            { value: "Agustus", label: "Agustus" },
+                            { value: "September", label: "September" },
+                            { value: "Oktober", label: "Oktober" },
+                            { value: "November", label: "November" },
+                            { value: "Desember", label: "Desember" }
                         ]}
                     />
                     <SelectField
                         label="Tahun Keluar"
-                        name="tahunKeluar"
-                        value={formData.tahunKeluar}
+                        name="end_year"
+                        value={formData.end_year ? formData.end_year.toString() : ''}
                         onChange={handleChange}
                         options={Array.from(
                             { length: 50 },
-                            (_, i) => (new Date().getFullYear() - i).toString()
+                            (_, i) => {
+                                const year = (new Date().getFullYear() - i).toString();
+                                return { value: year, label: year };
+                            }
                         )}
                     />
                 </div>
@@ -188,9 +247,10 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
 
                 <button
                     type="submit"
+                    disabled={loading}
                     className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
                 >
-                    Save & Next
+                    {loading ? 'Menyimpan...' : (existingData ? 'Update' : 'Simpan')}
                 </button>
             </form>
         </div>

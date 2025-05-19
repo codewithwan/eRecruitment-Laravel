@@ -10,7 +10,7 @@ class CreateSkillsTable extends Migration
     {
         Schema::create('skills', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('data_tambahan_id')->constrained('data_tambahan')->onDelete('cascade');
+            $table->foreignId('data_tambahan_id')->constrained('additional_data')->onDelete('cascade');
             $table->string('skill_name');
             $table->timestamps();
         });

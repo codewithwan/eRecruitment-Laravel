@@ -7,6 +7,7 @@ use App\Models\CandidatesEducations;
 use App\Models\CandidatesWorkExperiences;
 use App\Models\UserWorkExperiences;
 use App\Models\WorkExperience;
+use App\Models\CandidatesOrganizations;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -164,7 +165,7 @@ class CandidateController extends Controller
         $validated = $request->validate([
             'job_title' => 'required|string|max:255',
             'employment_status' => 'required|string|max:255',
-            'job_description' => 'required|string|min:100',
+            'job_description' => 'required|string|min:10', // Ubah dari 100 menjadi 10
             'is_current_job' => 'required|boolean',
             'start_month' => 'required|integer|min:1|max:12',
             'start_year' => 'required|integer|min:1900|max:' . date('Y'),
@@ -176,7 +177,10 @@ class CandidateController extends Controller
 
         $workExperience = CandidatesWorkExperiences::create($validated);
 
-        return response()->json($workExperience, 201);
+        return response()->json([
+            'message' => 'Data berhasil disimpan!',
+            'data' => $workExperience,
+        ], 201);
     }
 
     public function updateWorkExperience(Request $request, $id)
@@ -188,7 +192,7 @@ class CandidateController extends Controller
         $validated = $request->validate([
             'job_title' => 'required|string|max:255',
             'employment_status' => 'required|string|max:255',
-            'job_description' => 'required|string|min:100',
+            'job_description' => 'required|string|min:10', // Ubah dari 100 menjadi 10
             'is_current_job' => 'required|boolean',
             'start_month' => 'required|integer|min:1|max:12',
             'start_year' => 'required|integer|min:1900|max:' . date('Y'),
@@ -198,7 +202,10 @@ class CandidateController extends Controller
 
         $workExperience->update($validated);
 
-        return response()->json($workExperience);
+        return response()->json([
+            'message' => 'Data berhasil diperbarui!',
+            'data' => $workExperience,
+        ], 200);
     }
 
     public function deleteWorkExperience($id)
@@ -209,7 +216,9 @@ class CandidateController extends Controller
 
         $workExperience->delete();
 
-        return response()->json(['message' => 'Work experience deleted successfully']);
+        return response()->json([
+            'message' => 'Data berhasil dihapus!',
+        ]);
     }
     
     public function getWorkExperience($id)
@@ -219,5 +228,66 @@ class CandidateController extends Controller
             ->firstOrFail();
 
         return response()->json($experience);
+    }
+
+    public function editWorkExperience($id)
+    {
+        $workExperience = CandidatesWorkExperiences::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        return Inertia::render('EditPengalamanKerjaForm', [
+            'experienceData' => $workExperience,
+        ]);
+    }
+
+    public function indexOrganizations()
+    {
+        $organizations = CandidatesOrganizations::where('user_id', Auth::id())->get();
+        return response()->json($organizations);
+    }
+
+    public function storeOrganization(Request $request)
+    {
+        $validated = $request->validate([
+            'organization_name' => 'required|string|max:255',
+            'position' => 'required|string|max:255',
+            'description' => 'required|string|min:10',
+            'is_active' => 'required|boolean',
+            'start_year' => 'required|integer|min:1900|max:' . date('Y'),
+            'end_year' => 'nullable|integer|min:1900|max:' . date('Y'),
+        ]);
+
+        $validated['user_id'] = Auth::id();
+
+        $organization = CandidatesOrganizations::create($validated);
+
+        return response()->json([
+            'message' => 'Data berhasil disimpan!',
+            'data' => $organization,
+        ], 201);
+    }
+
+    public function updateOrganization(Request $request, $id)
+    {
+        $organization = CandidatesOrganizations::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'organization_name' => 'required|string|max:255',
+            'position' => 'required|string|max:255',
+            'description' => 'required|string|min:10',
+            'is_active' => 'required|boolean',
+            'start_year' => 'required|integer|min:1900|max:' . date('Y'),
+            'end_year' => 'nullable|integer|min:1900|max:' . date('Y'),
+        ]);
+
+        $organization->update($validated);
+
+        return response()->json([
+            'message' => 'Data berhasil diperbarui!',
+            'data' => $organization,
+        ], 200);
     }
 }

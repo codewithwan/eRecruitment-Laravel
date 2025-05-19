@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { LoaderCircle, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { FormEventHandler, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
+    const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm<Required<LoginForm>>({
         email: '',
         password: '',
@@ -36,26 +37,20 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     return (
         <div className="flex flex-col min-h-screen bg-white">
             <Head title="Masuk" />
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600 bg-green-50 p-4 rounded">
-                    {status}
-                </div>
-            )}
-
+            
             <header className="py-4 px-6 shadow">
                 <div className="container mx-auto flex justify-between items-center">
-                        <div className="font-bold text-xl text-black ml-8">MITRA KARYA GROUP</div>
+                    <div className="font-bold text-xl text-black ml-8">MITRA KARYA GROUP</div>
                     <div className="flex items-center gap-x-4">
                         <Link
                             href={route('register')}
-                            className="px-4 py-2 border-blue-500 text-blue-500 font-normal hover:bg-blue-50 transition"
+                            className="px-4 py-2 border-blue-500 text-blue-500 font-medium hover:bg-blue-50 transition"
                         >
                             Daftar
                         </Link>
                         <a
                             href="#"
-                            className="px-4 py-2 rounded-md bg-blue-500 text-white font-normal hover:bg-blue-600 transition"
+                            className="px-4 py-2 rounded-md bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
                         >
                             Masuk
                         </a>
@@ -71,6 +66,15 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             Sudah siap melangkah lebih dekat ke peluang impian Anda? Masuk sekarang dan lanjutkan perjalanan karier Anda bersama kami!
                         </p>
                     </div>
+
+                    {status && status.includes('Email berhasil diverifikasi') && (
+                        <div className="mb-6 animate-fadeIn">
+                            <div className="bg-green-50 border border-green-100 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                                <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                                <p className="text-sm font-medium">{status}</p>
+                            </div>
+                        </div>
+                    )}
 
                     <form className="flex flex-col gap-6" onSubmit={submit}>
                         <div className="space-y-4">
@@ -93,17 +97,30 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                             <div className="space-y-2">
                                 <Label htmlFor="password" className="text-base font-mediumm text-black">Kata Sandi</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    value={data.password}
-                                    onChange={(e) => setData('password', e.target.value)}
-                                    placeholder="Masukkan kata sandi Anda"
-                                    className="w-full bg-gray-100 text-black"
-                                />
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        required
+                                        tabIndex={2}
+                                        autoComplete="current-password"
+                                        value={data.password}
+                                        onChange={(e) => setData('password', e.target.value)}
+                                        placeholder="Masukkan kata sandi Anda"
+                                        className="w-full bg-gray-100 text-black pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-5 w-5" />
+                                        ) : (
+                                            <Eye className="h-5 w-5" />
+                                        )}
+                                    </button>
+                                </div>
                                 <InputError message={errors.password} />
                             </div>
 
@@ -148,12 +165,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             </p>
                         </div>
                     </form>
-
-                    {status && (
-                        <div className="mt-4 text-center text-sm font-medium text-green-600">
-                            {status}
-                        </div>
-                    )}
                 </div>
             </main>
         </div>

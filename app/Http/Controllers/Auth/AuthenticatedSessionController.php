@@ -29,36 +29,13 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+   public function store(LoginRequest $request): RedirectResponse
     {
-        // Check rate limiting
-        if (RateLimiter::tooManyAttempts('login', 5)) {
-            return back()->withErrors([
-                'email' => 'Too many login attempts. Please try again later.',
-            ])->withInput($request->except('password'));
-        }
-        
         $request->authenticate();
 
-        // Reset rate limiter after successful login
-        RateLimiter::clear('login');
-        
         $request->session()->regenerate();
 
-        // Redirect berdasarkan role user
-        $user = Auth::user();
-        
-        // Jika email belum terverifikasi, arahkan ke halaman verifikasi
-        if (!$user->hasVerifiedEmail()) {
-            return redirect('/email/verify');
-        }
-
-        // Jika email sudah terverifikasi
-        if ($user->role === UserRole::CANDIDATE->value) {
-            return redirect()->intended('/candidate/profile');
-        }
-
-        return redirect()->intended(route('admin.dashboard'));
+        return redirect()->route('redirect');
     }
 
     /**

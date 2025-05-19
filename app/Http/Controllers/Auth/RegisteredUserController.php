@@ -45,9 +45,10 @@ namespace App\Http\Controllers\Auth;
                 'role' => UserRole::CANDIDATE->value,
             ]);
 
-            event(new Registered($user)); // trigger email verification
+            event(new Registered($user));
+
+            Auth::login($user);
 
             return redirect()->route('verification.notice');
-
         }
     }

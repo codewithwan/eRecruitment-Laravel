@@ -16,19 +16,16 @@ class VerifyEmailController extends Controller
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('login')
-                ->with('status', 'Email already verified. Please login.');
+            return redirect()->route('login');
         }
 
         if ($request->user()->markEmailAsVerified()) {
-            /** @var \Illuminate\Contracts\Auth\MustVerifyEmail $user */
-            $user = $request->user();
-
-            event(new Verified($user));
+            event(new Verified($request->user()));
         }
 
         Auth::logout();
+
         return redirect()->route('login')
-            ->with('status', 'Email verified successfully! Please login to continue.');
+            ->with('status', 'Email berhasil diverifikasi! Silakan login untuk melanjutkan pendaftaran Anda.');
     }
 }

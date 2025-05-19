@@ -30,7 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/redirect', function () {
         return Auth::user()->role === UserRole::HR
             ? redirect()->route('admin.dashboard')
-            : redirect()->route('candidate.profile');
+            : redirect()->route('user.profile');
     })->name('redirect');
 });
 Route::post('/candidate/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])

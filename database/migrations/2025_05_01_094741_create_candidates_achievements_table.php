@@ -12,11 +12,15 @@ class CreateCandidatesAchievementsTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('title');
-            $table->string('level');
-            $table->string('organizer');
+            $table->enum('level', ['Internasional', 'Nasional', 'Regional', 'Lokal']);
+            $table->enum('month', [
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ]);
             $table->year('year');
-            $table->text('description')->nullable();
-            $table->string('file_path')->nullable();
+            $table->text('description');
+            $table->string('certificate_file');
+            $table->string('supporting_file')->nullable();
             $table->timestamps();
         });
     }

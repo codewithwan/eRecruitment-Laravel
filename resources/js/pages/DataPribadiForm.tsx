@@ -19,6 +19,8 @@ import DataTambahanForm from '../components/forms/DataTambahanForm';
 import TambahSkillsForm from '../components/forms/TambahSkillsForm';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
+import PrestasiListForm from '../components/forms/PrestasiListForm';
+import SocialMediaList from "@/components/forms/SocialMediaList";
 
 // Tambahkan komponen Alert
 const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }) => (
@@ -52,6 +54,19 @@ interface PengalamanKerja {
     end_month: number | null;
     end_year: number | null;
     is_current_job: boolean;
+}
+
+// Add this interface with other interfaces
+interface PrestasiData {
+    id?: number;
+    title: string;
+    level: string;
+    organizer: string;
+    month: string;
+    year: number;
+    description: string;
+    file_path?: string;
+    supporting_file_path?: string;
 }
 
 interface Props {
@@ -128,6 +143,8 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     const [showSocialMediaForm, setShowSocialMediaForm] = useState(false);
     const [activeTambahanForm, setActiveTambahanForm] = useState<string | null>(null);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [selectedPrestasi, setSelectedPrestasi] = useState<PrestasiData | null>(null);
+    const [selectedSocialMedia, setSelectedSocialMedia] = useState<any>(null);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -169,12 +186,61 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         }
     };
 
+    const handleSubmitPrestasi = async (formData: FormData) => {
+        setMessage(null);
+
+        try {
+            if (selectedPrestasi?.id) {
+                await axios.post(`/candidate/achievement/${selectedPrestasi.id}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                setMessage({
+                    type: 'success',
+                    text: 'Data berhasil diperbarui!'
+                });
+            } else {
+                await axios.post('/candidate/achievement', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                setMessage({
+                    type: 'success',
+                    text: 'Data berhasil disimpan!'
+                });
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            setTimeout(() => {
+                setMessage(null);
+                setShowPrestasiForm(false);
+                setSelectedPrestasi(null);
+            }, 3000);
+
+        } catch (error) {
+            console.error('Error saving achievement:', error);
+            setMessage({
+                type: 'error',
+                text: 'Terjadi kesalahan saat menyimpan data'
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const handleEditPrestasi = (prestasi: PrestasiData) => {
+        setSelectedPrestasi(prestasi);
+        setShowPrestasiForm(true);
+    };
+
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setMessage(null);
 
         if (!form.village) {
-            alert('Kelurahan/Desa harus diisi');
+            setMessage({
+                type: 'error',
+                text: 'Kelurahan/Desa harus diisi'
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
 
@@ -188,31 +254,28 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
 
             await router.post('/candidate/profile/data-pribadi', submitData, {
                 onSuccess: (page: any) => {
-                    const flash = page?.props?.flash;
+                    setMessage({
+                        type: 'success',
+                        text: 'Data berhasil disimpan!'
+                    });
 
-                    if (flash) {
-                        setMessage({
-                            type: flash.type,
-                            text: flash.message
-                        });
+                    // Scroll to top
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
 
-                        // Scroll to top
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
-
-                        // Auto hide after 3 seconds
-                        setTimeout(() => {
-                            setMessage(null);
-                        }, 3000);
-                    }
+                    // Auto hide after 3 seconds
+                    setTimeout(() => {
+                        setMessage(null);
+                    }, 3000);
                 },
                 onError: (errors) => {
                     setMessage({
                         type: 'error',
                         text: 'Terjadi kesalahan saat menyimpan data'
                     });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                 preserveScroll: true,
                 preserveState: true
@@ -223,6 +286,7 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                 type: 'error',
                 text: 'Terjadi kesalahan saat menyimpan data'
             });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
@@ -255,36 +319,41 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             if (showSocialMediaForm) {
                 return (
                     <TambahSocialMediaForm
-                        onSubmit={handleSubmit}
-                        onChange={handleChange}
-                        onBack={() => setShowSocialMediaForm(false)}
+                        initialData={selectedSocialMedia}
+                        onSuccess={() => {
+                            setShowSocialMediaForm(false);
+                            setSelectedSocialMedia(null);
+                        }}
+                        onBack={() => {
+                            setShowSocialMediaForm(false);
+                            setSelectedSocialMedia(null);
+                        }}
                     />
                 );
             }
             return (
-                <SocialMediaForm
-                    onTambahSocialMedia={() => setShowSocialMediaForm(true)}
+                <SocialMediaList
+                    onAdd={() => setShowSocialMediaForm(true)}
+                    onEdit={(data) => {
+                        setSelectedSocialMedia(data);
+                        setShowSocialMediaForm(true);
+                    }}
                 />
             );
         }
         if (activeForm === FormType.PRESTASI) {
-            if (hasPrestasiValue && showPrestasiForm) {
+            if (showPrestasiForm) {
                 return (
                     <TambahPrestasiForm
-                        onSubmit={handleSubmit}
-                        onChange={handleChange}
+                        onSubmit={handleSubmitPrestasi}
                         onBack={() => setShowPrestasiForm(false)}
                     />
                 );
             }
             return (
-                <PrestasiForm
-                    onHasPrestasi={(value) => {
-                        setHasPrestasiValue(value);
-                        if (value) {
-                            setShowPrestasiForm(true);
-                        }
-                    }}
+                <PrestasiListForm
+                    onAdd={() => setShowPrestasiForm(true)}
+                    onEdit={handleEditPrestasi}
                 />
             );
         }

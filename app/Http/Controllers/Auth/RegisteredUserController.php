@@ -38,7 +38,7 @@ namespace App\Http\Controllers\Auth;
             ]);
 
             $user = User::create([
-                'ektp' => $request->ektp,
+                'no_ektp' => $request->no_ektp,
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),

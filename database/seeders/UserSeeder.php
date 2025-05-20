@@ -7,9 +7,17 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Faker\Factory as Faker;
 
 class UserSeeder extends Seeder
 {
+    protected $faker;
+
+    public function __construct()
+    {
+        $this->faker = Faker::create();
+    }
+
     /**
      * Run the database seeds.
      */
@@ -18,40 +26,42 @@ class UserSeeder extends Seeder
         // Hapus user HR jika sudah ada
         User::where('email', 'hr@gmail.com')->delete();
 
-        // Create custom HR user
+        // User HR (manual)
         User::factory()->create([
             'name' => 'HR User',
             'email' => 'hr@gmail.com',
             'password' => Hash::make('password'),
             'role' => UserRole::HR,
+            'no_ektp' => $this->faker->unique()->numerify('################'),
         ]);
 
-        // Delete existing Candidate user with id 1
+        // Hapus candidate id 1 jika ada
         User::where('id', 1)->delete();
 
-        // Create custom Candidate user
+        // User Candidate (manual)
         User::create([
             'id' => 1,
             'name' => 'Candidate User',
             'email' => 'candidate@gmail.com',
             'password' => Hash::make('password'),
             'role' => UserRole::CANDIDATE,
+            'no_ektp' => $this->faker->unique()->numerify('################'),
         ]);
 
-        // Create regular users
+        // Batch factory, JANGAN isi no_ektp manual!
         User::factory(3)->create([
             'role' => UserRole::CANDIDATE,
         ]);
 
-        // Create random users with created_at timestamps from the last 7 days
+        // Batch harian, JANGAN isi no_ektp manual!
         $dayDistribution = [
-            1 => 8,  // Yesterday: 8 users
-            2 => 5,  // 2 days ago: 5 users
-            3 => 6,  // 3 days ago: 6 users
-            4 => 3,  // 4 days ago: 3 users
-            5 => 7,  // 5 days ago: 7 users
-            6 => 4,  // 6 days ago: 4 users
-            7 => 6,  // 7 days ago: 6 users
+            1 => 8,
+            2 => 5,
+            3 => 6,
+            4 => 3,
+            5 => 7,
+            6 => 4,
+            7 => 6,
         ];
 
         foreach ($dayDistribution as $daysAgo => $count) {

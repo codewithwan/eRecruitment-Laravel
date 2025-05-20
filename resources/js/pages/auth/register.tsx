@@ -1,15 +1,15 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { LoaderCircle, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 type RegisterForm = {
-    ektp: string;
+    no_ektp: string;
     name: string;
     email: string;
     password: string;
@@ -22,7 +22,7 @@ interface RegisterProps {
 
 export default function Register({ status }: RegisterProps) {
     const { data, setData, post, processing, errors, reset } = useForm<Required<RegisterForm>>({
-        ektp: '',
+        no_ektp: '',
         name: '',
         email: '',
         password: '',
@@ -42,7 +42,7 @@ export default function Register({ status }: RegisterProps) {
     return (
         <div className="flex flex-col min-h-screen bg-white">
             <Head title="Daftar" />
-            
+
             <header className="fixed top-0 left-0 right-0 bg-white py-4 px-6 shadow z-10">
                 <div className="container mx-auto flex justify-between items-center">
                     <div className="font-bold text-xl text-black ml-8">MITRA KARYA GROUP</div>
@@ -62,7 +62,7 @@ export default function Register({ status }: RegisterProps) {
                     </div>
                 </div>
             </header>
-            
+
             <main className="flex-grow py-12 px-4 mt-16">
                 <div className="grid grid-cols-1 place-items-center">
                     <div className="w-full max-w-3xl text-center mb-6">
@@ -76,7 +76,7 @@ export default function Register({ status }: RegisterProps) {
                         </p>
                         </div>
                     </div>
-                    
+
                     <form className="flex flex-col gap-4 w-full max-w-md" onSubmit={submit}>
                         <div className="space-y-4">
                             <div className="space-y-2">
@@ -87,12 +87,12 @@ export default function Register({ status }: RegisterProps) {
                                     required
                                     autoFocus
                                     tabIndex={1}
-                                    value={data.ektp}
-                                    onChange={(e) => setData('ektp', e.target.value)}
+                                    value={data.no_ektp}
+                                    onChange={(e) => setData('no_ektp', e.target.value)}
                                     placeholder="Masukkan No E-KTP Anda"
                                     className="w-full bg-gray-100 text-black"
                                 />
-                                <InputError message={errors.ektp} />
+                                <InputError message={errors.no_ektp} />
                             </div>
 
                             <div className="space-y-2">
@@ -158,7 +158,7 @@ export default function Register({ status }: RegisterProps) {
                                 </div>
                                 <InputError message={errors.password} />
                                 <p className="text-xs text-gray-500">
-                                    Kata sandi minimal terdiri 8 karakter, satu huruf kecil, satu huruf besar, satu angka 
+                                    Kata sandi minimal terdiri 8 karakter, satu huruf kecil, satu huruf besar, satu angka
                                     dan satu spesial karakter.
                                 </p>
                             </div>
@@ -192,14 +192,14 @@ export default function Register({ status }: RegisterProps) {
                                 <InputError message={errors.password_confirmation} />
                             </div>
 
-                            <Button 
-                                type="submit" 
-                                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 h-10 mt-4" 
-                                tabIndex={5} 
+                            <Button
+                                type="submit"
+                                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 h-10 mt-4"
+                                tabIndex={5}
                                 disabled={processing}
                             >
                                 {processing && <LoaderCircle className="h-4 w-4 animate-spin mr-2" />}
-                                Daftar 
+                                Daftar
                             </Button>
                         </div>
 

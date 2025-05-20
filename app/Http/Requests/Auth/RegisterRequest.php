@@ -14,7 +14,7 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ektp' => ['required', 'string', 'max:20', 'unique:users,ektp'],
+            'no_ektp' => ['required', 'string', 'max:20', 'unique:users,no_ektp'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],

@@ -3,7 +3,6 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\VacanciesController;
 use App\Http\Controllers\CandidateController;
-use App\Http\Controllers\CandidatesWorkExperiencesController; // Pastikan controller ini ada
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -12,34 +11,24 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\ApplicationHistoryController;
 use App\Http\Controllers\AboutUsController;
 
+// Home & Landing
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('job-hiring');
 Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacanciesLandingPage'])->name('job-hiring-landing-page');
 Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('application-history');
 Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
-Route::get('/application-history', function () {
-    return Inertia::render('candidate/jobs/application-history');
-})->name('application-history');
-
-// Seharusnya menggunakan controller untuk mengambil data
 Route::get('/data-pribadi', [CandidateController::class, 'profile'])->name('data.pribadi');
-
-
-Route::get('/contact', function () {
-        return Inertia::render('landing-page/contact');
-    })->name('job-hiring');
-
 Route::get('/about-us', [AboutUsController::class, 'index'])->name('about-us');
-
 Route::get('/job-detail/{id}', [VacanciesController::class, 'show'])->name('job.detail');
 
-
+// Hapus route duplikat untuk /job-hiring dan /contact
 Route::get('/lowongan-pekerjaan', function () {
-        return Inertia::render('landing-page/job-hiring-landing-page');
-    })->name('job-hiring');
+    return Inertia::render('landing-page/job-hiring-landing-page');
+})->name('lowongan-pekerjaan');
 Route::get('/kontak', function () {
-        return Inertia::render('landing-page/kontak');
-    })->name('contact');
+    return Inertia::render('landing-page/kontak');
+})->name('kontak');
+
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/redirect', function () {
@@ -47,23 +36,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ? redirect()->route('admin.dashboard')
             : redirect()->route('user.profile');
     })->name('redirect');
-});
-Route::middleware(['auth', 'verified'])->group(function () {
+
     Route::post('/candidate/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])
         ->name('candidate.profile.store');
 });
 
-// Route::middleware(['auth', 'verified'])->group(function () {
-//     Route::post('/candidate/education', [CandidateEducationController::class, 'store'])
-//         ->name('candidate.education.store');
-// });
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Rute yang memerlukan autentikasi dan verifikasi email
-});
-
+// Candidate Profile & Work Experience
 Route::middleware(['auth'])->group(function () {
-    // ...existing routes...
+    // Hanya gunakan satu route profile kandidat
     Route::get('/candidate/profile', function () {
         return Inertia::render('CandidateProfile');
     })->name('candidate.profile');
@@ -79,15 +59,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.work-experience.delete');
     Route::get('/candidate/work-experiences', [CandidateController::class, 'indexWorkExperiences'])
         ->name('candidate.work-experiences');
-
-    // Rute untuk Edit Pengalaman Kerja
     Route::get('/candidate/work-experience/{id}/edit', [CandidateController::class, 'editWorkExperience'])
         ->name('candidate.work-experience.edit');
-});
-
-Route::middleware(['auth'])->group(function () {
-    // Profile routes
-    Route::get('/profile', [CandidateController::class, 'profile'])->name('user.profile');
 
     // Education routes
     Route::get('/candidate/education', [CandidateController::class, 'showEducationForm'])
@@ -104,8 +77,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/candidate/organization/{id}', [CandidateController::class, 'updateOrganization'])
         ->name('candidate.organization.update');
 });
+
+// Register
 Route::post('/register', [RegisteredUserController::class, 'store'])->name('register');
 
+// Import additional route files
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/candidate.php';

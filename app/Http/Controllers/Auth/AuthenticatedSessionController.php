@@ -35,7 +35,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('redirect');
+        return redirect()->route('candidate.profile');
     }
 
     /**

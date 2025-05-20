@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -38,95 +37,26 @@ export default function Welcome(props: WelcomeProps) {
         "/images/slider4.png",
     ];
 
-    const jobList = [
-        {
-          title: "Data Analyst",
-          department: "Data",
-          deadline: "25 Maret 2025"
-        },
-        {
-          title: "Software Engineer",
-          department: "Engineering",
-          deadline: "30 Maret 2025"
-        },
-        {
-          title: "Game Developer",
-          department: "Creative",
-          deadline: "5 April 2025"
-        },
-        {
-          title: "Penetration Tester",
-          department: "Security",
-          deadline: "10 April 2025"
-        },
-        {
-          title: "UI/UX Designer",
-          department: "Design",
-          deadline: "15 April 2025"
-        },
-        {
-          title: "Project Manager",
-          department: "Management",
-          deadline: "20 April 2025"
-        },
-      ];
-
-      const benefitCards = [
-        {
-          title: "Lingkungan Kerja Profesional",
-          description: "Kami menciptakan budaya kerja yang kolaboratif dan mendukung perkembangan karier setiap karyawan.",
-          icon: "/images/benefit1.png"
-        },
-        {
-          title: "Inovasi dan Teknologi",
-          description: "Bergabunglah dengan tim yang selalu beradaptasi dengan teknologi terbaru dan menghadirkan solusi terbaik bagi pelanggan.",
-          icon: "/images/benefit2.png"
-        },
-        {
-          title: "Benefit Kompetitif",
-          description: "Kami menawarkan kompensasi dan tunjangan yang menarik sesuai dengan kinerja dan kontribusi Anda.",
-          icon: "/images/benefit3.png"
-        },
-        {
-          title: "Kesempatan Berkembang",
-          description: "Kami menyediakan pelatihan dan pengembangan berkelanjutan untuk meningkatkan keterampilan dan kompetensi Anda.",
-          icon: "/images/benefit4.png"
-        },
-      ];
-
-
-    const [bgIndex, setBgIndex] = useState(0);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setBgIndex((prev) => (prev + 1) % backgroundImages.length);
-        }, 10000);
-        return () => clearInterval(interval);
-    }, [backgroundImages.length]);
-
-    const backgroundImages = ['/images/slider1.png', '/images/slider2.png', '/images/slider3.png', '/images/slider4.png'];
-
-
     const benefitCards = [
         {
-            title: 'Lingkungan Kerja Profesional',
-            description: 'Kami menciptakan budaya kerja yang kolaboratif dan mendukung perkembangan karier setiap karyawan.',
-            icon: '/images/benefit1.png',
+            title: "Lingkungan Kerja Profesional",
+            description: "Kami menciptakan budaya kerja yang kolaboratif dan mendukung perkembangan karier setiap karyawan.",
+            icon: "/images/benefit1.png"
         },
         {
-            title: 'Inovasi dan Teknologi',
-            description: 'Bergabunglah dengan tim yang selalu beradaptasi dengan teknologi terbaru dan menghadirkan solusi terbaik bagi pelanggan.',
-            icon: '/images/benefit2.png',
+            title: "Inovasi dan Teknologi",
+            description: "Bergabunglah dengan tim yang selalu beradaptasi dengan teknologi terbaru dan menghadirkan solusi terbaik bagi pelanggan.",
+            icon: "/images/benefit2.png"
         },
         {
-            title: 'Benefit Kompetitif',
-            description: 'Kami menawarkan kompensasi dan tunjangan yang menarik sesuai dengan kinerja dan kontribusi Anda.',
-            icon: '/images/benefit3.png',
+            title: "Benefit Kompetitif",
+            description: "Kami menawarkan kompensasi dan tunjangan yang menarik sesuai dengan kinerja dan kontribusi Anda.",
+            icon: "/images/benefit3.png"
         },
         {
-            title: 'Kesempatan Berkembang',
-            description: 'Kami menyediakan pelatihan dan pengembangan berkelanjutan untuk meningkatkan keterampilan dan kompetensi Anda.',
-            icon: '/images/benefit4.png',
+            title: "Kesempatan Berkembang",
+            description: "Kami menyediakan pelatihan dan pengembangan berkelanjutan untuk meningkatkan keterampilan dan kompetensi Anda.",
+            icon: "/images/benefit4.png"
         },
     ];
 

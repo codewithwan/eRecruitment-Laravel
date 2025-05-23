@@ -18,19 +18,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Check, Eye, Filter, Search, X } from 'lucide-react';
+import { Check, Eye, Filter, Search, X, FileText, Image } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
-// Update the AdminUser type to include periodId
+// Updated AdminUser type to replace period with CV information
 type AdminUser = {
     id: string;
     name: string;
     email: string;
     position: string;
     registration_date: string;
-    period: string;
-    periodId: string; // Add this field for proper filtering
+    cv: {
+        filename: string;
+        fileType: 'pdf' | 'jpg' | 'png';
+        url: string;
+    };
+    periodId: string; // Maintain this for filtering
     vacancy: string;
 };
 
@@ -54,7 +58,7 @@ export default function AdministrationDashboard({ companyId = 1 }) {
     // Fix type issue by using string | null consistently
     const [selectedPeriodId, setSelectedPeriodId] = useLocalStorage<string | null>('selectedPeriodId', null);
     
-    // Mock data for the administration table with periodId included
+    // Mock data for the administration table with CV information
     const [adminUsers] = useState<AdminUser[]>([
         {
             id: '01',
@@ -62,7 +66,11 @@ export default function AdministrationDashboard({ companyId = 1 }) {
             email: 'Rizalfarhannanda@gmail.com',
             position: 'UI / UX',
             registration_date: 'Mar 20, 2025',
-            period: 'Q1 2025 Recruitment',
+            cv: {
+                filename: 'rizal_cv.pdf',
+                fileType: 'pdf',
+                url: '/uploads/cv/rizal_cv.pdf'
+            },
             periodId: '1', // Add periodId to match selectedPeriodId
             vacancy: 'UI/UX Designer',
         },
@@ -72,7 +80,11 @@ export default function AdministrationDashboard({ companyId = 1 }) {
             email: 'hassan@example.com',
             position: 'Back End',
             registration_date: 'Mar 18, 2025',
-            period: 'Q1 2025 Recruitment',
+            cv: {
+                filename: 'hassan_resume.jpg',
+                fileType: 'jpg',
+                url: '/uploads/cv/hassan_resume.jpg'
+            },
             periodId: '1',
             vacancy: 'Back End Developer',
         },
@@ -82,7 +94,11 @@ export default function AdministrationDashboard({ companyId = 1 }) {
             email: 'ardan@example.com',
             position: 'Front End',
             registration_date: 'Mar 18, 2025',
-            period: 'Q1 2025 Recruitment',
+            cv: {
+                filename: 'ardan_cv.pdf',
+                fileType: 'pdf',
+                url: '/uploads/cv/ardan_cv.pdf'
+            },
             periodId: '1',
             vacancy: 'Front End Developer',
         },
@@ -92,7 +108,11 @@ export default function AdministrationDashboard({ companyId = 1 }) {
             email: 'ridwan@example.com',
             position: 'UX Writer',
             registration_date: 'Mar 20, 2025',
-            period: 'Q1 2025 Recruitment',
+            cv: {
+                filename: 'ridwan_resume.png',
+                fileType: 'png',
+                url: '/uploads/cv/ridwan_resume.png'
+            },
             periodId: '1',
             vacancy: 'UX Writer',
         },
@@ -102,7 +122,11 @@ export default function AdministrationDashboard({ companyId = 1 }) {
             email: 'untara@example.com',
             position: 'IT Spesialis',
             registration_date: 'Mar 22, 2025',
-            period: 'Q1 2025 Recruitment',
+            cv: {
+                filename: 'untara_cv.pdf',
+                fileType: 'pdf',
+                url: '/uploads/cv/untara_cv.pdf'
+            },
             periodId: '1',
             vacancy: 'IT Specialist',
         },
@@ -112,7 +136,11 @@ export default function AdministrationDashboard({ companyId = 1 }) {
             email: 'dea@example.com',
             position: 'UX Writer',
             registration_date: 'Mar 20, 2025',
-            period: 'Q1 2025 Recruitment',
+            cv: {
+                filename: 'dea_resume.jpg',
+                fileType: 'jpg',
+                url: '/uploads/cv/dea_resume.jpg'
+            },
             periodId: '1',
             vacancy: 'UX Writer',
         },
@@ -122,7 +150,11 @@ export default function AdministrationDashboard({ companyId = 1 }) {
             email: 'kartika@example.com',
             position: 'IT Spesialis',
             registration_date: 'Mar 22, 2025',
-            period: 'Q1 2025 Recruitment',
+            cv: {
+                filename: 'kartika_cv.png',
+                fileType: 'png',
+                url: '/uploads/cv/kartika_cv.png'
+            },
             periodId: '1',
             vacancy: 'IT Specialist',
         },
@@ -132,7 +164,11 @@ export default function AdministrationDashboard({ companyId = 1 }) {
             email: 'ayesha@example.com',
             position: 'UX Writer',
             registration_date: 'Mar 20, 2025',
-            period: 'Q1 2025 Recruitment',
+            cv: {
+                filename: 'ayesha_cv.pdf',
+                fileType: 'pdf',
+                url: '/uploads/cv/ayesha_cv.pdf'
+            },
             periodId: '1',
             vacancy: 'UX Writer',
         },
@@ -168,7 +204,7 @@ export default function AdministrationDashboard({ companyId = 1 }) {
         // This is just a placeholder for the actual implementation
         // result = result.filter(user => user.companyId === companyId);
         
-        // Filter by period using periodId instead of name
+        // Keep filtering by periodId even though we show CV instead of Period
         if (selectedPeriod && selectedPeriod !== 'all') {
             result = result.filter(user => user.periodId === selectedPeriod);
         }
@@ -309,10 +345,10 @@ export default function AdministrationDashboard({ companyId = 1 }) {
                                     <div className="space-y-4">
                                         <h4 className="font-medium text-gray-900">Filters</h4>
                                         
-                                        {/* Add period filter */}
+                                        {/* Keep period filter for data organization */}
                                         <div className="space-y-2">
                                             <Label htmlFor="period-filter" className="text-sm text-gray-700">
-                                                Period
+                                                Recruitment Period
                                             </Label>
                                             <Select 
                                                 value={selectedPeriod || 'all'} 
@@ -369,7 +405,7 @@ export default function AdministrationDashboard({ companyId = 1 }) {
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Name</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Email</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Position</th>
-                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Period</th>
+                                        <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">CV</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Registration Date</th>
                                         <th className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap text-gray-900">Action</th>
                                     </tr>
@@ -381,7 +417,14 @@ export default function AdministrationDashboard({ companyId = 1 }) {
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.name}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.email}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.position}</td>
-                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.period}</td>
+                                            <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">
+                                                <a href={user.cv.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                                                    {user.cv.fileType === 'pdf' && <span className="mr-1 bg-red-100 px-2 py-1 rounded text-xs flex items-center"><FileText size={12} className="mr-1" />PDF</span>}
+                                                    {user.cv.fileType === 'jpg' && <span className="mr-1 bg-green-100 px-2 py-1 rounded text-xs flex items-center"><Image size={12} className="mr-1" />JPG</span>}
+                                                    {user.cv.fileType === 'png' && <span className="mr-1 bg-blue-100 px-2 py-1 rounded text-xs flex items-center"><Image size={12} className="mr-1" />PNG</span>}
+                                                    {user.cv.filename}
+                                                </a>
+                                            </td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap text-gray-900">{user.registration_date}</td>
                                             <td className="px-4 py-4 text-sm whitespace-nowrap">
                                                 <div className="flex items-center space-x-2">
@@ -441,6 +484,16 @@ export default function AdministrationDashboard({ companyId = 1 }) {
 
                                 <div className="font-medium">Position:</div>
                                 <div className="col-span-2">{selectedUser.position}</div>
+                                
+                                <div className="font-medium">CV:</div>
+                                <div className="col-span-2">
+                                    <a href={selectedUser.cv.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                                        {selectedUser.cv.fileType === 'pdf' && <span className="mr-1 bg-red-100 px-2 py-1 rounded text-xs flex items-center"><FileText size={12} className="mr-1" />PDF</span>}
+                                        {selectedUser.cv.fileType === 'jpg' && <span className="mr-1 bg-green-100 px-2 py-1 rounded text-xs flex items-center"><Image size={12} className="mr-1" />JPG</span>}
+                                        {selectedUser.cv.fileType === 'png' && <span className="mr-1 bg-blue-100 px-2 py-1 rounded text-xs flex items-center"><Image size={12} className="mr-1" />PNG</span>}
+                                        {selectedUser.cv.filename}
+                                    </a>
+                                </div>
 
                                 <div className="font-medium">Registration Date:</div>
                                 <div className="col-span-2">{selectedUser.registration_date}</div>

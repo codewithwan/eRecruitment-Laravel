@@ -10,12 +10,14 @@ class CandidatesProfilesSeeder extends Seeder
 {
     public function run(): void
     {
+        $male = DB::table('master_genders')->where('name', 'male')->first();
+
         DB::table('candidates_profiles')->insert([
             [
                 'id' => 1,
                 'user_id' => 1,
                 'no_ektp' => '1234567890123456',
-                'gender' => 'male',
+                'gender_id' => $male ? $male->id : 1, // gunakan gender_id
                 'phone_number' => '081234567890',
                 'npwp' => '123456789012345',
                 'about_me' => 'Saya seorang kandidat yang berdedikasi.',

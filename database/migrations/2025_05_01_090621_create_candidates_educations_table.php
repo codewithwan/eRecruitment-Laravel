@@ -13,8 +13,8 @@ class CreateCandidatesEducationsTable extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('education_level');
             $table->string('faculty');
-            $table->string('major');
-            $table->string('institution_name');
+            $table->foreignId('major_id')->constrained('master_majors');
+            $table->foreignId('institution_id')->constrained('master_institutions'); 
             $table->decimal('gpa', 3, 2);
             $table->year('year_in');
             $table->year('year_out')->nullable();

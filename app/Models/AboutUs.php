@@ -18,4 +18,9 @@ class AboutUs extends Model
     {
         return $this->belongsTo(Companies::class);
     }
+
+    public function company()
+    {
+        return $this->belongsTo(\App\Models\Companies::class, 'company_id');
+    }
 }

@@ -23,8 +23,14 @@ interface Job {
   department: string;
 }
 
+interface Recommendation {
+  vacancy: Job;
+  score: number;
+}
+
 interface Props {
   jobs: Job[];
+  recommendations: Recommendation[];
   companies: string[];
 }
 
@@ -73,24 +79,24 @@ const ContentContainer = styled.div`
 `;
 
 const Title = styled.h2`
-  color: #0088FF;  // Changed to match the image
+  color: #0088FF;
   font-size: 32px;
   font-weight: 600;
-  text-align: left;  // Added to center the title
-  margin: 40px 0 16px;  // Adjusted margins
+  text-align: left;
+  margin: 40px 0 16px;
 `;
 
 const Underline = styled.div`
   width: 80px;
   height: 4px;
-  background: #0088FF;  // Changed to match the image
+  background: #0088FF;
   border-radius: 2px;
-  margin: 0 0 32px;  // Centered the underline
+  margin: 0 0 32px;
 `;
 
 const FilterContainer = styled.div`
   display: flex;
-  justify-content: flex-start;  // Center the filter buttons
+  justify-content: flex-start;
   gap: 12px;
   margin-bottom: 24px;
 `;
@@ -104,12 +110,12 @@ const FilterButton = styled.button<FilterButtonProps>`
   color: ${(props) => (props.active ? '#fff' : '#0088FF')};
   border: 1px solid #0088FF;
   border-radius: 20px;
-  padding: 8px 20px;  // Adjusted padding
+  padding: 8px 20px;
   font-size: 14px;
-  font-weight: 500;  // Adjusted weight
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  white-space: nowrap;  // Prevent text wrapping
+  white-space: nowrap;
 
   &:hover {
     background: ${(props) => (props.active ? '#0077E6' : '#E6F4FF')};
@@ -184,7 +190,7 @@ const DetailButton = styled.button`
   }
 `;
 
-const JobHiring: React.FC<Props> = ({ jobs }) => {
+const JobHiring: React.FC<Props> = ({ jobs, recommendations, companies }) => {
   const [activeFilter, setActiveFilter] = React.useState<string>('all');
   const [filteredJobs, setFilteredJobs] = React.useState(jobs);
 
@@ -233,6 +239,33 @@ const JobHiring: React.FC<Props> = ({ jobs }) => {
             </HeroContent>
           </HeroSection>
           <ContentContainer>
+            {/* Rekomendasi Section */}
+            <Title>Rekomendasi Pekerjaan Untuk Anda</Title>
+            <Underline />
+            {recommendations.length === 0 && (
+              <Description>Tidak ada rekomendasi yang cocok.</Description>
+            )}
+            {recommendations.map(({ vacancy, score }) => (
+              <JobCard key={vacancy.id}>
+                <JobInfo>
+                  <JobTitle>{vacancy.title}</JobTitle>
+                  <Company>{vacancy.company.name}</Company>
+                  <Description>{vacancy.description}</Description>
+                  <JobDetails>
+                    <span>🏢 {vacancy.location}</span>
+                    <span>🕒 {vacancy.type}</span>
+                    <span>📅 {vacancy.deadline}</span>
+                    <span>👥 {vacancy.department}</span>
+                    <span>⭐ Score: {score}</span>
+                  </JobDetails>
+                </JobInfo>
+                <DetailButton onClick={() => Inertia.visit(`/job-detail/${vacancy.id}`)}>
+                  Lihat Detail
+                </DetailButton>
+              </JobCard>
+            ))}
+
+            {/* Semua Lowongan Section */}
             <Title>Open Positions</Title>
             <Underline />
             <FilterContainer>
@@ -242,18 +275,15 @@ const JobHiring: React.FC<Props> = ({ jobs }) => {
               >
                 View All
               </FilterButton>
-              <FilterButton
-                active={activeFilter === 'PT MITRA KARYA ANALITIKA'}
-                onClick={() => filterJobs('PT MITRA KARYA ANALITIKA')}
-              >
-                PT MITRA KARYA ANALITIKA
-              </FilterButton>
-              <FilterButton
-                active={activeFilter === 'PT AUTENTIK KARYA ANALITIKA'}
-                onClick={() => filterJobs('PT AUTENTIK KARYA ANALITIKA')}
-              >
-                PT AUTENTIK KARYA ANALITIKA
-              </FilterButton>
+              {companies.map((company) => (
+                <FilterButton
+                  key={company}
+                  active={activeFilter === company}
+                  onClick={() => filterJobs(company)}
+                >
+                  {company}
+                </FilterButton>
+              ))}
             </FilterContainer>
             {filteredJobs.map((job) => (
               <JobCard key={job.id}>

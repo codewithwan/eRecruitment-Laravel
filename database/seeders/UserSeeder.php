@@ -35,6 +35,9 @@ class UserSeeder extends Seeder
             'no_ektp' => $this->faker->unique()->numerify('################'),
         ]);
 
+        // Hapus relasi candidate profile user id 1 jika ada
+        \DB::table('candidates_profiles')->where('user_id', 1)->delete();
+
         // Hapus candidate id 1 jika ada
         User::where('id', 1)->delete();
 
@@ -43,6 +46,16 @@ class UserSeeder extends Seeder
             'id' => 1,
             'name' => 'Candidate User',
             'email' => 'candidate@gmail.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::CANDIDATE,
+            'no_ektp' => $this->faker->unique()->numerify('################'),
+        ]);
+
+        // Tambahkan user id = 2
+        User::create([
+            'id' => 2,
+            'name' => 'Candidate User 2',
+            'email' => 'candidate2@gmail.com',
             'password' => Hash::make('password'),
             'role' => UserRole::CANDIDATE,
             'no_ektp' => $this->faker->unique()->numerify('################'),

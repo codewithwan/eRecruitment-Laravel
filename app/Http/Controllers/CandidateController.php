@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Candidate;
 use App\Models\CandidatesProfiles;
 use App\Models\CandidatesEducations;
 use App\Models\CandidatesWorkExperiences;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Illuminate\Validation\ValidationException;
 
 class CandidateController extends Controller
 {
@@ -95,7 +97,7 @@ class CandidateController extends Controller
     {
         $user = Auth::user();
         $education = CandidatesEducations::where('user_id', $user->id)->first();
-        
+
         return Inertia::render('DataPribadiForm', [
             'profile' => [
                 'education' => $education
@@ -110,7 +112,7 @@ class CandidateController extends Controller
     public function education()
     {
         $education = CandidatesEducations::where('user_id', Auth::id())->first();
-        
+
         return Inertia::render('Education/Form', [
             'education' => $education
         ]);
@@ -144,7 +146,7 @@ class CandidateController extends Controller
 
     public function getAllWorkExperiences()
     {
-        $experiences = UserWorkExperiences::where('user_id', Auth::id())->get();
+        $experiences = CandidatesWorkExperiences::where('user_id', Auth::id())->get();
         return response()->json($experiences);
     }
 
@@ -231,10 +233,10 @@ class CandidateController extends Controller
             'message' => 'Data berhasil dihapus!',
         ]);
     }
-    
+
     public function getWorkExperience($id)
     {
-        $experience = WorkExperience::where('id', $id)
+        $experience = CandidatesWorkExperiences::where('id', $id)
             ->where('user_id', auth()->id())
             ->firstOrFail();
 

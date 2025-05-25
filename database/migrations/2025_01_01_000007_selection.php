@@ -6,17 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('statuses', function (Blueprint $table) {
+         Schema::create('selection', function (Blueprint $table) {
             $table->id(); // Creates an auto-incrementing INT primary key named 'id'
             $table->string('name'); // Creates a VARCHAR column named 'name'
             $table->timestamps(); // Adds created_at and updated_at columns
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('statuses_id');
+        Schema::dropIfExists('selection');
     }
 };

@@ -1,14 +1,15 @@
+import { usePage } from '@inertiajs/react';
 import React from 'react';
 import styled from 'styled-components';
 import Footer from '../../../components/Footer';
 import Header from '../../../components/Header';
 
 interface JobDetailProps {
-    title: string;
-    company: string;
-    job_description: string;
-    requirements: string[];
-    benefits: string[];
+    job: {
+        job_description: string;
+        requirements: string[];
+        benefits: string[];
+    };
 }
 
 const PageWrapper = styled.div`
@@ -102,29 +103,11 @@ const ApplyButton = styled.button`
     }
 `;
 
-const dummyJob: JobDetailProps = {
-    title: 'Frontend Developer',
-    company: 'PT. Teknologi Indonesia',
-    job_description: 'Bertanggung jawab untuk mengembangkan dan memelihara tampilan website perusahaan.',
-    requirements: [
-        'Menguasai React.js dan JavaScript',
-        'Pengalaman minimal 1 tahun di bidang terkait',
-        'Mampu bekerja dalam tim',
-        'Memahami konsep REST API'
-    ],
-    benefits: [
-        'Gaji kompetitif',
-        'Asuransi kesehatan',
-        'Waktu kerja fleksibel',
-        'Tunjangan transportasi'
-    ]
-};
-
 const JobDetailPage: React.FC = () => {
-    const job = dummyJob;
+    const { job } = usePage<{ job: JobDetailProps['job'] }>().props;
 
     const handleApply = async () => {
-        alert('Fitur apply belum tersedia pada mode dummy.');
+        alert('Fitur apply belum tersedia.');
     };
 
     return (
@@ -132,8 +115,7 @@ const JobDetailPage: React.FC = () => {
             <Header />
             <PageWrapper>
                 <HeroSection>
-                    <JobTitle>{job.title}</JobTitle>
-                    <CompanyTitle>{job.company}</CompanyTitle>
+                    <JobTitle>Detail Pekerjaan</JobTitle>
                 </HeroSection>
                 <ContentContainer>
                     <InfoSection>

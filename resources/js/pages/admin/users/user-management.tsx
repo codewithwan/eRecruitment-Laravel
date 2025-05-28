@@ -15,9 +15,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserTable, type User } from '@/components/user-table';
+import { UserTable } from '@/components/user-table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { User } from '@/types/user';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { Filter, Search } from 'lucide-react';

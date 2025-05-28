@@ -1,67 +1,164 @@
-import { Button } from '@/components/ui/button';
+// job-table.tsx
+
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PaginationData } from '@/types/user';
 import { EyeIcon, Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { format, parseISO } from 'date-fns';
 
 export interface Job {
     id: number;
     title: string;
     department: string;
     location: string;
+    salary?: string;
+    company?: { name: string };
+    company_id?: number | string;
     requirements: string[];
-    benefits?: string[] | null;
-    user_id: number;
+    benefits?: string[];
     created_at: string;
     updated_at: string;
+    status?: string;
+    start_date?: string;
+    questionPack?: {
+        id: number;
+        pack_name: string;
+        description?: string;
+        test_type?: string;
+        duration?: number;
+    };
+    question_pack_id?: number | null;
 }
 
 interface JobTableProps {
     jobs: Job[];
+    isLoading?: boolean;
     onView: (jobId: number) => void;
     onEdit: (jobId: number) => void;
     onDelete: (jobId: number) => void;
+    perPage?: number;
 }
 
-export function JobTable({ jobs, onView, onEdit, onDelete }: JobTableProps) {
+export function JobTable({
+    jobs,
+    isLoading = false,
+    onView,
+    onEdit,
+    onDelete,
+    perPage = 10,
+}: JobTableProps) {
+    // Function to format date to a simple format
+    const formatDate = (dateString: string | undefined) => {
+        if (!dateString) return '-';
+        try {
+            return format(parseISO(dateString), 'dd/MM/yyyy');
+        } catch (error) {
+            return dateString; // Return original if parsing fails
+        }
+    };
+
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {jobs.length === 0 ? (
-                    <TableRow>
-                        <TableCell colSpan={5} className="text-center">
-                            No jobs found
-                        </TableCell>
-                    </TableRow>
-                ) : (
-                    jobs.map((job) => (
-                        <TableRow key={job.id}>
-                            <TableCell>{job.id}</TableCell>
-                            <TableCell>{job.title}</TableCell>
-                            <TableCell>{job.department}</TableCell>
-                            <TableCell>{job.location}</TableCell>
-                            <TableCell className="space-x-2 text-right">
-                                <Button variant="ghost" size="icon" onClick={() => onView(job.id)}>
-                                    <EyeIcon className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => onEdit(job.id)}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => onDelete(job.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TableCell>
+        <div className="w-full">
+            <div className="overflow-x-auto rounded-md border border-gray-200">
+                <Table className="min-w-full bg-blue-50 [&_tr:hover]:bg-transparent">
+                    <TableHeader className="bg-blue-50 [&_tr:hover]:bg-transparent">
+                        <TableRow className="hover:bg-transparent [&>th]:hover:bg-transparent">
+                            <TableHead className="w-[60px] py-3">ID</TableHead>
+                            <TableHead className="w-[200px] py-3">Title</TableHead>
+                            <TableHead className="w-[180px] py-3">Department</TableHead>
+                            <TableHead className="w-[180px] py-3">Location</TableHead>
+                            <TableHead className="w-[180px] py-3">Salary</TableHead>
+                            <TableHead className="w-[180px] py-3">Company</TableHead>
+                            <TableHead className="w-[180px] py-3">Question Packs</TableHead>
+                            <TableHead className="w-[140px] py-3 text-center">Action</TableHead>
                         </TableRow>
-                    ))
-                )}
-            </TableBody>
-        </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {isLoading ? (
+                            Array(perPage)
+                                .fill(0)
+                                .map((_, idx) => (
+                                    <TableRow key={`skeleton-${idx}`}>
+                                        <TableCell className="w-[60px]">
+                                            <Skeleton className="h-4 w-8" />
+                                        </TableCell>
+                                        <TableCell className="w-[200px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[180px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[180px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[180px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[140px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[140px] text-center">
+                                            <div className="flex justify-center space-x-2">
+                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                        ) : jobs.length > 0 ? (
+                            jobs.map((job, index) => (
+                                <TableRow key={job.id} className={index % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
+                                    <TableCell className="whitespace-nowrap">{String(job.id).padStart(2, '0')}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.title}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.department}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.location}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.salary || '-'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.company?.name || '-'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {job.questionPack && job.questionPack.pack_name ? (
+                                            <Badge variant="default">
+                                                {job.questionPack.pack_name}
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="secondary">None</Badge>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-center space-x-3">
+                                            <button
+                                                onClick={() => onView(job.id)}
+                                                className="rounded-full p-1.5 text-blue-500 hover:bg-blue-100 hover:text-blue-700"
+                                            >
+                                                <EyeIcon className="h-4.5 w-4.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => onEdit(job.id)}
+                                                className="rounded-full p-1.5 text-blue-500 hover:bg-blue-100 hover:text-blue-700"
+                                            >
+                                                <Pencil className="h-4.5 w-4.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => onDelete(job.id)}
+                                                className="rounded-full p-1.5 text-blue-500 hover:bg-blue-100 hover:text-blue-700"
+                                            >
+                                                <Trash2 className="h-4.5 w-4.5" />
+                                            </button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={8} className="py-4 text-center">
+                                    No jobs found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
     );
 }

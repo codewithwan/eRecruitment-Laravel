@@ -12,15 +12,17 @@ export interface BreadcrumbItem {
 
 export interface NavGroup {
     title: string;
-    items: NavItem[];
+    href: string;
+    icon: LucideIcon | null;
+    Children?: NavItem[];
 }
 
-export interface NavItem {
+export type NavItem = {
     title: string;
     href: string;
-    icon?: LucideIcon | null;
-    isActive?: boolean;
-}
+    icon?: React.ComponentType<{ className?: string }>;
+    children?: NavItem[]; 
+};
 
 export interface SharedData {
     name: string;
@@ -30,13 +32,3 @@ export interface SharedData {
     [key: string]: unknown;
 }
 
-export interface User {
-    id: number;
-    name: string;
-    email: string;
-    avatar?: string;
-    email_verified_at: string | null;
-    created_at: string;
-    updated_at: string;
-    [key: string]: unknown; // This allows for additional properties...
-}

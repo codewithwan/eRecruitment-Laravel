@@ -16,7 +16,7 @@ export default function AuthSimpleLayout({ children, title, description }: Props
             {/* Left column - Assets section */}
             <div className="hidden items-center justify-center p-6 md:flex md:w-2/3">
                 <div className="text-muted-foreground flex h-full items-center justify-center">
-                    <img src="/images/auth.png" alt="Login illustration" className="max-h-full max-w-[60%] object-contain" />
+                    <img src="/images/auth.png" alt="Login illustration" className="max-h-full max-w-[100%] object-contain" />
                 </div>
             </div>
 

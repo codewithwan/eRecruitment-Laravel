@@ -14,8 +14,12 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             SuperAdminSeeder::class,
+            CompanySeeder::class,
+            QuestionSeeder::class,
+            QuestionPackSeeder::class,
             VacanciesSeeder::class,
-            CandidateSeeder::class,
+            PeriodSeeder::class,
+            ApplicantSeeder::class, // Add applicant seeder at the end
         ]);
     }
 }

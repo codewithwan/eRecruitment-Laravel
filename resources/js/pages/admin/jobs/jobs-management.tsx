@@ -1,4 +1,5 @@
 import { JobTable, type Job } from '@/components/job-table';
+import { SearchBar } from '@/components/searchbar';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,11 +22,15 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { Filter } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { format, parseISO } from 'date-fns';
+
 
 interface JobProps {
     vacancies: Job[];
+    companies: { id: number; name: string }[];
+    questionPacks: { id: number; pack_name: string; description?: string; test_type?: string; duration?: number }[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -34,13 +39,14 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
     {
-        title: 'Jobs Management',
+        title: 'Job Management',
         href: '/dashboard/jobs',
     },
 ];
 
 export default function Jobs(props: JobProps) {
     const jobs = props.vacancies || [];
+    const companies = props.companies || [];
     const [jobsList, setJobsList] = useState<Job[]>(jobs);
     const [filteredJobs, setFilteredJobs] = useState<Job[]>(jobs);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -66,8 +72,11 @@ export default function Jobs(props: JobProps) {
         title: '',
         department: '',
         location: '',
+        salary: '',
+        company_id: '',
         requirements: '',
         benefits: '',
+        question_pack_id: 'none',
     });
 
     // Edit job form state
@@ -76,8 +85,11 @@ export default function Jobs(props: JobProps) {
         title: '',
         department: '',
         location: '',
+        salary: '',
+        company_id: '',
         requirements: '',
         benefits: '',
+        question_pack_id: '',
     });
 
     // Apply filters whenever filter states change
@@ -126,8 +138,11 @@ export default function Jobs(props: JobProps) {
                 title: job.title,
                 department: job.department,
                 location: job.location,
+                salary: job.salary || '',
+                company_id: String(job.company_id || ''),
                 requirements: job.requirements.join('\n'),
                 benefits: job.benefits ? job.benefits.join('\n') : '',
+                question_pack_id: job.question_pack_id ? String(job.question_pack_id) : 'none',
             });
             setIsEditDialogOpen(true);
         }
@@ -158,15 +173,17 @@ export default function Jobs(props: JobProps) {
         setIsCreateDialogOpen(true);
     };
 
-    const handleCreateJobChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleCreateJobChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setNewJob((prevState) => ({ ...prevState, [name]: value }));
     };
 
-    const handleEditJobChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleEditJobChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setEditJob((prevState) => ({ ...prevState, [name]: value }));
     };
+
+    // Removed start date handling
 
     const handleCreateJob = async () => {
         setIsLoading(true);
@@ -175,6 +192,8 @@ export default function Jobs(props: JobProps) {
                 ...newJob,
                 requirements: newJob.requirements.split('\n').filter((req) => req.trim() !== ''),
                 benefits: newJob.benefits ? newJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : null,
+                company_id: parseInt(newJob.company_id),
+                question_pack_id: (newJob.question_pack_id && newJob.question_pack_id !== 'none') ? parseInt(newJob.question_pack_id) : null,
             };
             console.log('formattedData', formattedData);
             const response = await axios.post('/dashboard/jobs', formattedData);
@@ -186,8 +205,11 @@ export default function Jobs(props: JobProps) {
                 title: '',
                 department: '',
                 location: '',
+                salary: '',
+                company_id: '',
                 requirements: '',
                 benefits: '',
+                question_pack_id: 'none',
             });
         } catch (error) {
             console.error('Error creating job:', error);
@@ -203,6 +225,8 @@ export default function Jobs(props: JobProps) {
                 ...editJob,
                 requirements: editJob.requirements.split('\n').filter((req) => req.trim() !== ''),
                 benefits: editJob.benefits ? editJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : null,
+                company_id: parseInt(editJob.company_id),
+                question_pack_id: (editJob.question_pack_id && editJob.question_pack_id !== 'none') ? parseInt(editJob.question_pack_id) : null,
             };
 
             const response = await axios.put(`/dashboard/jobs/${editJob.id}`, formattedData);
@@ -223,77 +247,99 @@ export default function Jobs(props: JobProps) {
         setLocationFilter('all');
     };
 
+    // Helper function to format dates
+    const formatDate = (dateString: string | undefined) => {
+        if (!dateString) return '-';
+        try {
+            return format(parseISO(dateString), 'dd/MM/yyyy');
+        } catch (error) {
+            return dateString; // Return original if parsing fails
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Jobs Management" />
+            <Head title="Job Management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-2xl font-semibold">Jobs Management</h2>
+                        <h2 className="text-2xl font-semibold">Job Management</h2>
                         <div className="flex items-center gap-2">
                             <div className="relative flex items-center"></div>
                             <Button className="px-6" onClick={handleAddJob}>
-                                Add Job
+                                + Add Job
                             </Button>
                         </div>
                     </div>
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Jobs List</CardTitle>
-                                <CardDescription>Manage all job openings in the system</CardDescription>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="relative"></div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant={isFilterActive ? 'default' : 'outline'} size="icon" className="relative">
-                                            <Filter className="h-4 w-4" />
-                                            {isFilterActive && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
+                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div>
+                            <CardTitle>Jobs List</CardTitle>
+                            <CardDescription>Manage all jobs in the system</CardDescription>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <SearchBar
+                            icon={<Search className="w-4 h-4" />}
+                            placeholder="Cari user..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                            <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={isFilterActive ? 'default' : 'outline'}
+                                size="icon"
+                                className="relative"
+                                >
+                                <Filter className="h-4 w-4" />
+                                {isFilterActive && (
+                                    <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>
+                                )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                                <div className="space-y-4">
+                                    <h4 className="font-medium">Filters</h4>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="department-filter">Department</Label>
+                                        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                                            <SelectTrigger id="department-filter">
+                                                <SelectValue placeholder="Filter by department" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {departments.map((dept) => (
+                                                    <SelectItem key={dept} value={dept}>
+                                                        {dept === 'all' ? 'All Departments' : dept}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="location-filter">Location</Label>
+                                        <Select value={locationFilter} onValueChange={setLocationFilter}>
+                                            <SelectTrigger id="location-filter">
+                                                <SelectValue placeholder="Filter by location" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {locations.map((loc) => (
+                                                    <SelectItem key={loc} value={loc}>
+                                                        {loc === 'all' ? 'All Locations' : loc}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
+                                            Reset Filters
                                         </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80">
-                                        <div className="space-y-4">
-                                            <h4 className="font-medium">Filters</h4>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="department-filter">Department</Label>
-                                                <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                                                    <SelectTrigger id="department-filter">
-                                                        <SelectValue placeholder="Filter by department" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {departments.map((dept) => (
-                                                            <SelectItem key={dept} value={dept}>
-                                                                {dept === 'all' ? 'All Departments' : dept}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="location-filter">Location</Label>
-                                                <Select value={locationFilter} onValueChange={setLocationFilter}>
-                                                    <SelectTrigger id="location-filter">
-                                                        <SelectValue placeholder="Filter by location" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {locations.map((loc) => (
-                                                            <SelectItem key={loc} value={loc}>
-                                                                {loc === 'all' ? 'All Locations' : loc}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="flex justify-end">
-                                                <Button variant="outline" size="sm" onClick={resetFilters} className="text-xs">
-                                                    Reset Filters
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                            </Popover>
+                        </div>
                         </CardHeader>
                         <CardContent>
                             {/* Keep the rest of the JobTable component */}
@@ -313,23 +359,96 @@ export default function Jobs(props: JobProps) {
                     <div className="space-y-4">
                         <div>
                             <Label htmlFor="title">Job Title</Label>
-                            <Input id="title" name="title" value={newJob.title} onChange={handleCreateJobChange} />
+                            <Input 
+                                id="title" 
+                                name="title" 
+                                placeholder="Enter job title"
+                                value={newJob.title} 
+                                onChange={handleCreateJobChange} 
+                            />
                         </div>
                         <div>
                             <Label htmlFor="department">Department</Label>
-                            <Input id="department" name="department" value={newJob.department} onChange={handleCreateJobChange} />
+                            <Input 
+                                id="department" 
+                                name="department" 
+                                placeholder="Enter department"
+                                value={newJob.department} 
+                                onChange={handleCreateJobChange} 
+                            />
                         </div>
                         <div>
                             <Label htmlFor="location">Location</Label>
-                            <Input id="location" name="location" value={newJob.location} onChange={handleCreateJobChange} />
+                            <Input 
+                                id="location" 
+                                name="location" 
+                                placeholder="Enter job location"
+                                value={newJob.location} 
+                                onChange={handleCreateJobChange} 
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="salary">Salary</Label>
+                            <Input 
+                                id="salary" 
+                                name="salary" 
+                                placeholder="Enter salary range or amount"
+                                value={newJob.salary} 
+                                onChange={handleCreateJobChange} 
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="company_id">Company</Label>
+                            <Select name="company_id" value={newJob.company_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, company_id: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select company" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {companies.map((company) => (
+                                        <SelectItem key={company.id} value={String(company.id)}>
+                                            {company.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="question_pack_id">Question Pack</Label>
+                            <Select name="question_pack_id" value={newJob.question_pack_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, question_pack_id: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select question pack" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {props.questionPacks.map((pack) => (
+                                        <SelectItem key={pack.id} value={String(pack.id)}>
+                                            {pack.pack_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label htmlFor="requirements">Requirements (one per line)</Label>
-                            <Textarea id="requirements" name="requirements" value={newJob.requirements} onChange={handleCreateJobChange} rows={4} />
+                            <Textarea 
+                                id="requirements" 
+                                name="requirements" 
+                                placeholder="Enter job requirements"
+                                value={newJob.requirements} 
+                                onChange={handleCreateJobChange} 
+                                rows={4} 
+                            />
                         </div>
                         <div>
                             <Label htmlFor="benefits">Benefits (one per line, optional)</Label>
-                            <Textarea id="benefits" name="benefits" value={newJob.benefits} onChange={handleCreateJobChange} rows={4} />
+                            <Textarea 
+                                id="benefits" 
+                                name="benefits" 
+                                placeholder="Enter job benefits"
+                                value={newJob.benefits} 
+                                onChange={handleCreateJobChange} 
+                                rows={4} 
+                            />
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-end">
@@ -362,6 +481,47 @@ export default function Jobs(props: JobProps) {
                         <div>
                             <Label htmlFor="edit-location">Location</Label>
                             <Input id="edit-location" name="location" value={editJob.location} onChange={handleEditJobChange} />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-salary">Salary</Label>
+                            <Input 
+                                id="edit-salary" 
+                                name="salary" 
+                                placeholder="Enter salary range or amount"
+                                value={editJob.salary} 
+                                onChange={handleEditJobChange} 
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-company_id">Company</Label>
+                            <Select name="company_id" value={String(editJob.company_id)} onValueChange={(value) => setEditJob(prev => ({ ...prev, company_id: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select company" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {companies.map((company) => (
+                                        <SelectItem key={company.id} value={String(company.id)}>
+                                            {company.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-question_pack_id">Question Pack</Label>
+                            <Select name="question_pack_id" value={editJob.question_pack_id} onValueChange={(value) => setEditJob(prev => ({ ...prev, question_pack_id: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select question pack" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {props.questionPacks.map((pack) => (
+                                        <SelectItem key={pack.id} value={String(pack.id)}>
+                                            {pack.pack_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label htmlFor="edit-requirements">Requirements (one per line)</Label>
@@ -408,6 +568,17 @@ export default function Jobs(props: JobProps) {
                                 <div className="font-medium">Location:</div>
                                 <div className="col-span-2">{selectedJob.location}</div>
 
+                                <div className="font-medium">Salary:</div>
+                                <div className="col-span-2">{selectedJob.salary || 'Not specified'}</div>
+
+                                <div className="font-medium">Company:</div>
+                                <div className="col-span-2">{companies.find(company => company.id === selectedJob.company_id)?.name}</div>
+
+                                <div className="font-medium">Question Pack:</div>
+                                <div className="col-span-2">
+                                    {selectedJob.questionPack ? selectedJob.questionPack.pack_name : 'None'}
+                                </div>
+
                                 <div className="font-medium">Requirements:</div>
                                 <div className="col-span-2">
                                     <ul className="list-disc pl-5">
@@ -431,7 +602,7 @@ export default function Jobs(props: JobProps) {
                                 )}
 
                                 <div className="font-medium">Created:</div>
-                                <div className="col-span-2">{new Date(selectedJob.created_at).toLocaleDateString()}</div>
+                                <div className="col-span-2">{formatDate(selectedJob.created_at)}</div>
                             </div>
                         </div>
                     )}

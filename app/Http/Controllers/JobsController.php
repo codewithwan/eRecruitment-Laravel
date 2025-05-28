@@ -19,7 +19,7 @@ class JobsController extends Controller
         $appliedVacancyIds = [];
         if (Auth::check()) {
             $appliedVacancyIds = Candidate::where('user_id', Auth::id())
-                ->pluck('vacancy_id')
+                ->pluck('vacancies_id')
                 ->toArray();
         }
 
@@ -38,7 +38,7 @@ class JobsController extends Controller
             Vacancies::findOrFail($id);
             // Check if user has already applied to this vacancy
             $existingApplication = Candidate::where('user_id', Auth::id())
-                ->where('vacancy_id', $id)
+                ->where('vacancies_id', $id)
                 ->first();
 
             if ($existingApplication) {
@@ -48,19 +48,19 @@ class JobsController extends Controller
             $user_id = Auth::id();
             Candidate::create([
                 'user_id' => $user_id,
-                'vacancy_id' => $id,
+                'vacancies_id' => $id,
                 'applied_at' => now(),
                 'status' => CandidatesStage::ADMINISTRATIVE_SELECTION,
             ]);
 
             DB::commit();
 
-            Log::info('User applied for a job', ['user_id' => Auth::id(), 'vacancy_id' => $id]);
+            Log::info('User applied for a job', ['user_id' => Auth::id(), 'vacancies_id' => $id]);
 
             return redirect()->back()->with('success', 'Your application has been submitted successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error while applying for a job', ['user_id' => Auth::id(), 'vacancy_id' => $id, 'error' => $e->getMessage()]);
+            Log::error('Error while applying for a job', ['user_id' => Auth::id(), 'vacancies_id' => $id, 'error' => $e->getMessage()]);
 
             return redirect()->back()->with('error', 'An error occurred while submitting your application. Please try again.');
         }

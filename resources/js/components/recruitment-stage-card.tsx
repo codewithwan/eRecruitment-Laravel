@@ -23,13 +23,12 @@ export default function RecruitmentStageCard({ stage }: RecruitmentStageCardProp
         <div className="relative">
             {/* Dot in timeline */}
             <div
-                className={`absolute top-6 left-[-1.5rem] rounded-full p-1 sm:left-[-2.5rem] ${
-                    stage.status === 'completed'
+                className={`absolute top-6 left-[-1.5rem] rounded-full p-1 sm:left-[-2.5rem] ${stage.status === 'completed'
                         ? 'bg-green-100 text-green-600'
                         : stage.status === 'scheduled'
-                          ? 'bg-blue-100 text-blue-600'
-                          : 'bg-gray-100 text-gray-400'
-                }`}
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'bg-gray-100 text-gray-400'
+                    }`}
             >
                 {stage.status === 'completed' ? (
                     <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -42,9 +41,8 @@ export default function RecruitmentStageCard({ stage }: RecruitmentStageCardProp
 
             {/* Card stage */}
             <Card
-                className={`border-l-4 ${
-                    stage.status === 'completed' ? 'border-l-green-500' : stage.status === 'scheduled' ? 'border-l-blue-500' : 'border-l-gray-300'
-                }`}
+                className={`border-l-4 ${stage.status === 'completed' ? 'border-l-green-500' : stage.status === 'scheduled' ? 'border-l-blue-500' : 'border-l-gray-300'
+                    }`}
             >
                 <CardHeader className="px-3 pt-3 pb-2 sm:px-6 sm:pt-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-0">
@@ -59,8 +57,8 @@ export default function RecruitmentStageCard({ stage }: RecruitmentStageCardProp
                         {stage.status === 'completed' && stage.date
                             ? `Telah selesai pada ${stage.date}`
                             : stage.status === 'scheduled'
-                              ? `Dijadwalkan pada ${stage.date}, ${stage.time}`
-                              : 'Menunggu penyelesaian tahap sebelumnya'}
+                                ? `Dijadwalkan pada ${stage.date}, ${stage.time}`
+                                : 'Menunggu penyelesaian tahap sebelumnya'}
                     </CardDescription>
                 </CardHeader>
 

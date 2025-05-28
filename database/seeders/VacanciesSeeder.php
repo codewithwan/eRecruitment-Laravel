@@ -50,7 +50,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $fullTime->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(30),  // 30 days from now
                 'requirements' => [
                     'Laki-laki atau perempuan',
                     'SMK Analis Kimia, D3 Analis Kimia atau relevan',
@@ -67,7 +66,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $fullTime->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(45),  // 45 days from now
                 'requirements' => [
                     'Min. S1 Teknik Informatika/Sistem Informasi',
                     'Menguasai React.js, Vue.js, atau Angular',
@@ -84,7 +82,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $aka->id,
                 'type_id' => $intern->id,
                 'location' => 'Jakarta',
-                'deadline' => now()->addDays(15),  // 15 days from now
                 'requirements' => [
                     'Mahasiswa semester akhir',
                     'Jurusan Marketing/Komunikasi',
@@ -101,7 +98,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $fullTime->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(60),  // 60 days from now
                 'requirements' => [
                     'S1 Teknik Informatika/Sistem Informasi',
                     'Menguasai PHP/Laravel atau Node.js',
@@ -118,7 +114,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $partTime->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(25),
                 'requirements' => [
                     'Min. D3 Desain Komunikasi Visual',
                     'Menguasai Figma, Adobe XD, atau Sketch',
@@ -135,7 +130,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $contract->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(35),
                 'requirements' => [
                     'S1 Teknik Informatika/Sistem Informasi',
                     'Pengalaman minimal 1 tahun di QA',
@@ -152,7 +146,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $aka->id,
                 'type_id' => $intern->id,
                 'location' => 'Jakarta',
-                'deadline' => now()->addDays(20),
                 'requirements' => [
                     'Mahasiswa semester akhir',
                     'Menguasai Excel dan dasar SQL',
@@ -169,7 +162,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $fullTime->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(40),
                 'requirements' => [
                     'S1 Teknik Informatika/Sistem Informasi',
                     'Menguasai Flutter atau React Native',
@@ -186,7 +178,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $aka->id,
                 'type_id' => $partTime->id,
                 'location' => 'Jakarta',
-                'deadline' => now()->addDays(18),
                 'requirements' => [
                     'Min. SMA/SMK',
                     'Kreatif membuat konten digital',
@@ -203,7 +194,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $contract->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(50),
                 'requirements' => [
                     'S1 Teknik Informatika/Manajemen',
                     'Pengalaman minimal 2 tahun sebagai PM',
@@ -220,7 +210,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $aka->id,
                 'type_id' => $intern->id,
                 'location' => 'Jakarta',
-                'deadline' => now()->addDays(22),
                 'requirements' => [
                     'Mahasiswa Psikologi/Manajemen',
                     'Komunikatif dan teliti',
@@ -237,7 +226,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $fullTime->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(28),
                 'requirements' => [
                     'Min. D3 Semua Jurusan',
                     'Komunikatif dan sabar',
@@ -254,7 +242,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $aka->id,
                 'type_id' => $partTime->id,
                 'location' => 'Jakarta',
-                'deadline' => now()->addDays(17),
                 'requirements' => [
                     'Min. D3 Desain Grafis',
                     'Menguasai CorelDraw, Photoshop, Illustrator',
@@ -271,7 +258,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $contract->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(38),
                 'requirements' => [
                     'S1 Teknik Informatika/Sistem Informasi',
                     'Pengalaman minimal 2 tahun sebagai System Analyst',
@@ -288,7 +274,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $aka->id,
                 'type_id' => $intern->id,
                 'location' => 'Jakarta',
-                'deadline' => now()->addDays(14),
                 'requirements' => [
                     'Mahasiswa semester akhir',
                     'Jurusan Marketing/Komunikasi',
@@ -305,7 +290,6 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $aka->id,
                 'type_id' => $fullTime->id,
                 'location' => 'Semarang',
-                'deadline' => now()->addDays(30),
                 'requirements' => [
                     "Associate/Bachelor's degree in Electrical Engineering, Mechatronics, Electromechanics, or related fields;",
                     "Advanced knowledge of robotics, embedded programming, PCB layout, and PCB design;",

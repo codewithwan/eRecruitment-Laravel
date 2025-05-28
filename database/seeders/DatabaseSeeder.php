@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
             CandidateEducationSeeder::class,
             CandidatesProfilesSeeder::class,
             SelectionSeeder::class,
+            PeriodsSeeder::class,
+            VacanciesPeriodsSeeder::class,
             VacanciesSeeder::class,
             ApplicationSeeder::class,
             AssessmentsSeeder::class,

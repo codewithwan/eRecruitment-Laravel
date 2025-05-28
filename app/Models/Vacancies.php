@@ -18,15 +18,11 @@ class Vacancies extends Model
         'location',
         'requirements',
         'benefits',
-        'job_description',
-        'deadline',
-        'user_id',
     ];
 
     protected $casts = [
         'requirements' => 'array',
         'benefits' => 'array',
-        'deadline' => 'datetime',
     ];
 
     public function department(): BelongsTo

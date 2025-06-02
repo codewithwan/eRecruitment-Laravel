@@ -23,7 +23,7 @@ class Period extends Model
      */
     public function vacancies()
     {
-        return $this->belongsToMany(Vacancies::class, 'vacancy_period', 'period_id', 'vacancy_id');
+        return $this->belongsToMany(Vacancies::class, 'vacancy_periods', 'period_id', 'vacancy_id');
     }
     
     /**
@@ -33,11 +33,11 @@ class Period extends Model
     {
         return $this->hasManyThrough(
             Applicant::class,
-            VacancyPeriod::class,
-            'period_id', // Foreign key on vacancy_period table
+            VacancyPeriods::class,
+            'period_id', // Foreign key on vacancy_periods table
             'vacancy_period_id', // Foreign key on applicants table
             'id', // Local key on periods table
-            'id' // Local key on vacancy_period table
+            'id' // Local key on vacancy_periods table
         );
     }
 }

@@ -342,7 +342,7 @@ class PeriodController extends Controller
     public function destroy(Request $request, Period $period)
     {
         // Delete all applicants related to this period first
-        $vacancyPeriodIds = \App\Models\VacancyPeriod::where('period_id', $period->id)->pluck('id');
+        $vacancyPeriodIds = \App\Models\VacancyPeriods::where('period_id', $period->id)->pluck('id');
         Applicant::whereIn('vacancy_period_id', $vacancyPeriodIds)->delete();
         
         // Detach all vacancies from this period

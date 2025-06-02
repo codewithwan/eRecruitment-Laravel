@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Assessment;
 use App\Models\Question;
+use App\Models\Choice;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class QuestionFactory extends Factory
@@ -23,25 +24,27 @@ class QuestionFactory extends Factory
     public function definition()
     {
         return [
-            'question_text' => $this->faker->sentence(10, true).'?',
-            'options' => $this->generateOptions(),
+            'question_text' => $this->faker->sentence(10, true) . '?',
+            'question_type' => 'multiple_choice',
         ];
     }
 
-    /**
-     * Generate random options for multiple choice questions
-     *
-     * @return array
-     */
-    protected function generateOptions()
+    public function configure()
     {
-        $numOptions = $this->faker->numberBetween(2, 5);
-        $options = [];
-
-        for ($i = 0; $i < $numOptions; $i++) {
-            $options[] = $this->faker->sentence(3, true);
-        }
-
-        return $options;
+        return $this->afterCreating(function (Question $question) {
+            $numOptions = $this->faker->numberBetween(2, 5);
+            $options = [];
+            for ($i = 0; $i < $numOptions; $i++) {
+                $options[] = $this->faker->sentence(3, true);
+            }
+            $correct = $this->faker->randomElement($options);
+            foreach ($options as $option) {
+                Choice::create([
+                    'question_id' => $question->id,
+                    'choice_text' => $option,
+                    'is_correct' => $option === $correct,
+                ]);
+            }
+        });
     }
 }

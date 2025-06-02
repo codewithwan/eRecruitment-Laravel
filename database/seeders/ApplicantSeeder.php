@@ -6,7 +6,7 @@ use App\Enums\UserRole;
 use App\Models\Applicant;
 use App\Models\Status;
 use App\Models\User;
-use App\Models\VacancyPeriod;
+use App\Models\VacancyPeriods;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +35,7 @@ class ApplicantSeeder extends Seeder
         }
         
         // Get vacancy-period relationships
-        $vacancyPeriods = VacancyPeriod::all();
+        $vacancyPeriods = VacancyPeriods::all();
         
         if ($vacancyPeriods->isEmpty()) {
             $this->command->info('No vacancy-period relationships found. Make sure to run VacanciesSeeder and PeriodSeeder first.');

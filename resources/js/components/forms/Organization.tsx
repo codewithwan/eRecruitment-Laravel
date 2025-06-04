@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import OrganisasiListForm from './OrganisasiListForm';
-import TambahOrganisasiForm from './TambahOrganisasiForm';
+import OrganisasiListForm from './OrganizationListForm';
+import TambahOrganisasiForm from './AddOrganizationiForm';
 
 interface OrganisasiData {
     id: number;

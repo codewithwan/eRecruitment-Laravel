@@ -10,6 +10,11 @@ use App\Models\WorkExperience;
 use App\Models\CandidatesOrganizations;
 use App\Models\CandidatesAchievements;
 use App\Models\CandidatesSocialMedia;
+use App\Models\Skills;
+use App\Models\Courses;
+use App\Models\Certifications;
+use App\Models\Languages; // Pastikan import ini ada
+use App\Models\EnglishCertifications; // Pastikan import ini ada
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -322,68 +327,63 @@ class CandidateController extends Controller
     public function storeAchievement(Request $request)
     {
         try {
-            $validated = $request->validate([
+            \Log::info('Store Achievement Request', $request->all());
+            
+            $request->validate([
                 'title' => 'required|string|max:255',
-                'level' => 'required|string|in:Internasional,Nasional,Regional,Lokal',
-                'month' => 'required|string|in:Januari,Februari,Maret,April,Mei,Juni,Juli,Agustus,September,Oktober,November,Desember',
-                'year' => 'required|string',
+                'level' => 'required|string|max:100',
+                'month' => 'required|string|max:20',
+                'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
                 'description' => 'required|string|min:10',
-                'certificate_file' => 'required|file|mimes:pdf,jpg,jpeg,doc,docx|max:500',
-                'supporting_file' => 'nullable|file|mimes:pdf,jpg,jpeg,doc,docx|max:500',
-            ], [
-                'title.required' => 'Nama kompetisi harus diisi',
-                'title.max' => 'Nama kompetisi maksimal 255 karakter',
-                'level.required' => 'Skala kompetisi harus dipilih',
-                'level.in' => 'Skala kompetisi tidak valid',
-                'month.required' => 'Bulan harus dipilih',
-                'month.in' => 'Bulan tidak valid',
-                'year.required' => 'Tahun harus dipilih',
-                'description.required' => 'Deskripsi harus diisi',
-                'description.min' => 'Deskripsi minimal 10 karakter',
-                'certificate_file.required' => 'File sertifikat harus diupload',
-                'certificate_file.mimes' => 'Format file sertifikat harus pdf, jpg, jpeg, doc, atau docx',
-                'certificate_file.max' => 'Ukuran file sertifikat maksimal 500KB',
-                'supporting_file.mimes' => 'Format file pendukung harus pdf, jpg, jpeg, doc, atau docx',
-                'supporting_file.max' => 'Ukuran file pendukung maksimal 500KB',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:512', // 512KB
+                'supporting_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:512'
             ]);
 
-            // Store the files
+            $data = [
+                'user_id' => Auth::id(),
+                'title' => $request->title,
+                'level' => $request->level,
+                'month' => $request->month,
+                'year' => $request->year,
+                'description' => $request->description,
+            ];
+
+            // Handle certificate file
             if ($request->hasFile('certificate_file')) {
-                $certificatePath = $request->file('certificate_file')->store('achievements', 'public');
-                $validated['certificate_file'] = $certificatePath;
+                $file = $request->file('certificate_file');
+                $filename = time() . '_cert_' . $file->getClientOriginalName();
+                $path = $file->storeAs('achievements/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
             }
 
+            // Handle supporting file
             if ($request->hasFile('supporting_file')) {
-                $supportingPath = $request->file('supporting_file')->store('achievements', 'public');
-                $validated['supporting_file'] = $supportingPath;
+                $file = $request->file('supporting_file');
+                $filename = time() . '_supp_' . $file->getClientOriginalName();
+                $path = $file->storeAs('achievements/supporting', $filename, 'public');
+                $data['supporting_file'] = $path;
             }
 
-            $achievement = CandidatesAchievements::create([
-                'user_id' => auth()->id(),
-                'title' => $validated['title'],
-                'level' => $validated['level'],
-                'month' => $validated['month'],
-                'year' => $validated['year'],
-                'description' => $validated['description'],
-                'certificate_file' => $validated['certificate_file'] ?? null,
-                'supporting_file' => $validated['supporting_file'] ?? null,
-            ]);
+            $achievement = CandidatesAchievements::create($data);
 
             return response()->json([
-                'message' => 'Data berhasil disimpan!',
+                'success' => true,
+                'message' => 'Achievement berhasil disimpan',
                 'data' => $achievement
-            ], 201);
+            ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in achievement', $e->errors());
             return response()->json([
-                'message' => 'Validasi gagal',
+                'success' => false,
+                'message' => 'Data tidak valid',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Error saving achievement: ' . $e->getMessage());
+            \Log::error('Error storing achievement: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Terjadi kesalahan saat menyimpan data',
-                'error' => $e->getMessage()
+                'success' => false,
+                'message' => 'Gagal menyimpan achievement: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -391,50 +391,86 @@ class CandidateController extends Controller
     public function updateAchievement(Request $request, $id)
     {
         try {
-            $achievement = CandidatesAchievements::where('id', $id)
-                ->where('user_id', Auth::id())
-                ->firstOrFail();
-
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'level' => 'required|string|in:Internasional,Nasional,Regional,Lokal',
-                'month' => 'required|string',
-                'year' => 'required|string',
-                'description' => 'required|string|min:10',
-                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,doc,docx|max:500',
-                'supporting_file' => 'nullable|file|mimes:pdf,jpg,jpeg,doc,docx|max:500',
+            \Log::info('Update Achievement Request', [
+                'id' => $id,
+                'data' => $request->all()
             ]);
 
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'level' => 'required|string|max:100',
+                'month' => 'required|string|max:20',
+                'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
+                'description' => 'required|string|min:10',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:512',
+                'supporting_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:512'
+            ]);
+
+            $achievement = CandidatesAchievements::where('id', $id)
+                      ->where('user_id', Auth::id())
+                      ->first();
+
+            if (!$achievement) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Achievement tidak ditemukan'
+                ], 404);
+            }
+
+            $data = [
+                'title' => $request->title,
+                'level' => $request->level,
+                'month' => $request->month,
+                'year' => $request->year,
+                'description' => $request->description,
+            ];
+
+            // Handle certificate file
             if ($request->hasFile('certificate_file')) {
                 // Delete old file
-                if ($achievement->certificate_file) {
+                if ($achievement->certificate_file && Storage::disk('public')->exists($achievement->certificate_file)) {
                     Storage::disk('public')->delete($achievement->certificate_file);
                 }
-                $certificatePath = $request->file('certificate_file')->store('achievements', 'public');
-                $validated['certificate_file'] = $certificatePath;
+
+                $file = $request->file('certificate_file');
+                $filename = time() . '_cert_' . $file->getClientOriginalName();
+                $path = $file->storeAs('achievements/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
             }
 
+            // Handle supporting file
             if ($request->hasFile('supporting_file')) {
                 // Delete old file
-                if ($achievement->supporting_file) {
+                if ($achievement->supporting_file && Storage::disk('public')->exists($achievement->supporting_file)) {
                     Storage::disk('public')->delete($achievement->supporting_file);
                 }
-                $supportingPath = $request->file('supporting_file')->store('achievements', 'public');
-                $validated['supporting_file'] = $supportingPath;
+
+                $file = $request->file('supporting_file');
+                $filename = time() . '_supp_' . $file->getClientOriginalName();
+                $path = $file->storeAs('achievements/supporting', $filename, 'public');
+                $data['supporting_file'] = $path;
             }
 
-            $achievement->update($validated);
+            $achievement->update($data);
 
             return response()->json([
-                'message' => 'Data berhasil diperbarui!',
+                'success' => true,
+                'message' => 'Achievement berhasil diupdate',
                 'data' => $achievement
             ]);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in update achievement', $e->errors());
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             \Log::error('Error updating achievement: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Terjadi kesalahan saat memperbarui data',
-                'error' => $e->getMessage()
+                'success' => false,
+                'message' => 'Gagal mengupdate achievement: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -480,57 +516,783 @@ class CandidateController extends Controller
 
     public function indexSocialMedia()
     {
-        try {
-            $socialMedia = CandidatesSocialMedia::where('user_id', Auth::id())
-                ->orderBy('created_at', 'desc')
-                ->get();
+        $socialMedia = CandidatesSocialMedia::where('user_id', auth()->id())->get();
 
-            return response()->json([
-                'status' => 'success',
-                'data' => $socialMedia
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Terjadi kesalahan saat mengambil data'
-            ], 500);
-        }
+        return response()->json([
+            'status' => 'success',
+            'data' => $socialMedia
+        ]);
     }
 
     public function storeSocialMedia(Request $request)
     {
+        $validated = $request->validate([
+            'platform_name' => 'required|string',
+            'url' => 'required|url'
+        ]);
+
+        $validated['user_id'] = auth()->id();
+
+        CandidatesSocialMedia::create($validated);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Social media berhasil ditambahkan'
+        ]);
+    }
+
+    public function updateSocialMedia(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'platform_name' => 'required|string',
+            'url' => 'required|url'
+        ]);
+
+        $socialMedia = CandidatesSocialMedia::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+        $socialMedia->update($validated);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Social media berhasil diperbarui'
+        ]);
+    }
+
+    /**
+     * Menampilkan daftar skill user
+     */
+    public function indexSkills()
+    {
         try {
-            $validated = $request->validate([
-                'platform_name' => 'required|string|in:linkedin,github,instagram,twitter,facebook',
-                'url' => 'required|url|max:255'
-            ], [
-                'platform_name.required' => 'Tipe social media harus dipilih',
-                'platform_name.in' => 'Tipe social media tidak valid',
-                'url.required' => 'URL social media harus diisi',
-                'url.url' => 'URL tidak valid',
-                'url.max' => 'URL terlalu panjang'
+            $skills = Skills::where('user_id', Auth::id())->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $skills
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data skills'
+            ], 500);
+        }
+    }
+
+    /**
+     * Menyimpan skill baru
+     */
+    public function storeSkill(Request $request)
+    {
+        try {
+            $request->validate([
+                'skill_name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
             ]);
 
-            $validated['user_id'] = Auth::id();
+            $data = [
+                'user_id' => Auth::id(),
+                'skill_name' => $request->skill_name,
+            ];
 
-            $socialMedia = CandidatesSocialMedia::create($validated);
+            // Handle file upload
+            if ($request->hasFile('certificate_file')) {
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('skills/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $skill = Skills::create($data);
 
             return response()->json([
-                'status' => 'success',
-                'message' => 'Data berhasil disimpan!',
-                'data' => $socialMedia
-            ], 201);
+                'success' => true,
+                'message' => 'Skill berhasil disimpan',
+                'data' => $skill
+            ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Validasi gagal',
+                'success' => false,
+                'message' => 'Data tidak valid',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Terjadi kesalahan saat menyimpan data'
+                'success' => false,
+                'message' => 'Gagal menyimpan skill: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Hapus skill
+     */
+    public function deleteSkill($id)
+    {
+        try {
+            $skill = Skills::where('id', $id)
+                          ->where('user_id', Auth::id())
+                          ->first();
+
+            if (!$skill) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Skill tidak ditemukan'
+                ], 404);
+            }
+
+            // Delete file if exists
+            if ($skill->certificate_file && Storage::disk('public')->exists($skill->certificate_file)) {
+                Storage::disk('public')->delete($skill->certificate_file);
+            }
+
+            $skill->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Skill berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus skill'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update an existing skill
+     */
+    public function updateSkill(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'skill_name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $skill = Skills::where('id', $id)
+                      ->where('user_id', Auth::id())
+                      ->first();
+
+            if (!$skill) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Skill tidak ditemukan'
+                ], 404);
+            }
+
+            $data = [
+                'skill_name' => $request->skill_name,
+            ];
+
+            // Handle file upload
+            if ($request->hasFile('certificate_file')) {
+                // Delete old file if exists
+                if ($skill->certificate_file && Storage::disk('public')->exists($skill->certificate_file)) {
+                    Storage::disk('public')->delete($skill->certificate_file);
+                }
+
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('skills/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $skill->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Skill berhasil diupdate',
+                'data' => $skill
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate skill: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // COURSE METHODS - Menggunakan Courses (plural)
+    public function indexCourses()
+    {
+        try {
+            $courses = Courses::where('user_id', Auth::id())->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $courses
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data kursus'
+            ], 500);
+        }
+    }
+
+    public function storeCourse(Request $request)
+    {
+        try {
+            $request->validate([
+                'course_name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $data = [
+                'user_id' => Auth::id(),
+                'course_name' => $request->course_name,
+            ];
+
+            if ($request->hasFile('certificate_file')) {
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('courses/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $course = Courses::create($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kursus berhasil disimpan',
+                'data' => $course
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan kursus: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateCourse(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'course_name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $course = Courses::where('id', $id)
+                      ->where('user_id', Auth::id())
+                      ->first();
+
+            if (!$course) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kursus tidak ditemukan'
+                ], 404);
+            }
+
+            $data = [
+                'course_name' => $request->course_name,
+            ];
+
+            if ($request->hasFile('certificate_file')) {
+                if ($course->certificate_file && Storage::disk('public')->exists($course->certificate_file)) {
+                    Storage::disk('public')->delete($course->certificate_file);
+                }
+
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('courses/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $course->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kursus berhasil diupdate',
+                'data' => $course
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate kursus: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteCourse($id)
+    {
+        try {
+            $course = Courses::where('id', $id)
+                          ->where('user_id', Auth::id())
+                          ->first();
+
+            if (!$course) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kursus tidak ditemukan'
+                ], 404);
+            }
+
+            if ($course->certificate_file && Storage::disk('public')->exists($course->certificate_file)) {
+                Storage::disk('public')->delete($course->certificate_file);
+            }
+
+            $course->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kursus berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus kursus'
+            ], 500);
+        }
+    }
+
+    // CERTIFICATION METHODS - Menggunakan Certifications (plural)
+    public function indexCertifications()
+    {
+        try {
+            $certifications = Certifications::where('user_id', Auth::id())->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $certifications
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data sertifikasi'
+            ], 500);
+        }
+    }
+
+    public function storeCertification(Request $request)
+    {
+        try {
+            $request->validate([
+                'certification_name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $data = [
+                'user_id' => Auth::id(),
+                'certification_name' => $request->certification_name,
+            ];
+
+            if ($request->hasFile('certificate_file')) {
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('certifications/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $certification = Certifications::create($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sertifikasi berhasil disimpan',
+                'data' => $certification
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan sertifikasi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateCertification(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'certification_name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $certification = Certifications::where('id', $id)
+                      ->where('user_id', Auth::id())
+                      ->first();
+
+            if (!$certification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sertifikasi tidak ditemukan'
+                ], 404);
+            }
+
+            $data = [
+                'certification_name' => $request->certification_name,
+            ];
+
+            if ($request->hasFile('certificate_file')) {
+                if ($certification->certificate_file && Storage::disk('public')->exists($certification->certificate_file)) {
+                    Storage::disk('public')->delete($certification->certificate_file);
+                }
+
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('certifications/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $certification->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sertifikasi berhasil diupdate',
+                'data' => $certification
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate sertifikasi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteCertification($id)
+    {
+        try {
+            $certification = Certifications::where('id', $id)
+                          ->where('user_id', Auth::id())
+                          ->first();
+
+            if (!$certification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sertifikasi tidak ditemukan'
+                ], 404);
+            }
+
+            if ($certification->certificate_file && Storage::disk('public')->exists($certification->certificate_file)) {
+                Storage::disk('public')->delete($certification->certificate_file);
+            }
+
+            $certification->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sertifikasi berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus sertifikasi'
+            ], 500);
+        }
+    }
+
+    // LANGUAGE METHODS
+    public function indexLanguages()
+    {
+        try {
+            $languages = Languages::where('user_id', Auth::id())->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $languages
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data bahasa'
+            ], 500);
+        }
+    }
+
+    public function storeLanguage(Request $request)
+    {
+        try {
+            $request->validate([
+                'language_name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $data = [
+                'user_id' => Auth::id(),
+                'language_name' => $request->language_name,
+            ];
+
+            if ($request->hasFile('certificate_file')) {
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('languages/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $language = Languages::create($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bahasa berhasil disimpan',
+                'data' => $language
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan bahasa: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateLanguage(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'language_name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $language = Languages::where('id', $id)
+                      ->where('user_id', Auth::id())
+                      ->first();
+
+            if (!$language) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bahasa tidak ditemukan'
+                ], 404);
+            }
+
+            $data = [
+                'language_name' => $request->language_name,
+            ];
+
+            if ($request->hasFile('certificate_file')) {
+                if ($language->certificate_file && Storage::disk('public')->exists($language->certificate_file)) {
+                    Storage::disk('public')->delete($language->certificate_file);
+                }
+
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('languages/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $language->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bahasa berhasil diupdate',
+                'data' => $language
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate bahasa: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteLanguage($id)
+    {
+        try {
+            $language = Languages::where('id', $id)
+                          ->where('user_id', Auth::id())
+                          ->first();
+
+            if (!$language) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bahasa tidak ditemukan'
+                ], 404);
+            }
+
+            if ($language->certificate_file && Storage::disk('public')->exists($language->certificate_file)) {
+                Storage::disk('public')->delete($language->certificate_file);
+            }
+
+            $language->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bahasa berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus bahasa'
+            ], 500);
+        }
+    }
+
+    // ENGLISH CERTIFICATION METHODS
+    public function indexEnglishCertifications()
+    {
+        try {
+            $englishCertifications = EnglishCertifications::where('user_id', Auth::id())->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $englishCertifications
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data sertifikat bahasa Inggris'
+            ], 500);
+        }
+    }
+
+    public function storeEnglishCertification(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255', // Field 'name'
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $data = [
+                'user_id' => Auth::id(),
+                'name' => $request->name, // Pastikan menggunakan 'name'
+            ];
+
+            if ($request->hasFile('certificate_file')) {
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('english-certifications/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $englishCertification = EnglishCertifications::create($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sertifikat bahasa Inggris berhasil disimpan',
+                'data' => $englishCertification
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error storing english certification', [
+                'message' => $e->getMessage(),
+                'data' => $request->all()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan sertifikat: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateEnglishCertification(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048'
+            ]);
+
+            $englishCertification = EnglishCertifications::where('id', $id)
+                      ->where('user_id', Auth::id())
+                      ->first();
+
+            if (!$englishCertification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sertifikat tidak ditemukan'
+                ], 404);
+            }
+
+            $data = [
+                'name' => $request->name,
+            ];
+
+            if ($request->hasFile('certificate_file')) {
+                // Delete old file if exists
+                if ($englishCertification->certificate_file && Storage::disk('public')->exists($englishCertification->certificate_file)) {
+                    Storage::disk('public')->delete($englishCertification->certificate_file);
+                }
+
+                // Store new file
+                $file = $request->file('certificate_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('english-certifications/certificates', $filename, 'public');
+                $data['certificate_file'] = $path;
+            }
+
+            $englishCertification->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sertifikat berhasil diupdate',
+                'data' => $englishCertification
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error updating english certification: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate sertifikat: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteEnglishCertification($id)
+    {
+        try {
+            $englishCertification = EnglishCertifications::where('id', $id)
+                          ->where('user_id', Auth::id())
+                          ->first();
+
+            if (!$englishCertification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sertifikat tidak ditemukan'
+                ], 404);
+            }
+
+            // Delete file if exists
+            if ($englishCertification->certificate_file && Storage::disk('public')->exists($englishCertification->certificate_file)) {
+                Storage::disk('public')->delete($englishCertification->certificate_file);
+            }
+
+            // Delete record
+            $englishCertification->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sertifikat berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error deleting english certification: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus sertifikat: ' . $e->getMessage()
             ], 500);
         }
     }

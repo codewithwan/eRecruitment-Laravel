@@ -46,7 +46,6 @@ const PrestasiListForm: React.FC<PrestasiListFormProps> = ({ onAdd, onEdit }) =>
     }, []);
 
     const handleEdit = (achievement: PrestasiData) => {
-        // Pass complete achievement data to onEdit
         onEdit({
             id: achievement.id,
             title: achievement.title,

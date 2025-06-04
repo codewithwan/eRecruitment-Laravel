@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, FormEvent } from 'react';
 import InputField from '../InputField';
 
 interface TwoColumnFormProps {
@@ -12,79 +12,81 @@ interface TwoColumnFormProps {
     onInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
     onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
     onBack: () => void;
+    onSubmit?: () => void;
+    hideSubmitButton?: boolean;
+    loading?: boolean;
+    submitButtonText?: string; // Tambahkan prop untuk custom text
 }
 
-const TwoColumnForm: React.FC<TwoColumnFormProps> = ({
-    title,
-    inputLabel,
-    inputName,
-    inputValue,
-    inputPlaceholder,
-    fileLabel,
-    fileName,
-    onInputChange,
-    onFileChange,
-    onBack
-}) => {
+const TwoColumnForm: React.FC<TwoColumnFormProps> = (props) => {
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (props.onSubmit) {
+            props.onSubmit();
+        }
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-sm">
             <div className="p-6 border-b">
-                <h2 className="text-2xl font-bold text-blue-600">{title}</h2>
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-blue-600">{props.title}</h2>
+                </div>
             </div>
 
-            <div className="p-6">
-                <div className="grid grid-cols-2 gap-6">
-                    <div>
-                        <InputField
-                            label={inputLabel}
-                            name={inputName}
-                            value={inputValue}
-                            onChange={onInputChange}
-                            placeholder={inputPlaceholder}
-                        />
-                    </div>
-                    <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-700">
-                            {fileLabel}
-                        </label>
-                        <div className="flex items-center space-x-4">
-                            <input
-                                type="file"
-                                name={fileName}
-                                onChange={onFileChange}
-                                accept=".pdf,.jpg,.jpeg,.doc,.docx"
-                                className="hidden"
-                                id={fileName}
-                            />
-                            <label
-                                htmlFor={fileName}
-                                className="px-4 py-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
-                            >
-                                Pilih File
-                            </label>
-                            <span className="text-sm text-gray-500">
-                                Format file yang didukung: .pdf, .jpg, .jpeg, .doc, .docx
-                            </span>
-                        </div>
-                    </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-semibold mb-2">
+                        {props.inputLabel}
+                    </label>
+                    <input
+                        type="text"
+                        name={props.inputName}
+                        value={props.inputValue}
+                        onChange={props.onInputChange}
+                        placeholder={props.inputPlaceholder}
+                        className="w-full border border-gray-300 rounded p-2 text-gray-700"
+                    />
                 </div>
 
-                <div className="flex justify-between mt-6">
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-semibold mb-2">
+                        {props.fileLabel}
+                    </label>
+                    <input
+                        type="file"
+                        name={props.fileName}
+                        onChange={props.onFileChange}
+                        className="w-full border border-gray-300 rounded p-2 text-gray-700"
+                    />
+                </div>
+
+                <div className="flex justify-between">
                     <button
                         type="button"
-                        onClick={onBack}
+                        onClick={props.onBack}
                         className="text-gray-600 hover:text-gray-700"
                     >
                         Kembali
                     </button>
-                    <button
-                        type="submit"
-                        className="bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700"
-                    >
-                        Save & Next
-                    </button>
+                    
+                    {/* Render submit button conditionally based on hideSubmitButton prop */}
+                    {!props.hideSubmitButton && (
+                        <button
+                            type="submit"
+                            disabled={props.loading}
+                            className={`bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700 ${
+                                props.loading ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                        >
+                            {props.loading 
+                                ? 'Menyimpan...' 
+                                : (props.submitButtonText || 'Save & Next')
+                            }
+                        </button>
+                    )}
                 </div>
-            </div>
+            </form>
         </div>
     );
 };

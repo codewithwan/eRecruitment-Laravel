@@ -19,7 +19,13 @@ const SocialMediaList: React.FC<SocialMediaListProps> = ({ onAdd, onEdit }) => {
 
     useEffect(() => {
         fetchSocialMedias();
-    }, []);
+    }, []); // Fetch data on mount
+
+    useEffect(() => {
+        if (!loading) {
+            fetchSocialMedias(); // Refresh the list after adding/editing
+        }
+    }, [loading]);
 
     const fetchSocialMedias = async () => {
         try {

@@ -1,6 +1,6 @@
 import React, { useState, FormEvent } from 'react';
 import { useEducation } from '@/hooks/useEducation';
-import TambahPendidikanForm from './TambahPendidikanForm';
+import TambahPendidikanForm from './AddEducationForm';
 
 // Add Alert component
 const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }) => (

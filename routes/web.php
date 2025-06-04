@@ -67,6 +67,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.achievement.store');
     Route::put('/candidate/achievement/{id}', [CandidateController::class, 'updateAchievement'])
         ->name('candidate.achievement.update');
+    Route::delete('/candidate/achievement/{id}', [CandidateController::class, 'deleteAchievement'])
+        ->name('candidate.achievement.delete');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -118,6 +120,67 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/social-media', [CandidateController::class, 'indexSocialMedia']);
     Route::post('/candidate/social-media', [CandidateController::class, 'storeSocialMedia']);
     Route::put('/candidate/social-media/{id}', [CandidateController::class, 'updateSocialMedia']);
+});
+
+// Skills routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/candidate/skills', [CandidateController::class, 'indexSkills'])
+        ->name('candidate.skills');
+    Route::post('/candidate/skill', [CandidateController::class, 'storeSkill'])
+        ->name('candidate.skill.store');
+    Route::put('/candidate/skill/{id}', [CandidateController::class, 'updateSkill'])
+        ->name('candidate.skill.update');
+    Route::post('/candidate/skill/{id}', [CandidateController::class, 'updateSkill'])
+        ->name('candidate.skill.update.post'); // untuk FormData dengan _method
+    Route::delete('/candidate/skill/{id}', [CandidateController::class, 'deleteSkill'])
+        ->name('candidate.skill.delete');
+
+    // Course routes
+    Route::get('/candidate/courses', [CandidateController::class, 'indexCourses'])
+        ->name('candidate.courses');
+    Route::post('/candidate/course', [CandidateController::class, 'storeCourse'])
+        ->name('candidate.course.store');
+    Route::put('/candidate/course/{id}', [CandidateController::class, 'updateCourse'])
+        ->name('candidate.course.update');
+    Route::post('/candidate/course/{id}', [CandidateController::class, 'updateCourse'])
+        ->name('candidate.course.update.post');
+    Route::delete('/candidate/course/{id}', [CandidateController::class, 'deleteCourse'])
+        ->name('candidate.course.delete');
+
+    // Certification routes
+    Route::get('/candidate/certifications', [CandidateController::class, 'indexCertifications'])
+        ->name('candidate.certifications');
+    Route::post('/candidate/certification', [CandidateController::class, 'storeCertification'])
+        ->name('candidate.certification.store');
+    Route::put('/candidate/certification/{id}', [CandidateController::class, 'updateCertification'])
+        ->name('candidate.certification.update');
+    Route::post('/candidate/certification/{id}', [CandidateController::class, 'updateCertification'])
+        ->name('candidate.certification.update.post');
+    Route::delete('/candidate/certification/{id}', [CandidateController::class, 'deleteCertification'])
+        ->name('candidate.certification.delete');
+
+    Route::get('/candidate/languages', [CandidateController::class, 'indexLanguages'])
+        ->name('candidate.languages');
+    Route::post('/candidate/language', [CandidateController::class, 'storeLanguage'])
+        ->name('candidate.language.store');
+    Route::put('/candidate/language/{id}', [CandidateController::class, 'updateLanguage'])
+        ->name('candidate.language.update');
+    Route::post('/candidate/language/{id}', [CandidateController::class, 'updateLanguage'])
+        ->name('candidate.language.update.post');
+    Route::delete('/candidate/language/{id}', [CandidateController::class, 'deleteLanguage'])
+        ->name('candidate.language.delete');
+
+   
+    Route::get('/candidate/english-certifications', [CandidateController::class, 'indexEnglishCertifications'])
+        ->name('candidate.english-certifications');
+    Route::post('/candidate/english-certification', [CandidateController::class, 'storeEnglishCertification'])
+        ->name('candidate.english-certification.store');
+    Route::put('/candidate/english-certification/{id}', [CandidateController::class, 'updateEnglishCertification'])
+        ->name('candidate.english-certification.update');
+    Route::post('/candidate/english-certification/{id}', [CandidateController::class, 'updateEnglishCertification'])
+        ->name('candidate.english-certification.update.post');
+    Route::delete('/candidate/english-certification/{id}', [CandidateController::class, 'deleteEnglishCertification'])
+        ->name('candidate.english-certification.delete');
 });
 
 require __DIR__.'/settings.php';

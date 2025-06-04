@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CandidatesAchievements extends Model
 {
+    use HasFactory;
+
+    protected $table = 'candidates_achievements';
+    
     protected $fillable = [
         'user_id',
         'title',
@@ -22,7 +26,7 @@ class CandidatesAchievements extends Model
         'year' => 'integer'
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import EditPengalamanKerjaForm from '../components/forms/EditPengalamanForm';
-import TambahPengalamanForm from '../components/forms/TambahPengalamanForm';
+import EditPengalamanKerjaForm from '../components/forms/EditExperienceForm';
+import TambahPengalamanForm from '../components/forms/AddExperience';
 
 export interface PengalamanKerja {
     id: number;

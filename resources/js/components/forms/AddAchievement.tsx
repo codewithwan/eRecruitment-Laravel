@@ -7,10 +7,11 @@ interface PrestasiData {
     id?: number;
     title: string;
     level: string;
-    organizer: string;
     month: string;
     year: number;
     description: string;
+    certificate_file?: string;
+    supporting_file?: string;
 }
 
 interface TambahPrestasiFormProps {
@@ -35,11 +36,11 @@ const TambahPrestasiForm: React.FC<TambahPrestasiFormProps> = ({
     onSuccess
 }) => {
     const [formData, setFormData] = useState<PrestasiFormState>({
-        namaKompetisi: achievementData?.title || '',
-        kompetisi: achievementData?.level || '',
-        bulan: achievementData?.month || '',
-        tahun: achievementData?.year?.toString() || '',
-        deskripsi: achievementData?.description || '',
+        namaKompetisi: '',
+        kompetisi: '',
+        bulan: '',
+        tahun: '',
+        deskripsi: '',
         fileSertifikat: null,
         filePendukung: null
     });
@@ -104,9 +105,17 @@ const TambahPrestasiForm: React.FC<TambahPrestasiFormProps> = ({
                 formPayload.append('supporting_file', formData.filePendukung);
             }
 
+            // Debug: Log form data
+            console.log('Sending form data:');
+            for (let [key, value] of formPayload.entries()) {
+                console.log(key, value);
+            }
+
             let response;
             if (achievementData?.id) {
-                response = await axios.put(`/candidate/achievement/${achievementData.id}`, formPayload, {
+                // For update, use POST with _method field
+                formPayload.append('_method', 'PUT');
+                response = await axios.post(`/candidate/achievement/${achievementData.id}`, formPayload, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                         'Accept': 'application/json'
@@ -121,6 +130,8 @@ const TambahPrestasiForm: React.FC<TambahPrestasiFormProps> = ({
                 });
             }
 
+            console.log('Success response:', response.data);
+
             setMessage({
                 type: 'success',
                 text: achievementData?.id ? 'Data berhasil diperbarui!' : 'Data berhasil disimpan!'
@@ -132,8 +143,26 @@ const TambahPrestasiForm: React.FC<TambahPrestasiFormProps> = ({
             }, 2000);
 
         } catch (error: any) {
-            console.error('Error saving achievement:', error.response?.data);
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+            console.error('Full error object:', error);
+            console.error('Error response:', error.response?.data);
+            
+            let errorMessage = 'Terjadi kesalahan saat menyimpan data';
+            
+            if (error.response?.status === 422) {
+                // Validation errors
+                const errors = error.response.data.errors;
+                if (errors) {
+                    const errorMessages = Object.values(errors).flat();
+                    errorMessage = errorMessages.join(', ');
+                } else {
+                    errorMessage = error.response.data.message || 'Data tidak valid';
+                }
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
             setMessage({
                 type: 'error',
                 text: errorMessage
@@ -146,6 +175,7 @@ const TambahPrestasiForm: React.FC<TambahPrestasiFormProps> = ({
 
     useEffect(() => {
         if (achievementData) {
+            // Populate the form only when editing
             setFormData({
                 namaKompetisi: achievementData.title,
                 kompetisi: achievementData.level,
@@ -154,6 +184,27 @@ const TambahPrestasiForm: React.FC<TambahPrestasiFormProps> = ({
                 deskripsi: achievementData.description,
                 fileSertifikat: null,
                 filePendukung: null
+            });
+
+            setExistingFiles({
+                certificate: achievementData.certificate_file || '',
+                supporting: achievementData.supporting_file || ''
+            });
+        } else {
+            // Clear the form when adding a new achievement
+            setFormData({
+                namaKompetisi: '',
+                kompetisi: '',
+                bulan: '',
+                tahun: '',
+                deskripsi: '',
+                fileSertifikat: null,
+                filePendukung: null
+            });
+
+            setExistingFiles({
+                certificate: '',
+                supporting: ''
             });
         }
     }, [achievementData]);
@@ -319,7 +370,7 @@ const TambahPrestasiForm: React.FC<TambahPrestasiFormProps> = ({
                     </div>
                 </div>
 
-             
+
 
                 <div className="flex justify-between mt-6">
                     <button

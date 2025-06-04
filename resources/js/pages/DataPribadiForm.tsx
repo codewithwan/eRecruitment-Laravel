@@ -5,21 +5,20 @@ import SelectField from "../components/SelectField";
 import SidebarNav from "../components/SidebarNav";
 import ProfileHeader from "../components/ProfileHeader";
 import NavbarHeader from "../components/NavbarHeader";
-import PendidikanForm from '../components/forms/ListPendidikanForm';
-import TambahPendidikanForm from '../components/forms/TambahPendidikanForm';
+import PendidikanForm from '../components/forms/ListEducationForm';
+import TambahPendidikanForm from '../components/forms/AddEducationForm';
 import PengalamanKerjaForm from './PengalamanKerjaForm';
-import TambahPengalamanForm from '../components/forms/TambahPengalamanForm';
-import OrganisasiForm from '../components/forms/OrganisasiForm';
-import TambahOrganisasiForm from '../components/forms/TambahOrganisasiForm';
-import PrestasiForm from '../components/forms/PrestasiForm';
-import TambahPrestasiForm from '../components/forms/TambahPrestasiForm';
+import TambahPengalamanForm from '../components/forms/AddExperience';
+import OrganisasiForm from '../components/forms/Organization';
+import TambahOrganisasiForm from '../components/forms/AddOrganizationiForm';
+import PrestasiForm from '../components/forms/Achievement';
+import TambahPrestasiForm from '../components/forms/AddAchievement';
 import SocialMediaForm from '../components/forms/SocialMediaForm';
-import TambahSocialMediaForm from '../components/forms/TambahSocialMediaForm';
-import DataTambahanForm from '../components/forms/DataTambahanForm';
-import TambahSkillsForm from '../components/forms/TambahSkillsForm';
+import TambahSocialMediaForm from '../components/forms/AddSocialMediaForm';
+import DataTambahanForm from '../components/forms/AdditionalDataForm';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
-import PrestasiListForm from '../components/forms/PrestasiListForm';
+import PrestasiListForm from '../components/forms/AchievementListForm';
 import SocialMediaList from "@/components/forms/SocialMediaList";
 
 // Tambahkan komponen Alert
@@ -56,17 +55,28 @@ interface PengalamanKerja {
     is_current_job: boolean;
 }
 
-// Add this interface with other interfaces
+// Add this with other interfaces
 interface PrestasiData {
     id?: number;
     title: string;
     level: string;
-    organizer: string;
     month: string;
     year: number;
     description: string;
-    file_path?: string;
-    supporting_file_path?: string;
+    certificate_file?: string;
+    supporting_file?: string;
+}
+
+interface TambahPrestasiFormProps {
+    achievementData?: PrestasiData;
+    onSuccess: () => void;
+    onBack: () => void;
+}
+
+interface TambahOrganisasiFormProps {
+    onSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
+    onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+    onBack: () => void;
 }
 
 interface Props {
@@ -190,23 +200,19 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         setMessage(null);
 
         try {
-            if (selectedPrestasi?.id) {
-                await axios.post(`/candidate/achievement/${selectedPrestasi.id}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                setMessage({
-                    type: 'success',
-                    text: 'Data berhasil diperbarui!'
-                });
-            } else {
-                await axios.post('/candidate/achievement', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                setMessage({
-                    type: 'success',
-                    text: 'Data berhasil disimpan!'
-                });
-            }
+            const endpoint = selectedPrestasi?.id
+                ? `/candidate/achievement/${selectedPrestasi.id}`
+                : '/candidate/achievement';
+            const method = selectedPrestasi?.id ? 'put' : 'post';
+
+            await axios[method](endpoint, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setMessage({
+                type: 'success',
+                text: selectedPrestasi?.id ? 'Data berhasil diperbarui!' : 'Data berhasil disimpan!'
+            });
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -214,7 +220,7 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                 setMessage(null);
                 setShowPrestasiForm(false);
                 setSelectedPrestasi(null);
-            }, 3000);
+            }, 2000);
 
         } catch (error) {
             console.error('Error saving achievement:', error);
@@ -291,27 +297,14 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     };
 
     const renderDataTambahanForm = () => {
-        switch (activeTambahanForm) {
-            case 'skills':
-                return (
-                    <TambahSkillsForm
-                        onSubmit={handleSubmit}
-                        onChange={handleChange}
-                        onBack={() => setActiveTambahanForm(null)}
-                    />
-                );
-            // Add other form cases here
-            default:
-                return (
-                    <DataTambahanForm
-                        onTambahSkills={() => setActiveTambahanForm('skills')}
-                        onTambahKursus={() => setActiveTambahanForm('kursus')}
-                        onTambahSertifikasi={() => setActiveTambahanForm('sertifikasi')}
-                        onTambahBahasa={() => setActiveTambahanForm('bahasa')}
-                        onTambahEnglishCert={() => setActiveTambahanForm('englishCert')}
-                    />
-                );
-        }
+        return (
+            <DataTambahanForm
+                onNext={() => {
+                    // Handler untuk next jika diperlukan
+                    console.log('Next button clicked');
+                }}
+            />
+        );
     };
 
     const renderActiveForm = () => {
@@ -319,24 +312,27 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             if (showSocialMediaForm) {
                 return (
                     <TambahSocialMediaForm
-                        initialData={selectedSocialMedia}
+                        initialData={selectedSocialMedia} // Pass data only when editing
                         onSuccess={() => {
-                            setShowSocialMediaForm(false);
-                            setSelectedSocialMedia(null);
+                            setShowSocialMediaForm(false); // Hide the form after success
+                            setSelectedSocialMedia(null); // Clear selected social media
                         }}
                         onBack={() => {
-                            setShowSocialMediaForm(false);
-                            setSelectedSocialMedia(null);
+                            setShowSocialMediaForm(false); // Hide the form when going back
+                            setSelectedSocialMedia(null); // Clear selected social media
                         }}
                     />
                 );
             }
             return (
                 <SocialMediaList
-                    onAdd={() => setShowSocialMediaForm(true)}
+                    onAdd={() => {
+                        setSelectedSocialMedia(null); // Ensure no data is pre-filled
+                        setShowSocialMediaForm(true); // Show the form
+                    }}
                     onEdit={(data) => {
-                        setSelectedSocialMedia(data);
-                        setShowSocialMediaForm(true);
+                        setSelectedSocialMedia(data); // Pass the selected data for editing
+                        setShowSocialMediaForm(true); // Show the form
                     }}
                 />
             );
@@ -345,15 +341,28 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             if (showPrestasiForm) {
                 return (
                     <TambahPrestasiForm
-                        onSubmit={handleSubmitPrestasi}
-                        onBack={() => setShowPrestasiForm(false)}
+                        achievementData={selectedPrestasi ?? undefined} // Pass only when editing
+                        onSuccess={() => {
+                            setShowPrestasiForm(false);
+                            setSelectedPrestasi(null); // Clear selectedPrestasi after success
+                        }}
+                        onBack={() => {
+                            setShowPrestasiForm(false);
+                            setSelectedPrestasi(null); // Clear selectedPrestasi when going back
+                        }}
                     />
                 );
             }
             return (
                 <PrestasiListForm
-                    onAdd={() => setShowPrestasiForm(true)}
-                    onEdit={handleEditPrestasi}
+                    onAdd={() => {
+                        setSelectedPrestasi(null); // Ensure selectedPrestasi is cleared when adding
+                        setShowPrestasiForm(true);
+                    }}
+                    onEdit={(data) => {
+                        setSelectedPrestasi(data); // Set selectedPrestasi for editing
+                        setShowPrestasiForm(true);
+                    }}
                 />
             );
         }

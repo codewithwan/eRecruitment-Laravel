@@ -50,7 +50,7 @@ class Applicant extends Model
      */
     public function vacancyPeriod(): BelongsTo
     {
-        return $this->belongsTo(VacancyPeriod::class, 'vacancy_period_id');
+        return $this->belongsTo(VacancyPeriods::class, 'vacancy_period_id');
     }
     
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Question;
 use App\Models\QuestionPack;
+use App\Models\Choice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +17,20 @@ class QuestionController extends Controller
      */
     public function index()
     {
-        // Load questions with their related question packs
-        $questions = Question::with('questionPacks')->get();
+        // Load questions with their related question packs and choices
+        $questions = Question::with(['questionPacks', 'choices'])->get();
+
+        // Transform choices data for each question
+        $questions->transform(function ($question) {
+            $options = $question->choices->pluck('choice_text')->toArray();
+            $correctChoice = $question->choices->where('is_correct', true)->first();
+            $correct_answer = $correctChoice ? $correctChoice->choice_text : null;
+
+            $question->options = $options;
+            $question->correct_answer = $correct_answer;
+            
+            return $question;
+        });
 
         // Log the questions for debugging
         Log::info('Questions retrieved for management page:', ['count' => $questions->count()]);
@@ -58,7 +71,6 @@ class QuestionController extends Controller
         ]);
 
         try {
-            // Use the questions directly from the request
             $questionsData = $request->questions;
 
             if (!is_array($questionsData) || count($questionsData) === 0) {
@@ -66,12 +78,9 @@ class QuestionController extends Controller
             }
 
             $createdQuestions = [];
-
-            // Start a database transaction
             DB::beginTransaction();
 
             foreach ($questionsData as $questionData) {
-                // Validate each question
                 if (empty($questionData['options']) || !is_array($questionData['options'])) {
                     continue;
                 }
@@ -84,13 +93,25 @@ class QuestionController extends Controller
                     continue;
                 }
 
+                // Validate that correct_answer exists in options
+                if (!in_array($questionData['correct_answer'], $validOptions)) {
+                    continue;
+                }
+
                 // Create the question
                 $question = Question::create([
                     'question_text' => $questionData['question_text'] ?? '',
-                    'options' => $validOptions,
-                    'correct_answer' => $questionData['correct_answer'] ?? $validOptions[0],
                     'question_type' => 'multiple_choice'
                 ]);
+
+                // Create choices for the question
+                foreach ($validOptions as $option) {
+                    Choice::create([
+                        'question_id' => $question->id,
+                        'choice_text' => $option,
+                        'is_correct' => $option === $questionData['correct_answer'],
+                    ]);
+                }
 
                 $createdQuestions[] = $question;
             }
@@ -110,9 +131,7 @@ class QuestionController extends Controller
                 return redirect()->route('admin.questions.question-set')->with('success', 'Questions added to pack successfully!');
             }
 
-            // If we don't have a pack, redirect directly to question list
             DB::commit();
-
             return redirect()->route('admin.questions.question-set')->with('success', 'Questions created successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -127,7 +146,16 @@ class QuestionController extends Controller
     public function show($id)
     {
         try {
-            $question = Question::with('questionPacks')->findOrFail($id);
+            $question = Question::with(['questionPacks', 'choices'])->findOrFail($id);
+            
+            // Transform choices into options array and extract correct answer
+            $options = $question->choices->pluck('choice_text')->toArray();
+            $correctChoice = $question->choices->where('is_correct', true)->first();
+            $correct_answer = $correctChoice ? $correctChoice->choice_text : null;
+
+            // Add the transformed data to the question object
+            $question->options = $options;
+            $question->correct_answer = $correct_answer;
 
             return inertia('admin/questions/questions-set/view-question', [
                 'question' => $question
@@ -144,7 +172,16 @@ class QuestionController extends Controller
     public function edit($id)
     {
         try {
-            $question = Question::with('questionPacks')->findOrFail($id);
+            $question = Question::with(['questionPacks', 'choices'])->findOrFail($id);
+            
+            // Transform choices into options array and extract correct answer
+            $options = $question->choices->pluck('choice_text')->toArray();
+            $correctChoice = $question->choices->where('is_correct', true)->first();
+            $correct_answer = $correctChoice ? $correctChoice->choice_text : null;
+
+            // Add the transformed data to the question object
+            $question->options = $options;
+            $question->correct_answer = $correct_answer;
 
             return inertia('admin/questions/questions-set/edit-questions', [
                 'question' => $question
@@ -177,9 +214,18 @@ class QuestionController extends Controller
 
             $question->update([
                 'question_text' => $request->question_text,
-                'options' => $request->options,
-                'correct_answer' => $request->correct_answer,
             ]);
+
+            // Delete old choices
+            $question->choices()->delete();
+            // Create new choices
+            foreach ($request->options as $option) {
+                Choice::create([
+                    'question_id' => $question->id,
+                    'choice_text' => $option,
+                    'is_correct' => $option === $request->correct_answer,
+                ]);
+            }
 
             return redirect()->route('admin.questions.question-set')->with('success', 'Question updated successfully!');
         } catch (\Exception $e) {

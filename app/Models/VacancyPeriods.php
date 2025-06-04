@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class VacancyPeriod extends Model
+class VacancyPeriods extends Model
 {
     use HasFactory;
     
@@ -16,7 +16,7 @@ class VacancyPeriod extends Model
      *
      * @var string
      */
-    protected $table = 'vacancy_period';
+    protected $table = 'vacancy_periods';
     
     /**
      * The attributes that are mass assignable.

@@ -39,7 +39,8 @@ class CandidateController extends Controller
     {
         $user = Auth::user();
 
-        return Inertia::render('DataPribadiForm', [
+        // Ubah dari DataPribadiForm ke PersonalData
+        return Inertia::render('PersonalData', [
             'users' => $user,
         ]);
     }
@@ -49,7 +50,8 @@ class CandidateController extends Controller
         $user = Auth::user();
         $profile = CandidatesProfiles::where('user_id', $user->id)->first();
 
-        return Inertia::render('DataPribadiForm', [
+        // Ubah dari DataPribadiForm ke PersonalData
+        return Inertia::render('PersonalData', [
             'profile' => $profile,
             'user' => [
                 'name' => $user->name,

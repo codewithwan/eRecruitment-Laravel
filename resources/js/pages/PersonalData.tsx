@@ -3,7 +3,6 @@ import { FormType } from '../types/FormTypes';
 import InputField from "../components/InputField";
 import SelectField from "../components/SelectField";
 import SidebarNav from "../components/SidebarNav";
-import ProfileHeader from "../components/ProfileHeader";
 import PendidikanForm from '../components/forms/ListEducationForm';
 import TambahPendidikanForm from '../components/forms/AddEducationForm';
 import PengalamanKerjaForm from './WorkExperienceForm';
@@ -58,7 +57,6 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
                     <p className="text-gray-600">{email}</p>
-                    {/* Hilangkan badge "Candidate User" yang redundan */}
                 </div>
             </div>
         </div>
@@ -77,7 +75,6 @@ interface PengalamanKerja {
     is_current_job: boolean;
 }
 
-// Add this with other interfaces
 interface PrestasiData {
     id?: number;
     title: string;
@@ -124,7 +121,6 @@ interface Props {
     };
 }
 
-// Tambahkan interface untuk data completeness
 interface CompletenessResponse {
     completeness: {
         profile: boolean;
@@ -163,7 +159,8 @@ enum SubFormType {
     TAMBAH_PENDIDIKAN
 }
 
-const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
+// Ubah nama komponen agar konsisten
+const PersonalData: React.FC<Props> = ({ profile, user }) => {
     const [form, setForm] = useState({
         no_ektp: profile?.no_ektp || '',
         gender: profile?.gender ? convertGender(profile.gender) : '',
@@ -180,9 +177,8 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         rt: profile?.rt || '',
         rw: profile?.rw || '',
         punyaNpwp: false,
-        // Tambahkan nama dan email ke form state
-        name: user.name || '',
-        email: user.email || ''
+        name: user?.name || '',
+        email: user?.email || ''
     });
 
     const [activeForm, setActiveForm] = useState<FormType>(FormType.DATA_PRIBADI);
@@ -197,8 +193,6 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [selectedPrestasi, setSelectedPrestasi] = useState<PrestasiData | null>(null);
     const [selectedSocialMedia, setSelectedSocialMedia] = useState<any>(null);
-
-    // Tambahkan import dan state
     const [completenessData, setCompletenessData] = useState<CompletenessResponse | null>(null);
     const [loadingCompleteness, setLoadingCompleteness] = useState(false);
     const [generatingCV, setGeneratingCV] = useState(false);
@@ -213,12 +207,12 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     };
 
     const handleTambahPengalaman = () => {
-        setSelectedExperience(null); // Reset pengalaman kerja yang dipilih
+        setSelectedExperience(null);
         setShowTambahPengalaman(true);
     };
 
     const handleEditPengalaman = (experience: PengalamanKerja) => {
-        setSelectedExperience(experience); // Set pengalaman kerja yang akan diedit
+        setSelectedExperience(experience);
         setShowTambahPengalaman(true);
     };
 
@@ -230,10 +224,8 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     const handleSubmitPengalaman = async (updatedData: PengalamanKerja) => {
         try {
             if (updatedData.id) {
-                // Update pengalaman kerja
                 await axios.put(`/candidate/work-experience/${updatedData.id}`, updatedData);
             } else {
-                // Tambah pengalaman kerja baru
                 await axios.post('/candidate/work-experience', updatedData);
             }
             setShowTambahPengalaman(false);
@@ -312,13 +304,11 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                         text: 'Data berhasil disimpan!'
                     });
 
-                    // Scroll to top
                     window.scrollTo({
                         top: 0,
                         behavior: 'smooth'
                     });
 
-                    // Auto hide after 3 seconds
                     setTimeout(() => {
                         setMessage(null);
                     }, 3000);
@@ -383,7 +373,6 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         }
     };
 
-    // Function untuk generate CV dengan notifikasi hilang otomatis dalam 5 detik
     const handleGenerateCV = async () => {
         if (!completenessData?.completeness.overall_complete) {
             setMessage({
@@ -391,7 +380,6 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                 text: 'Data belum lengkap untuk generate CV!'
             });
             
-            // Auto hide error notification after 5 seconds
             setTimeout(() => {
                 setMessage(null);
             }, 5000);
@@ -404,7 +392,6 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         try {
             console.log('Starting CV generation...');
             
-            // Update: Gunakan JSON response instead of blob
             const response = await axios.get('/candidate/cv/generate');
 
             if (response.data.success) {
@@ -415,19 +402,16 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                     text: `${response.data.message} File: ${response.data.data.filename}`,
                 });
 
-                // Auto hide success notification after 5 seconds
                 setTimeout(() => {
                     setMessage(null);
                 }, 5000);
 
-                // Auto download CV if URL available
                 if (response.data.data.download_url) {
                     setTimeout(() => {
                         window.open(response.data.data.download_url, '_blank');
                     }, 1000);
                 }
 
-                // Refresh data completeness untuk update info CV
                 setTimeout(() => {
                     checkDataCompleteness();
                 }, 2000);
@@ -448,7 +432,6 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                 text: errorMessage
             });
 
-            // Auto hide error notification after 5 seconds
             setTimeout(() => {
                 setMessage(null);
             }, 5000);
@@ -457,7 +440,6 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         }
     };
 
-    // useEffect untuk load data completeness saat component mount
     useEffect(() => {
         checkDataCompleteness();
     }, []);
@@ -467,14 +449,14 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             if (showSocialMediaForm) {
                 return (
                     <TambahSocialMediaForm
-                        initialData={selectedSocialMedia} // Pass data only when editing
+                        initialData={selectedSocialMedia}
                         onSuccess={() => {
-                            setShowSocialMediaForm(false); // Hide the form after success
-                            setSelectedSocialMedia(null); // Clear selected social media
+                            setShowSocialMediaForm(false);
+                            setSelectedSocialMedia(null);
                         }}
                         onBack={() => {
-                            setShowSocialMediaForm(false); // Hide the form when going back
-                            setSelectedSocialMedia(null); // Clear selected social media
+                            setShowSocialMediaForm(false);
+                            setSelectedSocialMedia(null);
                         }}
                     />
                 );
@@ -482,12 +464,12 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             return (
                 <SocialMediaList
                     onAdd={() => {
-                        setSelectedSocialMedia(null); // Ensure no data is pre-filled
-                        setShowSocialMediaForm(true); // Show the form
+                        setSelectedSocialMedia(null);
+                        setShowSocialMediaForm(true);
                     }}
                     onEdit={(data) => {
-                        setSelectedSocialMedia(data); // Pass the selected data for editing
-                        setShowSocialMediaForm(true); // Show the form
+                        setSelectedSocialMedia(data);
+                        setShowSocialMediaForm(true);
                     }}
                 />
             );
@@ -496,14 +478,14 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             if (showPrestasiForm) {
                 return (
                     <TambahPrestasiForm
-                        achievementData={selectedPrestasi ?? undefined} // Pass only when editing
+                        achievementData={selectedPrestasi ?? undefined}
                         onSuccess={() => {
                             setShowPrestasiForm(false);
-                            setSelectedPrestasi(null); // Clear selectedPrestasi after success
+                            setSelectedPrestasi(null);
                         }}
                         onBack={() => {
                             setShowPrestasiForm(false);
-                            setSelectedPrestasi(null); // Clear selectedPrestasi when going back
+                            setSelectedPrestasi(null);
                         }}
                     />
                 );
@@ -511,11 +493,11 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
             return (
                 <PrestasiListForm
                     onAdd={() => {
-                        setSelectedPrestasi(null); // Ensure selectedPrestasi is cleared when adding
+                        setSelectedPrestasi(null);
                         setShowPrestasiForm(true);
                     }}
                     onEdit={(data) => {
-                        setSelectedPrestasi(data); // Set selectedPrestasi for editing
+                        setSelectedPrestasi(data);
                         setShowPrestasiForm(true);
                     }}
                 />
@@ -566,127 +548,119 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         if (activeForm === FormType.DATA_TAMBAHAN) {
             return renderDataTambahanForm();
         }
-        switch (activeForm) {
-            case FormType.DATA_PRIBADI:
-            default:
-                return (
-                    <div className="bg-white rounded-lg shadow-sm text-black">
-                        <div className="p-6 border-b">
-                            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                                <div className="grid grid-cols-2 gap-6 text-black">
-                                    <div>
-                                        <InputField label="No. E-KTP" name="no_ektp" value={form.no_ektp} onChange={handleChange} />
-                                        {/* Ubah dari user.name ke form.name */}
-                                        <InputField label="Nama Lengkap" name="name" value={form.name} onChange={handleChange} />
-                                        {/* Ubah dari user.email ke form.email */}
-                                        <InputField label="Email" name="email" type="email" value={form.email} onChange={handleChange} />
+        
+        // Default case - DATA_PRIBADI
+        return (
+            <div className="bg-white rounded-lg shadow-sm text-black">
+                <div className="p-6 border-b">
+                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                        <div className="grid grid-cols-2 gap-6 text-black">
+                            <div>
+                                <InputField label="No. E-KTP" name="no_ektp" value={form.no_ektp} onChange={handleChange} />
+                                <InputField label="Nama Lengkap" name="name" value={form.name} onChange={handleChange} />
+                                <InputField label="Email" name="email" type="email" value={form.email} onChange={handleChange} />
 
-                                        <SelectField
-                                            label="Gender"
-                                            name="gender"
-                                            value={form.gender}
-                                            onChange={handleChange}
-                                            options={[
-                                                { value: 'Pria', label: 'Pria' },
-                                                { value: 'Wanita', label: 'Wanita' }
-                                            ]}
-                                        />
-                                    </div>
-                                    <div>
-                                        <InputField
-                                            label="No. Telepon"
-                                            name="phone_number"
-                                            value={form.phone_number}
-                                            onChange={handleChange}
-                                        />
-                                        <div className="space-y-2">
-                                            <InputField
-                                                label="NPWP"
-                                                name="npwp"
-                                                value={form.npwp}
-                                                onChange={handleChange}
-                                                disabled={form.punyaNpwp}
-                                            />
-                                            <label className="inline-flex items-center text-sm text-gray-600">
-                                                <input
-                                                    type="checkbox"
-                                                    name="punyaNpwp"
-                                                    checked={form.punyaNpwp}
-                                                    onChange={(e) => {
-                                                        handleChange(e);
-                                                        if (e.target.checked) {
-                                                            setForm(prev => ({
-                                                                ...prev,
-                                                                npwp: ''
-                                                            }));
-                                                        }
-                                                    }}
-                                                    className="mr-2"
-                                                />
-                                                Saya tidak mempunyai NPWP
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block mb-1 text-sm font-medium text-gray-700">Tentang Saya</label>
-                                    <textarea
-                                        name="about_me"
-                                        value={form.about_me}
+                                <SelectField
+                                    label="Gender"
+                                    name="gender"
+                                    value={form.gender}
+                                    onChange={handleChange}
+                                    options={[
+                                        { value: 'Pria', label: 'Pria' },
+                                        { value: 'Wanita', label: 'Wanita' }
+                                    ]}
+                                />
+                            </div>
+                            <div>
+                                <InputField
+                                    label="No. Telepon"
+                                    name="phone_number"
+                                    value={form.phone_number}
+                                    onChange={handleChange}
+                                />
+                                <div className="space-y-2">
+                                    <InputField
+                                        label="NPWP"
+                                        name="npwp"
+                                        value={form.npwp}
                                         onChange={handleChange}
-                                        placeholder="Ceritakan tentang Anda min. 200 karakter"
-                                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-24
-                                            focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                                        disabled={form.punyaNpwp}
                                     />
+                                    <label className="inline-flex items-center text-sm text-gray-600">
+                                        <input
+                                            type="checkbox"
+                                            name="punyaNpwp"
+                                            checked={form.punyaNpwp}
+                                            onChange={(e) => {
+                                                handleChange(e);
+                                                if (e.target.checked) {
+                                                    setForm(prev => ({
+                                                        ...prev,
+                                                        npwp: ''
+                                                    }));
+                                                }
+                                            }}
+                                            className="mr-2"
+                                        />
+                                        Saya tidak mempunyai NPWP
+                                    </label>
                                 </div>
-
-                                <h3 className="font-semibold border-b pb-2">Kelahiran</h3>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <InputField label="Tempat Lahir" name="place_of_birth" value={form.place_of_birth} onChange={handleChange} />
-                                    <InputField label="Tanggal Lahir" name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} />
-                                </div>
-
-                                <h3 className="font-semibold border-b pb-2">Alamat</h3>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div>
-                                        <InputField label="Alamat" name="address" value={form.address} onChange={handleChange} />
-                                        <InputField label="Provinsi" name="province" value={form.province} onChange={handleChange} />
-                                        <InputField label="Kecamatan" name="district" value={form.district} onChange={handleChange} />
-                                        <InputField label="Kelurahan/Desa" name="village" value={form.village} onChange={handleChange} />
-                                    </div>
-                                    <div>
-                                        <InputField label="Kota/Kabupaten" name="city" value={form.city} onChange={handleChange} />
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <InputField label="RT" name="rt" value={form.rt} onChange={handleChange} />
-                                            <InputField label="RW" name="rw" value={form.rw} onChange={handleChange} />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                                >
-                                    Save & Next
-                                </button>
-                            </form>
+                            </div>
                         </div>
-                    </div>
-                );
-        }
+
+                        <div>
+                            <label className="block mb-1 text-sm font-medium text-gray-700">Tentang Saya</label>
+                            <textarea
+                                name="about_me"
+                                value={form.about_me}
+                                onChange={handleChange}
+                                placeholder="Ceritakan tentang Anda min. 200 karakter"
+                                className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-24
+                                    focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                            />
+                        </div>
+
+                        <h3 className="font-semibold border-b pb-2">Kelahiran</h3>
+                        <div className="grid grid-cols-2 gap-6">
+                            <InputField label="Tempat Lahir" name="place_of_birth" value={form.place_of_birth} onChange={handleChange} />
+                            <InputField label="Tanggal Lahir" name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} />
+                        </div>
+
+                        <h3 className="font-semibold border-b pb-2">Alamat</h3>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <InputField label="Alamat" name="address" value={form.address} onChange={handleChange} />
+                                <InputField label="Provinsi" name="province" value={form.province} onChange={handleChange} />
+                                <InputField label="Kecamatan" name="district" value={form.district} onChange={handleChange} />
+                                <InputField label="Kelurahan/Desa" name="village" value={form.village} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <InputField label="Kota/Kabupaten" name="city" value={form.city} onChange={handleChange} />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <InputField label="RT" name="rt" value={form.rt} onChange={handleChange} />
+                                    <InputField label="RW" name="rw" value={form.rw} onChange={handleChange} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                        >
+                            Save & Next
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
     };
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Hilangkan NavbarHeader */}
-            {/* <NavbarHeader /> */}
-            
             {message && (
                 <Alert type={message.type} message={message.text} />
             )}
             
-            {/* Ganti ProfileHeader dengan CustomProfileHeader - gunakan form state */}
             <CustomProfileHeader
                 name={form.name}
                 email={form.email}
@@ -827,4 +801,4 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     );
 };
 
-export default DataPribadiForm;
+export default PersonalData;

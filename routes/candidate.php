@@ -6,14 +6,17 @@ use App\Http\Controllers\JobsController;
 use App\Http\Controllers\CandidateEducationController;
 use Illuminate\Support\Facades\Route;
 
+
 // User route
-Route::middleware(['auth', 'verified', 'role:'.UserRole::CANDIDATE->value])
+Route::middleware(['auth', 'verified', 'role:' . UserRole::CANDIDATE->value])
     ->prefix('candidate')
     ->name('user.')
     ->group(function () {
         Route::get('/', [CandidateController::class, 'index'])->name('info');
         Route::get('/profile', [CandidateController::class, 'profile'])->name('profile');
         Route::post('/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])->name('candidate.profile.store');
+        Route::get('/dashboard', [CandidateController::class, 'dashboard'])->name('dashboard');
+
         Route::prefix('jobs')
             ->name('jobs.')
             ->group(function () {

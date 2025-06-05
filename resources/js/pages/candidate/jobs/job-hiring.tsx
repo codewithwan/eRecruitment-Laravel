@@ -1,3 +1,4 @@
+import { Inertia } from '@inertiajs/inertia';
 import React from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import Footer from '../../../components/Footer';
@@ -22,8 +23,15 @@ interface Job {
   department: string;
 }
 
+interface Recommendation {
+  vacancy: Job;
+  score: number;
+}
+
 interface Props {
   jobs: Job[];
+  recommendations: Recommendation[];
+  companies: string[];
 }
 
 const PageWrapper = styled.div`
@@ -36,25 +44,32 @@ const JobHiringContainer = styled.div`
   margin: 0 auto;
 `;
 
-const TeamImageWrapper = styled.div`
+const HeroSection = styled.div`
   width: 100%;
-  height: 500px; // Changed from 300px
+  height: 500px;
   position: relative;
-  margin-bottom: 60px;
-  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+              url('/images/team-celebration.png') center/cover no-repeat;
 `;
 
-const TeamImage = styled.div`
-  width: 100%;
-  height: 500px; // Changed from 300px to match wrapper
-  position: relative;
+const HeroContent = styled.div`
+  color: white;
+  z-index: 1;
+`;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-  }
+const HeroTitle = styled.h1`
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 16px;
+`;
+
+const HeroSubtitle = styled.p`
+  font-size: 18px;
+  opacity: 0.9;
 `;
 
 const ContentContainer = styled.div`
@@ -64,22 +79,24 @@ const ContentContainer = styled.div`
 `;
 
 const Title = styled.h2`
-  color: #1DA1F2;
+  color: #0088FF;
   font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: left;
+  margin: 40px 0 16px;
 `;
 
 const Underline = styled.div`
   width: 80px;
   height: 4px;
-  background: #1DA1F2;
+  background: #0088FF;
   border-radius: 2px;
-  margin-bottom: 32px;
+  margin: 0 0 32px;
 `;
 
 const FilterContainer = styled.div`
   display: flex;
+  justify-content: flex-start;
   gap: 12px;
   margin-bottom: 24px;
 `;
@@ -89,18 +106,19 @@ interface FilterButtonProps {
 }
 
 const FilterButton = styled.button<FilterButtonProps>`
-  background: ${(props) => (props.active ? '#1DA1F2' : '#fff')};
-  color: ${(props) => (props.active ? '#fff' : '#1DA1F2')};
-  border: 1px solid #1DA1F2;
+  background: ${(props) => (props.active ? '#0088FF' : '#fff')};
+  color: ${(props) => (props.active ? '#fff' : '#0088FF')};
+  border: 1px solid #0088FF;
   border-radius: 20px;
-  padding: 8px 16px;
+  padding: 8px 20px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 
   &:hover {
-    background: ${(props) => (props.active ? '#1A91DA' : '#E5F1FB')};
+    background: ${(props) => (props.active ? '#0077E6' : '#E6F4FF')};
   }
 `;
 
@@ -172,18 +190,39 @@ const DetailButton = styled.button`
   }
 `;
 
-const JobHiring: React.FC<Props> = ({ jobs }) => {
+const JobHiring: React.FC<Props> = ({ jobs, recommendations, companies }) => {
   const [activeFilter, setActiveFilter] = React.useState<string>('all');
   const [filteredJobs, setFilteredJobs] = React.useState(jobs);
 
-  const filterJobs = (company: string) => {
+  const filterJobs = React.useCallback((company: string) => {
     setActiveFilter(company);
+
+    // Update URL with company filter
+    const url = new URL(window.location.href);
+    if (company === 'all') {
+      url.searchParams.delete('company');
+    } else {
+      url.searchParams.set('company', company);
+    }
+    window.history.pushState({}, '', url.toString());
+
+    // Filter jobs
     if (company === 'all') {
       setFilteredJobs(jobs);
     } else {
-      setFilteredJobs(jobs.filter(job => job.company.name === company));
+      const filtered = jobs.filter(job => job.company.name === company);
+      setFilteredJobs(filtered);
     }
-  };
+  }, [jobs]);
+
+  // Add effect to handle initial filter from URL
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const companyFilter = urlParams.get('company');
+    if (companyFilter) {
+      filterJobs(companyFilter);
+    }
+  }, [filterJobs]);
 
   return (
     <>
@@ -191,12 +230,42 @@ const JobHiring: React.FC<Props> = ({ jobs }) => {
       <Header />
       <PageWrapper>
         <JobHiringContainer>
-          <TeamImageWrapper>
-            <TeamImage>
-              <img src="/images/team-celebration.png" alt="Team celebration" />
-            </TeamImage>
-          </TeamImageWrapper>
+          <HeroSection>
+            <HeroContent>
+              <HeroTitle>Bergabunglah Bersama Kami</HeroTitle>
+              <HeroSubtitle>
+                Telusuri berbagai peluang karir dan berkembang bersama PT Mitra Karya Analitika
+              </HeroSubtitle>
+            </HeroContent>
+          </HeroSection>
           <ContentContainer>
+            {/* Rekomendasi Section */}
+            <Title>Rekomendasi Pekerjaan Untuk Anda</Title>
+            <Underline />
+            {recommendations.length === 0 && (
+              <Description>Tidak ada rekomendasi yang cocok.</Description>
+            )}
+            {recommendations.map(({ vacancy, score }) => (
+              <JobCard key={vacancy.id}>
+                <JobInfo>
+                  <JobTitle>{vacancy.title}</JobTitle>
+                  <Company>{vacancy.company.name}</Company>
+                  <Description>{vacancy.description}</Description>
+                  <JobDetails>
+                    <span>🏢 {vacancy.location}</span>
+                    <span>🕒 {vacancy.type}</span>
+                    <span>📅 {vacancy.deadline}</span>
+                    <span>👥 {vacancy.department}</span>
+                    <span>⭐ Score: {score}</span>
+                  </JobDetails>
+                </JobInfo>
+                <DetailButton onClick={() => Inertia.visit(`/job-detail/${vacancy.id}`)}>
+                  Lihat Detail
+                </DetailButton>
+              </JobCard>
+            ))}
+
+            {/* Semua Lowongan Section */}
             <Title>Open Positions</Title>
             <Underline />
             <FilterContainer>
@@ -206,18 +275,15 @@ const JobHiring: React.FC<Props> = ({ jobs }) => {
               >
                 View All
               </FilterButton>
-              <FilterButton
-                active={activeFilter === 'PT MITRA KARYA ANALITIKA'}
-                onClick={() => filterJobs('PT MITRA KARYA ANALITIKA')}
-              >
-                PT MITRA KARYA ANALITIKA
-              </FilterButton>
-              <FilterButton
-                active={activeFilter === 'PT AUTENTIK KARYA ANALITIKA'}
-                onClick={() => filterJobs('PT AUTENTIK KARYA ANALITIKA')}
-              >
-                PT AUTENTIK KARYA ANALITIKA
-              </FilterButton>
+              {companies.map((company) => (
+                <FilterButton
+                  key={company}
+                  active={activeFilter === company}
+                  onClick={() => filterJobs(company)}
+                >
+                  {company}
+                </FilterButton>
+              ))}
             </FilterContainer>
             {filteredJobs.map((job) => (
               <JobCard key={job.id}>
@@ -232,7 +298,9 @@ const JobHiring: React.FC<Props> = ({ jobs }) => {
                     <span>👥 {job.department}</span>
                   </JobDetails>
                 </JobInfo>
-                <DetailButton>Lihat Detail</DetailButton>
+                <DetailButton onClick={() => Inertia.visit(`/job-detail/${job.id}`)}>
+                  Lihat Detail
+                </DetailButton>
               </JobCard>
             ))}
           </ContentContainer>

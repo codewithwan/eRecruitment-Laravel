@@ -20,9 +20,7 @@ return new class extends Migration
             $table->string('location');
             $table->json('requirements');
             $table->json('benefits')->nullable();
-            $table->json('applicants')->nullable();
             $table->text('job_description')->nullable();
-            $table->date('deadline')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

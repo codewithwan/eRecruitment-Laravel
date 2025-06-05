@@ -2,32 +2,37 @@
 
 namespace Database\Seeders;
 
-use App\Models\CandidatesProfiles;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class CandidatesProfilesSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        CandidatesProfiles::create([
-            'user_id' => 2,
-            'no_ektp' => '3374121234567890',
-            'gender' => 'male',
-            'phone_number' => '081234567890',
-            'npwp' => '12.345.678.9-123.000',
-            'about_me' => 'Saya adalah seorang profesional yang berdedikasi dengan pengalaman di bidang teknologi. Saya memiliki kemampuan analitis yang kuat dan dapat bekerja dengan baik dalam tim maupun secara mandiri.',
-            'place_of_birth' => 'Semarang',
-            'date_of_birth' => '1995-05-15',
-            'address' => 'Jl. Pemuda No. 123',
-            'province' => 'Jawa Tengah',
-            'city' => 'Semarang',
-            'district' => 'Semarang Tengah',
-            'village' => 'Sekayu',
-            'rt' => '001',
-            'rw' => '002',
+        $male = DB::table('master_genders')->where('name', 'male')->first();
+
+        DB::table('candidates_profiles')->insert([
+            [
+                'id' => 1,
+                'user_id' => 1,
+                'no_ektp' => '1234567890123456',
+                'gender_id' => $male ? $male->id : 1, // gunakan gender_id
+                'phone_number' => '081234567890',
+                'npwp' => '123456789012345',
+                'about_me' => 'Saya seorang kandidat yang berdedikasi.',
+                'place_of_birth' => 'Jakarta',
+                'date_of_birth' => '2000-01-01',
+                'address' => 'Jl. Contoh No. 1',
+                'province' => 'DKI Jakarta',
+                'city' => 'Jakarta Selatan',
+                'district' => 'Kebayoran Baru',
+                'village' => 'Gandaria Utara',
+                'rt' => '01',
+                'rw' => '02',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
         ]);
     }
 }

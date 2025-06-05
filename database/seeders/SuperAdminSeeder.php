@@ -14,6 +14,9 @@ class SuperAdminSeeder extends Seeder
      */
     public function run(): void
     {
+        // Hapus user superadmin jika sudah ada
+        User::where('email', env('SUPER_ADMIN_EMAIL', 'superadmin@gmail.com'))->delete();
+
         User::factory()->create([
             'name' => env('SUPER_ADMIN_NAME', 'Super Admin'),
             'email' => env('SUPER_ADMIN_EMAIL', 'superadmin@gmail.com'),

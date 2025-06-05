@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import React from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import Footer from '../../../components/Footer';
@@ -12,6 +13,7 @@ const GlobalStyle = createGlobalStyle`
 const PageWrapper = styled.div`
   background: #fff;
   min-height: 100vh;
+  padding-top: 80px;
   padding-bottom: 40px;
 `;
 
@@ -128,27 +130,19 @@ const ActionButton = styled.button<{ status: string }>`
   font-size: 14px;
 `;
 
+interface Application {
+  status_id: number;
+  title: string;
+  company: string;
+  description: string;
+  location: string;
+  type: string;
+  deadline: string;
+}
+
 const ApplicationHistory: React.FC = () => {
-  const applications = [
-    {
-      title: 'Hardware Engineer',
-      company: 'PT AUTENTIKA KARYA ANALITIKA',
-      description: 'Ahli yang merancang, mengembangkan, dan menguji perangkat keras, termasuk desain PCB dan integrasi komponen elektronik, untuk aplikasi seperti robotika dan sistem tertanam.',
-      location: 'Office',
-      type: 'Full Time',
-      deadline: 'Lamar Sebelum 25 Maret',
-      status: 'pending',
-    },
-    {
-      title: 'Hardware Engineer',
-      company: 'PT MITRA KARYA ANALITIKA',
-      description: 'Ahli yang merancang, mengembangkan, dan menguji perangkat keras, termasuk desain PCB dan integrasi komponen elektronik, untuk aplikasi seperti robotika dan sistem tertanam.',
-      location: 'Office',
-      type: 'Full Time',
-      deadline: 'Lamar Sebelum 25 Maret',
-      status: 'rejected',
-    },
-  ];
+  // Ambil data dari backend
+  const { applications = [] } = usePage().props as unknown as { applications: Application[] };
 
   return (
     <>
@@ -161,7 +155,7 @@ const ApplicationHistory: React.FC = () => {
             Berikut adalah riwayat lamaran pekerjaan yang telah Anda apply sebelumnya
           </Description>
           {applications.map((application, index) => (
-            <ApplicationCard key={index} status={application.status}>
+            <ApplicationCard key={index} status={application.status_id === 2 ? 'rejected' : 'pending'}>
               <JobHeader>
                 <JobTitleSection>
                   <JobTitle>{application.title}</JobTitle>
@@ -169,12 +163,12 @@ const ApplicationHistory: React.FC = () => {
                     Department
                   </StatusBadge>
                 </JobTitleSection>
-                {application.status === 'rejected' ? (
-                  <StatusBadge status={application.status}>
+                {application.status_id === 2 ? (
+                  <StatusBadge status="rejected">
                     Tidak Lolos
                   </StatusBadge>
                 ) : (
-                  <ActionButton status={application.status}>
+                  <ActionButton status="pending">
                     Lihat Detail
                   </ActionButton>
                 )}
@@ -186,19 +180,19 @@ const ApplicationHistory: React.FC = () => {
                   <DetailIcon>
                     <i className="fa-solid fa-building" style={{ fontSize: 14 }} />
                   </DetailIcon>
-                  Office
+                  {application.location}
                 </span>
                 <span>
                   <DetailIcon>
                     <i className="fa-solid fa-clock" style={{ fontSize: 14 }} />
                   </DetailIcon>
-                  Full Time
+                  {application.type}
                 </span>
                 <span>
                   <DetailIcon>
                     <i className="fa-solid fa-calendar" style={{ fontSize: 14 }} />
                   </DetailIcon>
-                  Lamar Sebelum 25 Maret
+                  Lamar Sebelum {application.deadline}
                 </span>
               </JobDetails>
             </ApplicationCard>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 interface Education {
     id?: number;
@@ -29,7 +29,7 @@ export function useEducation() {
 
     const updateEducation = async (data: Education) => {
         try {
-            const response = await axios.post('/candidate/education', data);
+            const response = await axios.post('/candidate/education/update', data);
             setEducation(response.data);
             return { success: true, message: 'Education updated successfully' };
         } catch (error) {

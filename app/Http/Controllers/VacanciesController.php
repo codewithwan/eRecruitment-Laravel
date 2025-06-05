@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vacancies;
+use App\Models\Companies;
+use App\Models\CandidatesProfiles;
+use App\Models\CandidatesEducations;
+use App\Models\CandidatesWorkExperiences;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -12,11 +16,37 @@ class VacanciesController extends Controller
 {
     public function index()
     {
-        $vacancies = Vacancies::all();
+        try {
+            // Query vacancies with relationships
+            $vacancies = Vacancies::with(['company', 'jobType', 'department'])
+                ->orderBy('created_at', 'desc')
+                ->take(6) // Limit to 6 jobs for the welcome page
+                ->get()
+                ->map(function ($vacancy) {
+                    return [
+                        'id' => $vacancy->id,
+                        'title' => $vacancy->title,
+                        'company' => [
+                            'name' => $vacancy->company ? $vacancy->company->name : 'N/A',
+                        ],
+                        'description' => $vacancy->job_description ?? $vacancy->description,
+                        'location' => $vacancy->location,
+                        'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
+                        'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
+                        'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
+                    ];
+                });
 
-        return Inertia::render('welcome', [
-            'vacancies' => $vacancies,
-        ]);
+            return Inertia::render('welcome', [
+                'vacancies' => $vacancies,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in VacanciesController@index: ' . $e->getMessage());
+            return Inertia::render('welcome', [
+                'vacancies' => [],
+                'error' => 'Failed to load job vacancies',
+            ]);
+        }
     }
 
     public function store()
@@ -88,36 +118,142 @@ class VacanciesController extends Controller
         ]);
     }
 
-    public function getVacancies()
+    public function getVacancies(Request $request)
     {
-        try {
-            $vacancies = Vacancies::with(['department', 'company', 'jobType'])
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function ($vacancy) {
-                    return [
+        $userId = Auth::id();
+
+        // Ambil data kandidat
+        $profile = CandidatesProfiles::where('user_id', $userId)->first();
+        $education = CandidatesEducations::where('user_id', $userId)->first();
+        $workExperiences = CandidatesWorkExperiences::where('user_id', $userId)->get();
+        \Log::info($profile);
+        \Log::info($education);
+        \Log::info($workExperiences);
+
+        // Ambil semua lowongan dan mapping
+        $vacancies = Vacancies::with(['company', 'jobType', 'department'])->get()->map(function ($vacancy) {
+            return [
+                'id' => $vacancy->id,
+                'title' => $vacancy->title,
+                'company' => [
+                    'name' => $vacancy->company ? $vacancy->company->name : 'N/A',
+                ],
+                'description' => $vacancy->job_description ?? $vacancy->description,
+                'location' => $vacancy->location,
+                'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
+                'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
+                'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
+            ];
+        });
+
+        // Rekomendasi sederhana (gunakan $vacancies->toArray() jika perlu)
+        $recommendations = [];
+        foreach (Vacancies::all() as $vacancy) {
+            $score = 0;
+            foreach ($vacancy->requirements as $req) {
+                if (
+                    (isset($profile) && stripos($profile->about_me, $req) !== false) ||
+                    (isset($education) && (
+                        stripos($education->major, $req) !== false ||
+                        stripos($education->faculty, $req) !== false ||
+                        stripos($education->education_level, $req) !== false
+                    )) ||
+                    ($workExperiences->filter(fn($exp) => stripos($exp->job_title, $req) !== false)->count() > 0)
+                ) {
+                    $score++;
+                }
+            }
+            if ($score > 0) {
+                $recommendations[] = [
+                    'vacancy' => [
                         'id' => $vacancy->id,
                         'title' => $vacancy->title,
                         'company' => [
-                            'name' => $vacancy->company ? $vacancy->company->name : 'N/A'
+                            'name' => $vacancy->company ? $vacancy->company->name : 'N/A',
                         ],
-                        'description' => $vacancy->job_description,
+                        'description' => $vacancy->job_description ?? $vacancy->description,
                         'location' => $vacancy->location,
                         'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
-                        'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : null,
-                        'department' => $vacancy->department ? $vacancy->department->name : 'N/A'
-                    ];
-                });
+                        'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
+                        'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
+                    ],
+                    'score' => $score,
+                ];
+            }
+        }
+        usort($recommendations, fn($a, $b) => $b['score'] <=> $a['score']);
 
-            return Inertia::render('candidate/jobs/job-hiring', [
-                'jobs' => $vacancies
+        $companies = Companies::pluck('name')->toArray();
+        //  \Log::info($recommendations);
+
+        return Inertia::render('candidate/jobs/job-hiring', [
+            'jobs' => $vacancies,
+            'recommendations' => $recommendations,
+            'companies' => $companies,
+        ]);
+    }
+
+    public function getVacanciesLandingPage(Request $request)
+    {
+        try {
+            // Query vacancies with relationships
+            $query = Vacancies::with(['company', 'jobType', 'department'])
+                ->orderBy('created_at', 'desc');
+
+            // Filter by company if provided
+            if ($request->has('company') && $request->company !== 'all') {
+                $query->whereHas('company', function ($q) use ($request) {
+                    $q->where('name', $request->company);
+                });
+            }
+
+            // Map vacancies data
+            $vacancies = $query->get()->map(function ($vacancy) {
+                return [
+                    'id' => $vacancy->id,
+                    'title' => $vacancy->title,
+                    'company' => [
+                        'name' => $vacancy->company ? $vacancy->company->name : 'N/A',
+                    ],
+                    'description' => $vacancy->job_description ?? $vacancy->description,
+                    'location' => $vacancy->location,
+                    'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
+                    'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
+                    'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
+                ];
+            });
+
+            // Get list of companies for filtering
+            $companies = Companies::pluck('name');
+
+            // Render the view with data
+            return Inertia::render('landing-page/job-hiring-landing-page', [
+                'jobs' => $vacancies,
+                'companies' => $companies,
             ]);
         } catch (\Exception $e) {
+            // Log error and return empty data with error message
             Log::error('Error in VacanciesController@getVacancies: ' . $e->getMessage());
-            return Inertia::render('candidate/jobs/job-hiring', [
+            return Inertia::render('landing-page/job-hiring-landing-page', [
                 'jobs' => [],
-                'error' => 'Failed to load job vacancies'
+                'companies' => [],
+                'error' => 'Failed to load job vacancies',
             ]);
         }
+    }
+
+    public function show($id)
+    {
+        $vacancy = \App\Models\Vacancies::findOrFail($id);
+
+        $job = [
+            'job_description' => $vacancy->job_description ?? '',
+            'requirements' => $vacancy->requirements ?? [],
+            'benefits' => $vacancy->benefits ?? [],
+        ];
+
+        return \Inertia\Inertia::render('candidate/detail-job/detail-job', [
+            'job' => $job,
+        ]);
     }
 }

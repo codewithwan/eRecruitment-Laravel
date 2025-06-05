@@ -305,7 +305,7 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                 npwp: form.punyaNpwp ? null : form.npwp
             };
 
-            await router.post('/candidate/profile/data-pribadi', submitData, {
+            await router.post('/candidate/data-pribadi', submitData, {
                 onSuccess: (page: any) => {
                     setMessage({
                         type: 'success',
@@ -636,7 +636,7 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                                         value={form.about_me}
                                         onChange={handleChange}
                                         placeholder="Ceritakan tentang Anda min. 200 karakter"
-                                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-24 
+                                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-24
                                             focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                                     />
                                 </div>

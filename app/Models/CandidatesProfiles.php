@@ -16,7 +16,7 @@ class CandidatesProfiles extends Model
     protected $fillable = [
         'user_id',
         'no_ektp',
-        'gender',
+        'gender_id', // ubah dari 'gender' ke 'gender_id'
         'phone_number',
         'npwp',
         'about_me',
@@ -44,6 +44,14 @@ class CandidatesProfiles extends Model
     }
 
     /**
+     * Get the gender that belongs to the profile.
+     */
+    public function gender()
+    {
+        return $this->belongsTo(\App\Models\MasterGender::class, 'gender_id');
+    }
+
+    /**
      * Store or update candidate profile data
      */
     public static function storeProfile($userData, $userId)
@@ -57,9 +65,9 @@ class CandidatesProfiles extends Model
             );
 
             DB::commit();
-            
+
             \Log::info('Profile saved successfully:', $profile->toArray());
-            
+
             return [
                 'success' => true,
                 'profile' => $profile,
@@ -69,7 +77,7 @@ class CandidatesProfiles extends Model
         } catch (Exception $e) {
             DB::rollBack();
             \Log::error('Error saving profile: ' . $e->getMessage());
-            
+
             return [
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan data'

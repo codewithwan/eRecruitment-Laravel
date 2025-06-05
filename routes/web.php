@@ -3,19 +3,35 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\VacanciesController;
 use App\Http\Controllers\CandidateController;
-use App\Http\Controllers\CandidatesWorkExperiencesController; // Pastikan controller ini ada
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\ResetPasswordController;
+use App\Models\AboutUs;
+use App\Http\Controllers\ContactsController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('job-hiring');
+Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacanciesLandingPage'])->name('job-hiring-landing-page');
+Route::get('/job-detail/{id}', [VacanciesController::class, 'show'])->name('job.detail');
 Route::get('/application-history', function () {
     return Inertia::render('candidate/jobs/application-history');
 })->name('application-history');
+Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
 
-// Seharusnya menggunakan controller untuk mengambil data
-Route::get('/data-pribadi', [CandidateController::class, 'profile'])->name('data.pribadi');
+Route::get('/data-pribadi', function () {
+        return Inertia::render('DataPribadiForm');
+    })->name('data.pribadi');
+
+Route::get('/contact', [ContactsController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactsController::class, 'store'])->name('contact.store');
+
+Route::get('/about-us', function () {
+    $aboutUs = \App\Models\AboutUs::with('company')->get();
+    return Inertia::render('landing-page/about-us', [
+        'aboutUs' => $aboutUs,
+    ]);
+})->name('about-us');
 
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
@@ -24,33 +40,38 @@ Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     : redirect()->route('user.profile');
 })->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::post('/candidate/profile/data-pribadi', [CandidateController::class, 'storeDataPribadi'])
-        ->name('candidate.profile.store');
-});
-
-// Route::middleware(['auth', 'verified'])->group(function () {
-//     Route::post('/candidate/education', [CandidateEducationController::class, 'store'])
-//         ->name('candidate.education.store');
-// });
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Rute yang memerlukan autentikasi dan verifikasi email
-});
+// Route untuk simpan data pribadi (POST)
+Route::post('/candidate/data-pribadi', [CandidateController::class, 'storeDataPribadi'])
+    ->name('candidate.data-pribadi.store');
 
 Route::middleware(['auth'])->group(function () {
-    // ...existing routes...
-    Route::get('/candidate/profile', function () {
-        return Inertia::render('CandidateProfile');
-    })->name('candidate.profile');
-    
-    // Work Experience routes
-    Route::get('/candidate/work-experience/{id}', [CandidateController::class, 'showWorkExperience'])
-        ->name('candidate.work-experience.show');
+    // Route untuk form data pribadi (GET)
+    Route::get('/candidate/data-pribadi', [CandidateController::class, 'profile'])
+        ->name('candidate.data-pribadi');
+
+    Route::get('/candidate/education/data', [CandidateController::class, 'getEducation'])
+        ->name('candidate.education.data');
+
+    Route::post('/candidate/education/update', [CandidateController::class, 'storeEducation'])
+        ->name('candidate.education.update');
+
+    // Tambah pengalaman kerja (POST)
     Route::post('/candidate/work-experience', [CandidateController::class, 'storeWorkExperience'])
         ->name('candidate.work-experience.store');
+
+    // Update pengalaman kerja (PUT)
     Route::put('/candidate/work-experience/{id}', [CandidateController::class, 'updateWorkExperience'])
         ->name('candidate.work-experience.update');
+
+    // Ambil semua pengalaman kerja (GET)
+    Route::get('/candidate/work-experience', [CandidateController::class, 'getWorkExperiences'])
+        ->name('candidate.work-experience.index');
+
+    // Ambil satu pengalaman kerja (GET)
+    Route::get('/candidate/work-experience/{id}', [CandidateController::class, 'showWorkExperience'])
+        ->name('candidate.work-experience.show');
+
+    // Hapus pengalaman kerja (DELETE)
     Route::delete('/candidate/work-experience/{id}', [CandidateController::class, 'deleteWorkExperience'])
         ->name('candidate.work-experience.delete');
     Route::get('/candidate/work-experiences', [CandidateController::class, 'indexWorkExperiences'])

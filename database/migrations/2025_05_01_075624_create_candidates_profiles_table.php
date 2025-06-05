@@ -11,7 +11,7 @@ class CreateCandidatesProfilesTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained();
             $table->string('no_ektp', 16);
-            $table->enum('gender', ['male', 'female']);
+            $table->foreignId('gender_id')->constrained('master_genders'); // ubah dari enum gender ke foreign key
             $table->string('phone_number');
             $table->string('npwp')->nullable();
             $table->text('about_me');

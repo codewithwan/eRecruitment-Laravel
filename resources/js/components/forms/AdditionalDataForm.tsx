@@ -214,16 +214,16 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
             let response;
             
             if (state.editingId) {
-                // Update existing skill
+                // Update existing skill - PERBAIKI URL INI
                 formData.append('_method', 'PUT');
-                response = await axios.post(`/candidate/skill/${state.editingId}`, formData, {
+                response = await axios.post(`/candidate/skills/${state.editingId}`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
                 });
             } else {
-                // Create new skill
-                response = await axios.post('/candidate/skill', formData, {
+                // Create new skill - PERBAIKI URL INI
+                response = await axios.post('/candidate/skills', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
@@ -289,7 +289,8 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
         setLoading(true);
 
         try {
-            const response = await axios.delete(`/candidate/skill/${id}`);
+            // PERBAIKI URL INI
+            const response = await axios.delete(`/candidate/skills/${id}`);
 
             if (response.data.success) {
                 setSavedData(prev => ({
@@ -355,16 +356,15 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
             let response;
             
             if (state.editingId) {
-                // Update existing course
                 formData.append('_method', 'PUT');
-                response = await axios.post(`/candidate/course/${state.editingId}`, formData, {
+                response = await axios.post(`/candidate/courses/${state.editingId}`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
                 });
             } else {
-                // Create new course
-                response = await axios.post('/candidate/course', formData, {
+                // PERBAIKI URL INI
+                response = await axios.post('/candidate/courses', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
@@ -430,7 +430,8 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
         setLoading(true);
 
         try {
-            const response = await axios.delete(`/candidate/course/${id}`);
+            // PERBAIKI URL INI
+            const response = await axios.delete(`/candidate/courses/${id}`);
 
             if (response.data.success) {
                 setSavedData(prev => ({
@@ -496,16 +497,15 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
             let response;
             
             if (state.editingId) {
-                // Update existing certification
                 formData.append('_method', 'PUT');
-                response = await axios.post(`/candidate/certification/${state.editingId}`, formData, {
+                response = await axios.post(`/candidate/certifications/${state.editingId}`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
                 });
             } else {
-                // Create new certification
-                response = await axios.post('/candidate/certification', formData, {
+                // PERBAIKI URL INI
+                response = await axios.post('/candidate/certifications', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
@@ -555,7 +555,8 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
         setLoading(true);
 
         try {
-            const response = await axios.delete(`/candidate/certification/${id}`);
+            // PERBAIKI URL INI
+            const response = await axios.delete(`/candidate/certifications/${id}`);
 
             if (response.data.success) {
                 setSavedData(prev => ({
@@ -622,13 +623,14 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
             
             if (state.editingId) {
                 formData.append('_method', 'PUT');
-                response = await axios.post(`/candidate/language/${state.editingId}`, formData, {
+                response = await axios.post(`/candidate/languages/${state.editingId}`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
                 });
             } else {
-                response = await axios.post('/candidate/language', formData, {
+                // PERBAIKI URL INI
+                response = await axios.post('/candidate/languages', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
@@ -677,7 +679,8 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
         setLoading(true);
 
         try {
-            const response = await axios.delete(`/candidate/language/${id}`);
+            // PERBAIKI URL INI
+            const response = await axios.delete(`/candidate/languages/${id}`);
 
             if (response.data.success) {
                 setSavedData(prev => ({
@@ -744,13 +747,14 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
             
             if (state.editingId) {
                 formData.append('_method', 'PUT');
-                response = await axios.post(`/candidate/english-certification/${state.editingId}`, formData, {
+                response = await axios.post(`/candidate/english-certifications/${state.editingId}`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
                 });
             } else {
-                response = await axios.post('/candidate/english-certification', formData, {
+                // PERBAIKI URL INI
+                response = await axios.post('/candidate/english-certifications', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     }
@@ -799,7 +803,8 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
         setLoading(true);
 
         try {
-            const response = await axios.delete(`/candidate/english-certification/${id}`);
+            // PERBAIKI URL INI
+            const response = await axios.delete(`/candidate/english-certifications/${id}`);
 
             if (response.data.success) {
                 setSavedData(prev => ({

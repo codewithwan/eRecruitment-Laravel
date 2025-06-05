@@ -125,65 +125,61 @@ Route::middleware(['auth'])->group(function () {
 // Skills routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/skills', [CandidateController::class, 'indexSkills'])
-        ->name('candidate.skills');
-    Route::post('/candidate/skill', [CandidateController::class, 'storeSkill'])
-        ->name('candidate.skill.store');
-    Route::put('/candidate/skill/{id}', [CandidateController::class, 'updateSkill'])
-        ->name('candidate.skill.update');
-    Route::post('/candidate/skill/{id}', [CandidateController::class, 'updateSkill'])
-        ->name('candidate.skill.update.post'); // untuk FormData dengan _method
-    Route::delete('/candidate/skill/{id}', [CandidateController::class, 'deleteSkill'])
-        ->name('candidate.skill.delete');
+        ->name('candidate.skills.index');
+    Route::post('/candidate/skills', [CandidateController::class, 'storeSkill'])
+        ->name('candidate.skills.store');
+    Route::get('/candidate/skills/{id}', [CandidateController::class, 'showSkill'])
+        ->name('candidate.skills.show');
+    Route::put('/candidate/skills/{id}', [CandidateController::class, 'updateSkill'])
+        ->name('candidate.skills.update');
+    Route::delete('/candidate/skills/{id}', [CandidateController::class, 'deleteSkill'])
+        ->name('candidate.skills.delete');
 
-    // Course routes
-    Route::get('/candidate/courses', [CandidateController::class, 'indexCourses'])
-        ->name('candidate.courses');
-    Route::post('/candidate/course', [CandidateController::class, 'storeCourse'])
-        ->name('candidate.course.store');
-    Route::put('/candidate/course/{id}', [CandidateController::class, 'updateCourse'])
-        ->name('candidate.course.update');
-    Route::post('/candidate/course/{id}', [CandidateController::class, 'updateCourse'])
-        ->name('candidate.course.update.post');
-    Route::delete('/candidate/course/{id}', [CandidateController::class, 'deleteCourse'])
-        ->name('candidate.course.delete');
-
-    // Certification routes
-    Route::get('/candidate/certifications', [CandidateController::class, 'indexCertifications'])
-        ->name('candidate.certifications');
-    Route::post('/candidate/certification', [CandidateController::class, 'storeCertification'])
-        ->name('candidate.certification.store');
-    Route::put('/candidate/certification/{id}', [CandidateController::class, 'updateCertification'])
-        ->name('candidate.certification.update');
-    Route::post('/candidate/certification/{id}', [CandidateController::class, 'updateCertification'])
-        ->name('candidate.certification.update.post');
-    Route::delete('/candidate/certification/{id}', [CandidateController::class, 'deleteCertification'])
-        ->name('candidate.certification.delete');
-
+    // Languages routes
     Route::get('/candidate/languages', [CandidateController::class, 'indexLanguages'])
-        ->name('candidate.languages');
-    Route::post('/candidate/language', [CandidateController::class, 'storeLanguage'])
-        ->name('candidate.language.store');
-    Route::put('/candidate/language/{id}', [CandidateController::class, 'updateLanguage'])
-        ->name('candidate.language.update');
-    Route::post('/candidate/language/{id}', [CandidateController::class, 'updateLanguage'])
-        ->name('candidate.language.update.post');
-    Route::delete('/candidate/language/{id}', [CandidateController::class, 'deleteLanguage'])
-        ->name('candidate.language.delete');
+        ->name('candidate.languages.index');
+    Route::post('/candidate/languages', [CandidateController::class, 'storeLanguage'])
+        ->name('candidate.languages.store');
+    Route::put('/candidate/languages/{id}', [CandidateController::class, 'updateLanguage'])
+        ->name('candidate.languages.update');
+    Route::delete('/candidate/languages/{id}', [CandidateController::class, 'deleteLanguage'])
+        ->name('candidate.languages.delete');
 
-   
+    // Courses routes
+    Route::get('/candidate/courses', [CandidateController::class, 'indexCourses'])
+        ->name('candidate.courses.index');
+    Route::post('/candidate/courses', [CandidateController::class, 'storeCourse'])
+        ->name('candidate.courses.store');
+
+    // Certifications routes
+    Route::get('/candidate/certifications', [CandidateController::class, 'indexCertifications'])
+        ->name('candidate.certifications.index');
+    Route::post('/candidate/certifications', [CandidateController::class, 'storeCertification'])
+        ->name('candidate.certifications.store');
+
+    // English Certifications routes
     Route::get('/candidate/english-certifications', [CandidateController::class, 'indexEnglishCertifications'])
-        ->name('candidate.english-certifications');
-    Route::post('/candidate/english-certification', [CandidateController::class, 'storeEnglishCertification'])
-        ->name('candidate.english-certification.store');
-    Route::put('/candidate/english-certification/{id}', [CandidateController::class, 'updateEnglishCertification'])
-        ->name('candidate.english-certification.update');
-    Route::post('/candidate/english-certification/{id}', [CandidateController::class, 'updateEnglishCertification'])
-        ->name('candidate.english-certification.update.post');
-    Route::delete('/candidate/english-certification/{id}', [CandidateController::class, 'deleteEnglishCertification'])
-        ->name('candidate.english-certification.delete');
+        ->name('candidate.english-certifications.index');
+    Route::post('/candidate/english-certifications', [CandidateController::class, 'storeEnglishCertification'])
+        ->name('candidate.english-certifications.store');
+
+    // CV Generation routes
+    Route::get('/candidate/data-completeness', [CandidateController::class, 'checkDataCompleteness'])
+        ->name('candidate.data-completeness');
+    Route::get('/candidate/cv/generate', [CandidateController::class, 'generateCV'])
+        ->name('candidate.cv.generate');
+    Route::get('/candidate/cv/download/{id?}', [CandidateController::class, 'downloadCV'])
+        ->name('candidate.cv.download');
+    Route::get('/candidate/cvs', [CandidateController::class, 'listUserCVs'])
+        ->name('candidate.cvs.list');
+    Route::delete('/candidate/cv/{id}', [CandidateController::class, 'deleteCV'])
+        ->name('candidate.cv.delete');
+    Route::get('/candidate/cv/test', [CandidateController::class, 'testPDF'])
+        ->name('candidate.cv.test');
 });
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/candidate.php';
 require __DIR__.'/admin.php';
+

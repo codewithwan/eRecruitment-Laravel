@@ -1,13 +1,12 @@
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { FormType } from '../types/FormTypes';
 import InputField from "../components/InputField";
 import SelectField from "../components/SelectField";
 import SidebarNav from "../components/SidebarNav";
 import ProfileHeader from "../components/ProfileHeader";
-import NavbarHeader from "../components/NavbarHeader";
 import PendidikanForm from '../components/forms/ListEducationForm';
 import TambahPendidikanForm from '../components/forms/AddEducationForm';
-import PengalamanKerjaForm from './PengalamanKerjaForm';
+import PengalamanKerjaForm from './WorkExperienceForm';
 import TambahPengalamanForm from '../components/forms/AddExperience';
 import OrganisasiForm from '../components/forms/Organization';
 import TambahOrganisasiForm from '../components/forms/AddOrganizationiForm';
@@ -38,6 +37,29 @@ const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }
                     </svg>
                 )}
                 <span>{message}</span>
+            </div>
+        </div>
+    </div>
+);
+
+// Custom ProfileHeader dengan icon profile biru
+const CustomProfileHeader = ({ name, email }: { name: string; email: string }) => (
+    <div className="bg-white border-b border-gray-200">
+        <div className="mx-6 py-6">
+            <div className="flex items-center space-x-4">
+                {/* Icon Profile Biru */}
+                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                </div>
+                
+                {/* Info User */}
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
+                    <p className="text-gray-600">{email}</p>
+                    {/* Hilangkan badge "Candidate User" yang redundan */}
+                </div>
             </div>
         </div>
     </div>
@@ -102,6 +124,25 @@ interface Props {
     };
 }
 
+// Tambahkan interface untuk data completeness
+interface CompletenessResponse {
+    completeness: {
+        profile: boolean;
+        education: boolean;
+        skills: boolean;
+        work_experience: boolean;
+        achievements: boolean;
+        overall_complete: boolean;
+    };
+    has_existing_cv: boolean;
+    existing_cv?: {
+        id: number;
+        filename: string;
+        created_at: string;
+        download_count: number;
+    };
+}
+
 // Helper functions for gender conversion
 const convertGender = (dbGender: string): string => {
     return dbGender === 'male' ? 'Pria' : dbGender === 'female' ? 'Wanita' : '';
@@ -111,13 +152,11 @@ const convertGenderForDb = (formGender: string): string => {
     return formGender === 'Pria' ? 'male' : formGender === 'Wanita' ? 'female' : '';
 };
 
-
 const formatDate = (dateString: string | undefined) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toISOString().split('T')[0];
 };
-
 
 enum SubFormType {
     NONE,
@@ -140,7 +179,10 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         village: profile?.village || '',
         rt: profile?.rt || '',
         rw: profile?.rw || '',
-        punyaNpwp: false
+        punyaNpwp: false,
+        // Tambahkan nama dan email ke form state
+        name: user.name || '',
+        email: user.email || ''
     });
 
     const [activeForm, setActiveForm] = useState<FormType>(FormType.DATA_PRIBADI);
@@ -155,6 +197,11 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [selectedPrestasi, setSelectedPrestasi] = useState<PrestasiData | null>(null);
     const [selectedSocialMedia, setSelectedSocialMedia] = useState<any>(null);
+
+    // Tambahkan import dan state
+    const [completenessData, setCompletenessData] = useState<CompletenessResponse | null>(null);
+    const [loadingCompleteness, setLoadingCompleteness] = useState(false);
+    const [generatingCV, setGeneratingCV] = useState(false);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -303,9 +350,117 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                     // Handler untuk next jika diperlukan
                     console.log('Next button clicked');
                 }}
+                onTambahSkills={() => {
+                    console.log('Tambah skills clicked');
+                }}
+                onTambahKursus={() => {
+                    console.log('Tambah kursus clicked');
+                }}
+                onTambahSertifikasi={() => {
+                    console.log('Tambah sertifikasi clicked');
+                }}
+                onTambahBahasa={() => {
+                    console.log('Tambah bahasa clicked');
+                }}
+                onTambahEnglishCert={() => {
+                    console.log('Tambah English certification clicked');
+                }}
             />
         );
     };
+
+    const checkDataCompleteness = async () => {
+        setLoadingCompleteness(true);
+        try {
+            const response = await axios.get('/candidate/data-completeness');
+            if (response.data.success) {
+                setCompletenessData(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error checking data completeness:', error);
+        } finally {
+            setLoadingCompleteness(false);
+        }
+    };
+
+    // Function untuk generate CV dengan notifikasi hilang otomatis dalam 5 detik
+    const handleGenerateCV = async () => {
+        if (!completenessData?.completeness.overall_complete) {
+            setMessage({
+                type: 'error',
+                text: 'Data belum lengkap untuk generate CV!'
+            });
+            
+            // Auto hide error notification after 5 seconds
+            setTimeout(() => {
+                setMessage(null);
+            }, 5000);
+            return;
+        }
+
+        setGeneratingCV(true);
+        setMessage(null);
+        
+        try {
+            console.log('Starting CV generation...');
+            
+            // Update: Gunakan JSON response instead of blob
+            const response = await axios.get('/candidate/cv/generate');
+
+            if (response.data.success) {
+                console.log('CV generated successfully:', response.data);
+                
+                setMessage({
+                    type: 'success',
+                    text: `${response.data.message} File: ${response.data.data.filename}`,
+                });
+
+                // Auto hide success notification after 5 seconds
+                setTimeout(() => {
+                    setMessage(null);
+                }, 5000);
+
+                // Auto download CV if URL available
+                if (response.data.data.download_url) {
+                    setTimeout(() => {
+                        window.open(response.data.data.download_url, '_blank');
+                    }, 1000);
+                }
+
+                // Refresh data completeness untuk update info CV
+                setTimeout(() => {
+                    checkDataCompleteness();
+                }, 2000);
+            }
+
+        } catch (error: any) {
+            console.error('Error generating CV:', error);
+            
+            let errorMessage = 'Gagal generate CV';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            setMessage({
+                type: 'error',
+                text: errorMessage
+            });
+
+            // Auto hide error notification after 5 seconds
+            setTimeout(() => {
+                setMessage(null);
+            }, 5000);
+        } finally {
+            setGeneratingCV(false);
+        }
+    };
+
+    // useEffect untuk load data completeness saat component mount
+    useEffect(() => {
+        checkDataCompleteness();
+    }, []);
 
     const renderActiveForm = () => {
         if (activeForm === FormType.SOCIAL_MEDIA) {
@@ -402,7 +557,6 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
         if (activeForm === FormType.PENDIDIKAN) {
             return (
                 <PendidikanForm
-
                     onSubmit={handleSubmit}
                     onChange={handleChange}
                     onTambahPendidikan={() => { }}
@@ -422,8 +576,10 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
                                 <div className="grid grid-cols-2 gap-6 text-black">
                                     <div>
                                         <InputField label="No. E-KTP" name="no_ektp" value={form.no_ektp} onChange={handleChange} />
-                                        <InputField label="Nama Lengkap" name="nama" value={user.name} onChange={handleChange} />
-                                        <InputField label="Email" name="email" type="email" value={user.email} onChange={handleChange} />
+                                        {/* Ubah dari user.name ke form.name */}
+                                        <InputField label="Nama Lengkap" name="name" value={form.name} onChange={handleChange} />
+                                        {/* Ubah dari user.email ke form.email */}
+                                        <InputField label="Email" name="email" type="email" value={form.email} onChange={handleChange} />
 
                                         <SelectField
                                             label="Gender"
@@ -523,13 +679,17 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
 
     return (
         <div className="min-h-screen bg-white">
-            <NavbarHeader />
+            {/* Hilangkan NavbarHeader */}
+            {/* <NavbarHeader /> */}
+            
             {message && (
                 <Alert type={message.type} message={message.text} />
             )}
-            <ProfileHeader
-                name={user.name}
-                email={user.email}
+            
+            {/* Ganti ProfileHeader dengan CustomProfileHeader - gunakan form state */}
+            <CustomProfileHeader
+                name={form.name}
+                email={form.email}
             />
 
             <div className="mx-6 flex space-x-6">
@@ -542,6 +702,125 @@ const DataPribadiForm: React.FC<Props> = ({ profile, user }) => {
 
                 <div className="flex-1">
                     {renderActiveForm()}
+                </div>
+            </div>
+
+            {/* CV Generation Section */}
+            <div className="mx-6 mb-8">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900">Generate CV Otomatis</h3>
+                            <p className="text-gray-600 mt-1">
+                                Buat CV professional dari data yang sudah Anda isi
+                            </p>
+                        </div>
+                        <button
+                            onClick={checkDataCompleteness}
+                            disabled={loadingCompleteness}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                            {loadingCompleteness ? 'Checking...' : 'Refresh Status'}
+                        </button>
+                    </div>
+
+                    {completenessData && (
+                        <>
+                            {/* Data Completeness Status */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                                <div className={`p-3 rounded-lg ${completenessData.completeness.profile ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                    <div className="flex items-center">
+                                        <div className={`w-2 h-2 rounded-full mr-2 ${completenessData.completeness.profile ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                        <span className="text-sm font-medium">Data Pribadi</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3 rounded-lg ${completenessData.completeness.education ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                    <div className="flex items-center">
+                                        <div className={`w-2 h-2 rounded-full mr-2 ${completenessData.completeness.education ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                        <span className="text-sm font-medium">Pendidikan</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3 rounded-lg ${completenessData.completeness.skills ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                    <div className="flex items-center">
+                                        <div className={`w-2 h-2 rounded-full mr-2 ${completenessData.completeness.skills ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                        <span className="text-sm font-medium">Skills/Kemampuan</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3 rounded-lg ${completenessData.completeness.work_experience ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                    <div className="flex items-center">
+                                        <div className={`w-2 h-2 rounded-full mr-2 ${completenessData.completeness.work_experience ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                                        <span className="text-sm font-medium">Pengalaman Kerja</span>
+                                    </div>
+                                    <span className="text-xs">(Opsional)</span>
+                                </div>
+
+                                <div className={`p-3 rounded-lg ${completenessData.completeness.achievements ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                    <div className="flex items-center">
+                                        <div className={`w-2 h-2 rounded-full mr-2 ${completenessData.completeness.achievements ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                                        <span className="text-sm font-medium">Prestasi</span>
+                                    </div>
+                                    <span className="text-xs">(Opsional)</span>
+                                </div>
+                            </div>
+
+                            {/* Existing CV Info */}
+                            {completenessData.has_existing_cv && completenessData.existing_cv && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium text-blue-900">CV Tersimpan</h4>
+                                            <p className="text-blue-700 text-sm">
+                                                {completenessData.existing_cv.filename}
+                                            </p>
+                                            <p className="text-blue-600 text-xs">
+                                                Dibuat: {completenessData.existing_cv.created_at} |
+                                                Downloaded: {completenessData.existing_cv.download_count}x
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Generate CV Button */}
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={handleGenerateCV}
+                                    disabled={!completenessData.completeness.overall_complete || generatingCV}
+                                    className={`flex-1 flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-colors ${
+                                        completenessData.completeness.overall_complete && !generatingCV
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {generatingCV ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Generating CV...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            Generate & Download CV
+                                        </>
+                                    )}
+                                </button>
+
+                                {!completenessData.completeness.overall_complete && (
+                                    <div className="text-red-600 text-sm flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        Lengkapi data yang diperlukan untuk generate CV
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

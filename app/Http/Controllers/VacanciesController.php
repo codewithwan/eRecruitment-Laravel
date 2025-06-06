@@ -126,11 +126,11 @@ class VacanciesController extends Controller
         $profile = CandidatesProfiles::where('user_id', $userId)->first();
         $education = CandidatesEducations::where('user_id', $userId)->first();
         $workExperiences = CandidatesWorkExperiences::where('user_id', $userId)->get();
-        \Log::info($profile);
-        \Log::info($education);
-        \Log::info($workExperiences);
 
-        // Ambil semua lowongan dan mapping
+        // Ambil jurusan kandidat
+        $majorId = $education?->major_id;
+
+        // Ambil semua lowongan
         $vacancies = Vacancies::with(['company', 'jobType', 'department'])->get()->map(function ($vacancy) {
             return [
                 'id' => $vacancy->id,
@@ -143,27 +143,18 @@ class VacanciesController extends Controller
                 'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
                 'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
                 'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
+                'requirements' => $vacancy->requirements,
             ];
         });
 
-        // Rekomendasi sederhana (gunakan $vacancies->toArray() jika perlu)
+        // Rekomendasi berdasarkan jurusan kandidat
         $recommendations = [];
-        foreach (Vacancies::all() as $vacancy) {
-            $score = 0;
-            foreach ($vacancy->requirements as $req) {
-                if (
-                    (isset($profile) && stripos($profile->about_me, $req) !== false) ||
-                    (isset($education) && (
-                        stripos($education->major, $req) !== false ||
-                        stripos($education->faculty, $req) !== false ||
-                        stripos($education->education_level, $req) !== false
-                    )) ||
-                    ($workExperiences->filter(fn($exp) => stripos($exp->job_title, $req) !== false)->count() > 0)
-                ) {
-                    $score++;
-                }
-            }
-            if ($score > 0) {
+        if ($majorId) {
+            $recommendedVacancies = Vacancies::with(['company', 'jobType', 'department'])
+                ->where('major_id', $majorId)
+                ->get();
+
+            foreach ($recommendedVacancies as $vacancy) {
                 $recommendations[] = [
                     'vacancy' => [
                         'id' => $vacancy->id,
@@ -177,19 +168,21 @@ class VacanciesController extends Controller
                         'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
                         'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
                     ],
-                    'score' => $score,
+                    'score' => 100, // Atau logika penilaian lain jika ingin
                 ];
             }
         }
-        usort($recommendations, fn($a, $b) => $b['score'] <=> $a['score']);
 
         $companies = Companies::pluck('name')->toArray();
-        //  \Log::info($recommendations);
+
+        // Ambil nama jurusan kandidat untuk frontend
+        $candidateMajor = $education && $education->major ? $education->major->name : null;
 
         return Inertia::render('candidate/jobs/job-hiring', [
             'jobs' => $vacancies,
             'recommendations' => $recommendations,
             'companies' => $companies,
+            'candidateMajor' => $candidateMajor,
         ]);
     }
 

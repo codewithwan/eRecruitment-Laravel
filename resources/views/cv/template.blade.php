@@ -10,42 +10,42 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
             line-height: 1.4;
             color: #333;
         }
-        
+
         .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 30px;
             border-bottom: 2px solid #2563eb;
             padding-bottom: 20px;
         }
-        
+
         .header h1 {
             font-size: 24px;
             color: #2563eb;
             margin-bottom: 5px;
         }
-        
+
         .header .contact-info {
             font-size: 11px;
             color: #666;
         }
-        
+
         .section {
             margin-bottom: 25px;
         }
-        
+
         .section-title {
             font-size: 16px;
             font-weight: bold;
@@ -54,49 +54,49 @@
             padding-bottom: 5px;
             margin-bottom: 15px;
         }
-        
+
         .item {
             margin-bottom: 15px;
         }
-        
+
         .item-title {
             font-weight: bold;
             font-size: 13px;
         }
-        
+
         .item-subtitle {
             font-style: italic;
             color: #666;
             font-size: 11px;
         }
-        
+
         .item-description {
             margin-top: 5px;
             text-align: justify;
         }
-        
+
         .two-column {
             display: table;
             width: 100%;
         }
-        
+
         .left-column {
             display: table-cell;
             width: 65%;
             vertical-align: top;
             padding-right: 20px;
         }
-        
+
         .right-column {
             display: table-cell;
             width: 35%;
             vertical-align: top;
         }
-        
+
         .skills-list {
             list-style: none;
         }
-        
+
         .skills-list li {
             background: #f3f4f6;
             padding: 3px 8px;
@@ -104,7 +104,7 @@
             border-radius: 3px;
             font-size: 11px;
         }
-        
+
         .about-me {
             background: #f9fafb;
             padding: 15px;
@@ -121,7 +121,7 @@
             <h1>{{ $user->name ?? 'Nama Lengkap' }}</h1>
             <div class="contact-info">
                 {{ $user->email ?? '' }}
-                @if($profile && $profile->phone_number) 
+                @if($profile && $profile->phone_number)
                     | {{ $profile->phone_number }}
                 @endif
                 @if($profile && $profile->address)
@@ -153,8 +153,8 @@
                     <div class="item">
                         <div class="item-title">{{ $work->job_title ?? 'Job Title' }}</div>
                         <div class="item-subtitle">
-                            {{ $work->company_name ?? 'Company Name' }} | 
-                            {{ $work->employment_status ?? 'Full Time' }} | 
+                            {{ $work->company_name ?? 'Company Name' }} |
+                            {{ $work->employment_status ?? 'Full Time' }} |
                             @php
                                 $startMonth = '';
                                 if ($work->start_month) {
@@ -165,7 +165,7 @@
                                     }
                                 }
                             @endphp
-                            {{ $startMonth }} {{ $work->start_year ?? '' }} - 
+                            {{ $startMonth }} {{ $work->start_year ?? '' }} -
                             @if($work->is_current_job)
                                 Sekarang
                             @else
@@ -190,25 +190,13 @@
                 </div>
                 @endif
 
-                <!-- Education -->
+                <!-- Pendidikan -->
                 @if($education)
-                <div class="section">
-                    <div class="section-title">PENDIDIKAN</div>
-                    <div class="item">
-                        <div class="item-title">{{ $education->education_level ?? 'Tingkat Pendidikan' }}</div>
-                        <div class="item-subtitle">
-                            {{ $education->institution_name ?? 'Nama Institusi' }} | {{ $education->year_in ?? '' }} - {{ $education->year_out ?? '' }}
-                        </div>
-                        <div class="item-description">
-                            @if($education->faculty && $education->major)
-                                {{ $education->faculty }} - {{ $education->major }}<br>
-                            @endif
-                            @if($education->gpa)
-                                IPK: {{ $education->gpa }}
-                            @endif
-                        </div>
-                    </div>
-                </div>
+                    <h3>PENDIDIKAN</h3>
+                    <strong>{{ $education['level'] }}</strong><br>
+                    <em>{{ $education['institution'] }} | {{ $education['year_in'] }} - {{ $education['year_out'] }}</em><br>
+                    Fakultas {{ $education['faculty'] }} - {{ $education['major'] }}<br>
+                    IPK: {{ $education['gpa'] }}
                 @endif
 
                 <!-- Organizations -->
@@ -219,8 +207,8 @@
                     <div class="item">
                         <div class="item-title">{{ $org->position ?? 'Posisi' }}</div>
                         <div class="item-subtitle">
-                            {{ $org->organization_name ?? 'Nama Organisasi' }} | 
-                            {{ $org->start_month ?? '' }} {{ $org->start_year ?? '' }} - 
+                            {{ $org->organization_name ?? 'Nama Organisasi' }} |
+                            {{ $org->start_month ?? '' }} {{ $org->start_year ?? '' }} -
                             @if($org->is_active)
                                 Sekarang
                             @else

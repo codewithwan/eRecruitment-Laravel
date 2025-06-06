@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+
 use App\Models\Candidate;
 use App\Models\CandidatesProfiles;
 use App\Models\CandidatesEducations;
@@ -17,13 +19,13 @@ use App\Models\Certifications;
 use App\Models\Languages;
 use App\Models\EnglishCertifications;
 use App\Models\CandidateCV;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Validation\ValidationException;
+use App\Models\Job;
 
 class CandidateController extends Controller
 {
@@ -585,7 +587,7 @@ class CandidateController extends Controller
         try {
             $userId = Auth::id();
             $user = Auth::user();
-            
+
             $completeness = [
                 'profile' => false,
                 'education' => false,
@@ -596,45 +598,45 @@ class CandidateController extends Controller
                 'english_certifications' => false,
                 'overall_complete' => false
             ];
-            
+
             // Cek data pribadi
             $profile = CandidatesProfiles::where('user_id', $userId)->first();
             $completeness['profile'] = $profile && $profile->phone_number && $profile->address && $profile->date_of_birth;
-            
+
             // Cek pendidikan
             $education = CandidatesEducations::where('user_id', $userId)->first();
             $completeness['education'] = (bool) $education;
-            
+
             // Cek skills
             $skillsCount = Skills::where('user_id', $userId)->count();
             $completeness['skills'] = $skillsCount > 0;
-            
+
             // Cek pengalaman kerja (opsional)
             $workExpCount = CandidatesWorkExperiences::where('user_id', $userId)->count();
             $completeness['work_experience'] = $workExpCount > 0;
-            
+
             // Cek prestasi (opsional)
             $achievementCount = CandidatesAchievements::where('user_id', $userId)->count();
             $completeness['achievements'] = $achievementCount > 0;
-            
+
             // Cek bahasa (opsional)
             $languagesCount = Languages::where('user_id', $userId)->count();
             $completeness['languages'] = $languagesCount > 0;
-            
+
             // Cek sertifikat bahasa inggris (opsional)
             $englishCertCount = EnglishCertifications::where('user_id', $userId)->count();
             $completeness['english_certifications'] = $englishCertCount > 0;
-            
+
             // Overall completeness (minimal profile, education, skills)
-            $completeness['overall_complete'] = $completeness['profile'] && 
-                                               $completeness['education'] && 
+            $completeness['overall_complete'] = $completeness['profile'] &&
+                                               $completeness['education'] &&
                                                $completeness['skills'];
-            
+
             // Cek apakah sudah ada CV yang pernah digenerate
             $existingCV = CandidateCV::where('user_id', $userId)
                                      ->where('is_active', true)
                                      ->first();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -647,7 +649,7 @@ class CandidateController extends Controller
                     ] : null
                 ]
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error checking data completeness: ' . $e->getMessage());
             return response()->json([
@@ -662,9 +664,9 @@ class CandidateController extends Controller
         try {
             $userId = Auth::id();
             $user = Auth::user();
-            
+
             \Log::info('Starting CV generation for user: ' . $userId);
-            
+
             if (!$user) {
                 throw new \Exception('User not authenticated');
             }
@@ -719,36 +721,36 @@ class CandidateController extends Controller
             // Generate PDF
             $pdf = Pdf::loadView('cv.template', $data);
             $pdf->setPaper('A4', 'portrait');
-            
+
             // Generate PDF content
             $pdfContent = $pdf->output();
-            
+
             \Log::info('PDF generated successfully', [
                 'user_id' => $userId,
                 'pdf_size' => strlen($pdfContent)
             ]);
-            
+
             // Nama file yang aman
             $userName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->name ?? 'User');
             $fileName = 'CV_' . $userName . '_' . date('Y-m-d_H-i-s') . '.pdf';
             $filePath = 'cvs/' . $fileName;
-            
+
             // Pastikan direktori ada
             if (!Storage::disk('public')->exists('cvs')) {
                 Storage::disk('public')->makeDirectory('cvs');
             }
-            
+
             // Simpan PDF ke storage
             Storage::disk('public')->put($filePath, $pdfContent);
-            
+
             \Log::info('PDF saved to storage', [
                 'user_id' => $userId,
                 'file_path' => $filePath
             ]);
-            
+
             // Nonaktifkan CV lama jika ada
             CandidateCV::where('user_id', $userId)->update(['is_active' => false]);
-            
+
             // Simpan info CV baru ke database
             $cvRecord = CandidateCV::create([
                 'user_id' => $userId,
@@ -789,7 +791,7 @@ class CandidateController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Return JSON error response
             return response()->json([
                 'success' => false,
@@ -806,7 +808,7 @@ class CandidateController extends Controller
     private function formatBytes($size, $precision = 2)
     {
         $base = log($size, 1024);
-        $suffixes = array('', 'KB', 'MB', 'GB', 'TB');   
+        $suffixes = array('', 'KB', 'MB', 'GB', 'TB');
         return round(pow(1024, $base - floor($base)), $precision) .' '. $suffixes[floor($base)];
     }
 
@@ -814,7 +816,7 @@ class CandidateController extends Controller
     {
         try {
             $userId = Auth::id();
-            
+
             if ($id) {
                 // Download specific CV by ID
                 $cv = CandidateCV::where('id', $id)
@@ -825,24 +827,24 @@ class CandidateController extends Controller
                 $cv = CandidateCV::where('user_id', $userId)
                                  ->where('is_active', true)
                                  ->first();
-                
+
                 if (!$cv) {
                     return response()->json(['error' => 'CV not found'], 404);
                 }
             }
-            
+
             // Check if file exists
             if (!Storage::disk('public')->exists($cv->cv_path)) {
                 return response()->json(['error' => 'CV file not found'], 404);
             }
-            
+
             // Update download count
             $cv->increment('download_count');
             $cv->update(['last_downloaded_at' => now()]);
-            
+
             // Return file download
             return Storage::disk('public')->download($cv->cv_path, $cv->cv_filename);
-            
+
         } catch (\Exception $e) {
             \Log::error('Download CV error: ' . $e->getMessage());
             return response()->json(['error' => 'Download failed'], 500);
@@ -856,12 +858,12 @@ class CandidateController extends Controller
             $cvs = CandidateCV::where('user_id', $userId)
                           ->orderBy('created_at', 'desc')
                           ->get();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $cvs
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error listing CVs: ' . $e->getMessage());
             return response()->json([
@@ -878,20 +880,20 @@ class CandidateController extends Controller
             $cv = CandidateCV::where('id', $id)
                          ->where('user_id', $userId)
                          ->firstOrFail();
-            
+
             // Delete file from storage
             if (Storage::disk('public')->exists($cv->cv_path)) {
                 Storage::disk('public')->delete($cv->cv_path);
             }
-            
+
             // Delete record from database
             $cv->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'CV berhasil dihapus'
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error deleting CV: ' . $e->getMessage());
             return response()->json([
@@ -904,7 +906,7 @@ class CandidateController extends Controller
     private function validateUserDataForCV($userId)
     {
         $errors = [];
-        
+
         // Cek data pribadi
         $profile = CandidatesProfiles::where('user_id', $userId)->first();
         if (!$profile) {
@@ -914,19 +916,19 @@ class CandidateController extends Controller
             if (!$profile->address) $errors[] = 'Alamat belum diisi';
             if (!$profile->date_of_birth) $errors[] = 'Tanggal lahir belum diisi';
         }
-        
+
         // Cek data pendidikan
         $education = CandidatesEducations::where('user_id', $userId)->first();
         if (!$education) {
             $errors[] = 'Data pendidikan belum dilengkapi';
         }
-        
+
         // Cek minimal ada 1 skill
         $skillsCount = Skills::where('user_id', $userId)->count();
         if ($skillsCount == 0) {
             $errors[] = 'Minimal harus menambahkan 1 skill/kemampuan';
         }
-        
+
         if (!empty($errors)) {
             throw new \Exception('Data belum lengkap untuk generate CV: ' . implode(', ', $errors));
         }
@@ -937,25 +939,25 @@ class CandidateController extends Controller
     {
         try {
             \Log::info('Testing PDF generation');
-            
+
             $html = '<h1>Test PDF</h1><p>This is a test PDF generation at ' . now() . '</p>';
             $pdf = Pdf::loadHTML($html);
             $content = $pdf->output();
-            
+
             \Log::info('Test PDF generated successfully', ['size' => strlen($content)]);
-            
+
             return response($content, 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'attachment; filename="test_' . date('Y-m-d_H-i-s') . '.pdf"',
                 'Content-Length' => strlen($content)
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Test PDF generation failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -1060,7 +1062,7 @@ public function updateSkill(Request $request, $id)
             if ($skill->certificate_file) {
                 Storage::disk('public')->delete($skill->certificate_file);
             }
-            
+
             $file = $request->file('certificate_file');
             $filename = time() . '_' . $file->getClientOriginalName();
             $path = $file->storeAs('skills/certificates', $filename, 'public');
@@ -1112,7 +1114,8 @@ public function deleteSkill($id)
     }
 }
 
-// Methods untuk Languages
+// Methods
+
 public function indexLanguages()
 {
     try {
@@ -1369,5 +1372,45 @@ public function indexEnglishCertifications()
             'message' => 'Gagal mengambil data sertifikat bahasa Inggris'
         ], 500);
     }
+}
+public function jobRecommendations()
+{
+    $user = Auth::user();
+
+    // Ambil pendidikan terakhir user
+    $education = \App\Models\CandidatesEducations::where('user_id', $user->id)
+        ->orderByDesc('year_out')
+        ->first();
+
+    $majorId = $education?->major_id;
+
+    $jobs = [];
+    if ($majorId) {
+        $jobs = \App\Models\Job::with('company')
+            ->where('major_id', $majorId)
+            ->get();
+    }
+
+    $recommendations = collect($jobs)->map(function ($job) {
+        return [
+            'vacancy' => [
+                'id' => $job->id,
+                'title' => $job->title,
+                'company' => [
+                    'name' => $job->company->name ?? '-'
+                ],
+                'description' => $job->description ?? '-',
+                'location' => $job->location ?? '-',
+                'type' => $job->type ?? '-',
+                'deadline' => $job->deadline ?? '-',
+                'department' => $job->department ?? '-',
+            ],
+            'score' => 100,
+        ];
+    })->values();
+
+    return response()->json([
+        'recommendations' => $recommendations,
+    ]);
 }
 }

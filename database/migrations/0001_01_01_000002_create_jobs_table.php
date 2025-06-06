@@ -13,12 +13,18 @@ return new class extends Migration
     {
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
+            $table->string('title'); // <-- tambahkan baris ini
+            $table->unsignedBigInteger('major_id')->nullable(); // <-- perbaiki di sini
+            $table->unsignedBigInteger('company_id')->nullable(); // <-- tambahkan kolom company_id
             $table->string('queue')->index();
             $table->longText('payload');
             $table->unsignedTinyInteger('attempts');
             $table->unsignedInteger('reserved_at')->nullable();
             $table->unsignedInteger('available_at');
             $table->unsignedInteger('created_at');
+            // Tambahkan foreign key jika ingin
+            // $table->foreign('major_id')->references('id')->on('master_majors')->onDelete('set null');
+            // $table->foreign('company_id')->references('id')->on('companies')->onDelete('set null'); // <-- tambahkan foreign key
         });
 
         Schema::create('job_batches', function (Blueprint $table) {
@@ -50,6 +56,13 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('jobs', function (Blueprint $table) {
+            // $table->dropForeign(['major_id']);
+            // $table->dropForeign(['company_id']); // <-- hapus foreign key
+            $table->dropColumn('major_id');
+            $table->dropColumn('company_id'); // <-- hapus kolom company_id
+        });
+
         Schema::dropIfExists('jobs');
         Schema::dropIfExists('job_batches');
         Schema::dropIfExists('failed_jobs');

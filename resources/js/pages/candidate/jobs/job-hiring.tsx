@@ -1,5 +1,5 @@
 import { Inertia } from '@inertiajs/inertia';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import Footer from '../../../components/Footer';
 import Header from '../../../components/Header';
@@ -18,9 +18,9 @@ interface Job {
   };
   description: string;
   location: string;
-  type: string;
+  type: string | { name: string };
   deadline: string;
-  department: string;
+  department: string | { name: string };
 }
 
 interface Recommendation {
@@ -32,6 +32,7 @@ interface Props {
   jobs: Job[];
   recommendations: Recommendation[];
   companies: string[];
+  candidateMajor?: string; // <-- opsional, jika ingin tampilkan jurusan
 }
 
 const PageWrapper = styled.div`
@@ -190,39 +191,25 @@ const DetailButton = styled.button`
   }
 `;
 
-const JobHiring: React.FC<Props> = ({ jobs, recommendations, companies }) => {
-  const [activeFilter, setActiveFilter] = React.useState<string>('all');
-  const [filteredJobs, setFilteredJobs] = React.useState(jobs);
+const JobHiring: React.FC<Props> = ({ jobs, recommendations: initialRecommendations, companies, candidateMajor }) => {
+  const [recommendations] = useState<Recommendation[]>(initialRecommendations || []);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>(jobs);
 
-  const filterJobs = React.useCallback((company: string) => {
-    setActiveFilter(company);
-
-    // Update URL with company filter
-    const url = new URL(window.location.href);
-    if (company === 'all') {
-      url.searchParams.delete('company');
-    } else {
-      url.searchParams.set('company', company);
-    }
-    window.history.pushState({}, '', url.toString());
-
-    // Filter jobs
-    if (company === 'all') {
+  useEffect(() => {
+    if (activeFilter === 'all') {
       setFilteredJobs(jobs);
     } else {
-      const filtered = jobs.filter(job => job.company.name === company);
-      setFilteredJobs(filtered);
+      setFilteredJobs(jobs.filter(job => job.company.name === activeFilter));
     }
-  }, [jobs]);
+  }, [activeFilter, jobs]);
 
-  // Add effect to handle initial filter from URL
-  React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const companyFilter = urlParams.get('company');
-    if (companyFilter) {
-      filterJobs(companyFilter);
-    }
-  }, [filterJobs]);
+  const filterJobs = (filter: string) => {
+    setActiveFilter(filter);
+  };
+
+  // Hilangkan duplikat nama perusahaan
+  const uniqueCompanies = Array.from(new Set(companies));
 
   return (
     <>
@@ -242,28 +229,41 @@ const JobHiring: React.FC<Props> = ({ jobs, recommendations, companies }) => {
             {/* Rekomendasi Section */}
             <Title>Rekomendasi Pekerjaan Untuk Anda</Title>
             <Underline />
-            {recommendations.length === 0 && (
-              <Description>Tidak ada rekomendasi yang cocok.</Description>
+            {candidateMajor && (
+              <Description>
+                Berdasarkan jurusan Anda: <b>{candidateMajor}</b>
+              </Description>
             )}
-            {recommendations.map(({ vacancy, score }) => (
-              <JobCard key={vacancy.id}>
+            {recommendations.length === 0 ? (
+              <JobCard>
                 <JobInfo>
-                  <JobTitle>{vacancy.title}</JobTitle>
-                  <Company>{vacancy.company.name}</Company>
-                  <Description>{vacancy.description}</Description>
-                  <JobDetails>
-                    <span>🏢 {vacancy.location}</span>
-                    <span>🕒 {vacancy.type}</span>
-                    <span>📅 {vacancy.deadline}</span>
-                    <span>👥 {vacancy.department}</span>
-                    <span>⭐ Score: {score}</span>
-                  </JobDetails>
+                  <JobTitle>Tidak ada rekomendasi yang cocok.</JobTitle>
+                  <Description>
+                    Belum ada lowongan yang sesuai dengan jurusan Anda saat ini.
+                  </Description>
                 </JobInfo>
-                <DetailButton onClick={() => Inertia.visit(`/job-detail/${vacancy.id}`)}>
-                  Lihat Detail
-                </DetailButton>
               </JobCard>
-            ))}
+            ) : (
+              recommendations.map(({ vacancy, score }) => (
+                <JobCard key={vacancy.id}>
+                  <JobInfo>
+                    <JobTitle>{vacancy.title}</JobTitle>
+                    <Company>{vacancy.company.name}</Company>
+                    <Description>{vacancy.description}</Description>
+                    <JobDetails>
+                      <span>🏢 {vacancy.location}</span>
+                      <span>🕒 {typeof vacancy.type === 'object' ? vacancy.type?.name : vacancy.type}</span>
+                      <span>📅 {vacancy.deadline}</span>
+                      <span>👥 {typeof vacancy.department === 'object' ? vacancy.department?.name : vacancy.department}</span>
+                      <span>⭐ Score: {score}</span>
+                    </JobDetails>
+                  </JobInfo>
+                  <DetailButton onClick={() => Inertia.visit(`/job-detail/${vacancy.id}`)}>
+                    Lihat Detail
+                  </DetailButton>
+                </JobCard>
+              ))
+            )}
 
             {/* Semua Lowongan Section */}
             <Title>Open Positions</Title>
@@ -275,7 +275,7 @@ const JobHiring: React.FC<Props> = ({ jobs, recommendations, companies }) => {
               >
                 View All
               </FilterButton>
-              {companies.map((company) => (
+              {uniqueCompanies.map((company) => (
                 <FilterButton
                   key={company}
                   active={activeFilter === company}
@@ -293,9 +293,9 @@ const JobHiring: React.FC<Props> = ({ jobs, recommendations, companies }) => {
                   <Description>{job.description}</Description>
                   <JobDetails>
                     <span>🏢 {job.location}</span>
-                    <span>🕒 {job.type}</span>
+                    <span>🕒 {typeof job.type === 'object' ? job.type?.name : job.type}</span>
                     <span>📅 {job.deadline}</span>
-                    <span>👥 {job.department}</span>
+                    <span>👥 {typeof job.department === 'object' ? job.department?.name : job.department}</span>
                   </JobDetails>
                 </JobInfo>
                 <DetailButton onClick={() => Inertia.visit(`/job-detail/${job.id}`)}>

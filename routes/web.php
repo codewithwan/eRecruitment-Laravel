@@ -27,7 +27,7 @@ Route::get('/contact', [ContactsController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactsController::class, 'store'])->name('contact.store');
 
 Route::get('/about-us', function () {
-    $aboutUs = \App\Models\AboutUs::with('company')->get();
+    $aboutUs = \App\Models\AboutUs::with('companies')->get();
     return Inertia::render('landing-page/about-us', [
         'aboutUs' => $aboutUs,
     ]);
@@ -76,11 +76,11 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.work-experience.delete');
     Route::get('/candidate/work-experiences', [CandidateController::class, 'indexWorkExperiences'])
         ->name('candidate.work-experiences');
-    
+
     // Rute untuk Edit Pengalaman Kerja
     Route::get('/candidate/work-experience/{id}/edit', [CandidateController::class, 'editWorkExperience'])
         ->name('candidate.work-experience.edit');
-    
+
     // Achievement routes
     Route::get('/candidate/achievements', [CandidateController::class, 'indexAchievements'])
         ->name('candidate.achievements');
@@ -95,14 +95,14 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     // Profile routes
     Route::get('/profile', [CandidateController::class, 'profile'])->name('user.profile');
-    
+
     // Education routes
     Route::get('/candidate/education', [CandidateController::class, 'showEducationForm'])
         ->name('candidate.education');
     Route::post('/candidate/education', [CandidateController::class, 'storeEducation'])
         ->name('candidate.education.store');
     Route::get('/candidate/education/data', [CandidateController::class, 'getEducation']);
-    
+
     // Organization routes
     Route::get('/candidate/organizations', [CandidateController::class, 'indexOrganizations'])
         ->name('candidate.organizations');
@@ -198,6 +198,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/cv/test', [CandidateController::class, 'testPDF'])
         ->name('candidate.cv.test');
 });
+
+// Job Recommendations route
+Route::get('/candidate/job-recommendations', [CandidateController::class, 'jobRecommendations'])->middleware('auth');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

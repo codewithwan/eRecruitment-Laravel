@@ -13,32 +13,25 @@ class MasterMajorSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('master_majors')->insert([
-            [
-                'name' => 'Teknik Informatika',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Manajemen',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Akuntansi',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Teknik Elektro',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Psikologi',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        DB::table('master_majors')->updateOrInsert(
+            ['name' => 'Teknik Informatika'],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+        DB::table('master_majors')->updateOrInsert(
+            ['name' => 'Manajemen'],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+        DB::table('master_majors')->updateOrInsert(
+            ['name' => 'Akuntansi'],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+        DB::table('master_majors')->updateOrInsert(
+            ['name' => 'Teknik Elektro'],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+        DB::table('master_majors')->updateOrInsert(
+            ['name' => 'Psikologi'],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
     }
 }

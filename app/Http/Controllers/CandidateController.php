@@ -131,6 +131,7 @@ class CandidateController extends Controller
 
     public function getEducation()
     {
+        // getEducation()
         $education = CandidatesEducations::where('user_id', Auth::id())->first();
         return response()->json($education);
     }

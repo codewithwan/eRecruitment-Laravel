@@ -37,9 +37,14 @@ class Vacancies extends Model
         return $this->belongsTo(Companies::class, 'company_id');
     }
 
+    // Perbaiki relasi ini - pastikan model dan namespace benar
     public function jobType(): BelongsTo
     {
-        return $this->belongsTo(JobType::class, 'type_id');
+        // Ganti dengan namespace yang benar, misalnya jika nama model adalah JobTypes bukan JobType
+        return $this->belongsTo(\App\Models\JobTypes::class, 'type_id');
+        
+        // Atau jika namespace berbeda
+        // return $this->belongsTo(\App\Models\Master\JobType::class, 'type_id');
     }
 
     public function major(): BelongsTo

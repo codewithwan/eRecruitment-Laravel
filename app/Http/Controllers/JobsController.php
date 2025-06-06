@@ -8,6 +8,8 @@ use App\Models\Vacancies;
 use App\Models\Applications;
 use App\Models\CandidatesEducations;
 use App\Models\MasterMajor; // Tambahkan ini
+use App\Models\CandidatesProfile; // Tambahkan ini
+use App\Models\CandidatesProfiles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -36,68 +38,61 @@ class JobsController extends Controller
 
     public function apply(Request $request, $id)
     {
-        DB::beginTransaction();
+        $user = Auth::user();
 
-        try {
-            $user = auth()->user();
-            $vacancy = Vacancies::findOrFail($id);
+        // Ambil data profile kandidat
+        $profile = CandidatesProfiles::where('user_id', $user->id)->first();
+        $education = CandidatesEducations::where('user_id', $user->id)->first();
 
-            // Cek jurusan - Validasi utama kesesuaian jurusan
-            $education = CandidatesEducations::where('user_id', $user->id)->first();
-            if (!$education) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data pendidikan Anda belum lengkap.',
-                    'redirect' => '/candidate/personal-data'
-                ], 422);
-            }
-
-            // Jika vacancy tidak memiliki major_id, abaikan pengecekan
-            if ($vacancy->major_id && $vacancy->major_id != $education->major_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Lowongan pekerjaan ini tidak sesuai dengan jurusan Anda.'
-                ], 422);
-            }
-
-            // Cek kelengkapan data
-            $profileComplete = $this->checkProfileComplete($user);
-            if (!$profileComplete['complete']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $profileComplete['message'],
-                    'redirect' => '/candidate/personal-data' // Perbaiki path
-                ], 422);
-            }
-
-            // Proses apply sesuai dengan gambar yang ditampilkan
-            Applications::create([
-                'user_id' => $user->id,
-                'vacancies_id' => $vacancy->id,
-                'status_id' => 1, // 1 = pending
-            ]);
-
-            DB::commit();
-
-            // Return JSON response dengan redirect ke halaman application-history
-            return response()->json([
-                'success' => true,
-                'message' => 'Lamaran berhasil dikirim!',
-                'redirect' => '/candidate/application-history' // Perbaiki path
-            ]);
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Error while applying for a job', [
-                'user_id' => Auth::id(),
-                'vacancy_id' => $id,
-                'error' => $e->getMessage()
-            ]);
-
+        // Cek kelengkapan data pribadi
+        if (!$profile || empty($user->name) || empty($user->email) || empty($profile->phone_number)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat apply lowongan. Silakan coba lagi.'
-            ], 500);
+                'message' => 'Nama, email, dan nomor telepon wajib diisi.',
+                'redirect' => route('candidate.data-pribadi', ['redirect_back' => url()->current()])
+            ], 422);
         }
+        if (empty($profile->address)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Alamat wajib diisi.',
+                'redirect' => route('candidate.data-pribadi', ['redirect_back' => url()->current()])
+            ], 422);
+        }
+        // Cek pendidikan
+        if (
+            !$education ||
+            empty($education->institution) ||
+            is_null($education->major_id) ||
+            is_null($education->year_graduated)
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data pendidikan belum lengkap.',
+                'redirect' => route('candidate.data-pribadi', ['redirect_back' => url()->current()])
+            ], 422);
+        }
+
+        // Jika sudah lengkap, simpan lamaran
+        $alreadyApplied = Applications::where('user_id', $user->id)->where('vacancies_id', $id)->exists();
+        if ($alreadyApplied) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda sudah pernah melamar lowongan ini.',
+            ], 422);
+        }
+
+        Applications::create([
+            'user_id' => $user->id,
+            'vacancies_id' => $id,
+            'status_id' => 1, // pending
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lamaran berhasil dikirim!',
+            'redirect' => route('application-history')
+        ]);
     }
 
     public function show()
@@ -229,19 +224,54 @@ class JobsController extends Controller
         }
     }
 
+    public function applicationHistory()
+    {
+        $user = Auth::user();
+        $applications = Applications::with(['job', 'job.company'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($app) {
+                return [
+                    'id' => $app->id,
+                    'status_id' => $app->status_id,
+                    'status_name' => $app->status->name ?? 'Pending',
+                    'status_color' => $app->status->color ?? '#888',
+                    'job' => [
+                        'id' => $app->job->id,
+                        'title' => $app->job->title,
+                        'company' => $app->job->company->name ?? '-',
+                        'location' => $app->job->location ?? '-',
+                        'type' => $app->job->type ?? '-',
+                    ],
+                    'applied_at' => $app->created_at->format('Y-m-d H:i'),
+                    'updated_at' => $app->updated_at->format('Y-m-d H:i'),
+                ];
+            });
+
+        return inertia('candidate/jobs/application-history', [
+            'applications' => $applications,
+        ]);
+    }
+
     // Metode tambahan untuk memeriksa kelengkapan profil
     private function checkProfileComplete($user)
     {
-        // Cek data pribadi dasar
-        if (empty($user->name) || empty($user->email) || empty($user->phone_number)) {
+        $profile = \App\Models\CandidatesProfiles::where('user_id', $user->id)->first();
+
+        if (
+            !$profile ||
+            empty($user->name) ||
+            empty($user->email) ||
+            empty($profile->phone_number)
+        ) {
             return [
                 'complete' => false,
                 'message' => 'Nama, email, dan nomor telepon wajib diisi.'
             ];
         }
 
-        // Cek alamat
-        if (empty($user->address)) {
+        if (empty($profile->address)) {
             return [
                 'complete' => false,
                 'message' => 'Alamat wajib diisi.'
@@ -250,7 +280,12 @@ class JobsController extends Controller
 
         // Cek pendidikan
         $education = CandidatesEducations::where('user_id', $user->id)->first();
-        if (!$education || empty($education->institution) || empty($education->major_id) || empty($education->year_graduated)) {
+        if (
+            !$education ||
+            empty($education->institution) ||
+            empty($education->major_id) ||
+            empty($education->year_graduated)
+        ) {
             return [
                 'complete' => false,
                 'message' => 'Data pendidikan belum lengkap.'
@@ -258,7 +293,7 @@ class JobsController extends Controller
         }
 
         // Cek CV
-        $hasCV = Storage::disk('public')->exists('cv/'.$user->id.'.pdf');
+        $hasCV = \Storage::disk('public')->exists('cv/'.$user->id.'.pdf');
         if (!$hasCV) {
             return [
                 'complete' => false,

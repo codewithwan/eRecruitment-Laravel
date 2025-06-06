@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\ResetPasswordController;
 use App\Models\AboutUs;
 use App\Http\Controllers\ContactsController;
+use App\Http\Controllers\PersonalDataController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 Route::get('/job-hiring', [JobsController::class, 'jobHiring'])->name('job-hiring');

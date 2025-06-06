@@ -156,7 +156,7 @@ const JobDetailPage: React.FC = () => {
                 icon: 'success',
                 confirmButtonText: 'OK'
             }).then(() => {
-                window.location.href = '/application-history';
+                window.location.href = '/jobs/application-history';
             });
         }
 
@@ -207,7 +207,7 @@ const JobDetailPage: React.FC = () => {
                             confirmButtonText: 'OK'
                         }).then(() => {
                             // Redirect ke halaman application history
-                            window.location.href = response.data.redirect || '/application-history';
+                            window.location.href = response.data.redirect || '/jobs/application-history';
                         });
                     }
                 } catch (error: any) {
@@ -227,9 +227,7 @@ const JobDetailPage: React.FC = () => {
                         icon: 'warning',
                         confirmButtonText: redirectUrl ? 'Lengkapi Data' : 'OK'
                     }).then(() => {
-                        // Redirect ke personal-data jika data belum lengkap
                         if (redirectUrl) {
-                            // Simpan URL saat ini sebagai redirect_back
                             const currentUrl = window.location.href;
                             const redirectPath = `${redirectUrl}?redirect_back=${encodeURIComponent(currentUrl)}`;
                             window.location.href = redirectPath;

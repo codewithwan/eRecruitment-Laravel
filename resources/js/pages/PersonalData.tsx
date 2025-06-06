@@ -1,7 +1,8 @@
 import SocialMediaList from "@/components/forms/SocialMediaList";
-import { router } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import Swal from 'sweetalert2';
 import InputField from "../components/InputField";
 import SelectField from "../components/SelectField";
 import SidebarNav from "../components/SidebarNav";
@@ -216,26 +217,19 @@ enum SubFormType {
 
 // Ubah nama komponen agar konsisten
 const PersonalData: React.FC<Props> = ({ profile, user }) => {
-    const [form, setForm] = useState({
-        no_ektp: profile?.no_ektp || '',
-        gender: profile?.gender ? convertGender(profile.gender) : '',
-        phone_number: profile?.phone_number || '',
-        npwp: profile?.npwp || '',
-        about_me: profile?.about_me || '',
-        place_of_birth: profile?.place_of_birth || '',
-        date_of_birth: formatDate(profile?.date_of_birth) || '',
-        address: profile?.address || '',
-        province: profile?.province || '',
-        city: profile?.city || '',
-        district: profile?.district || '',
-        village: profile?.village || '',
-        rt: profile?.rt || '',
-        rw: profile?.rw || '',
-        punyaNpwp: false,
+    const { data, setData, post, processing, errors } = useForm({
         name: user?.name || '',
-        email: user?.email || ''
+        email: user?.email || '',
+        phone_number: user?.phone_number || '',
+        address: user?.address || '',
+        institution: profile?.institution || '',
+        major_id: profile?.major_id || '',
+        year_graduated: profile?.year_graduated || '',
+        cv: null as File | null,
+        redirect_back: null as string | null
     });
 
+    const [file, setFile] = useState<File | null>(null);
     const [activeForm, setActiveForm] = useState<FormType>(FormType.DATA_PRIBADI);
     const [subForm, setSubForm] = useState<SubFormType>(SubFormType.NONE);
     const [showTambahPengalaman, setShowTambahPengalaman] = useState(false);
@@ -252,10 +246,38 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
     const [loadingCompleteness, setLoadingCompleteness] = useState(false);
     const [generatingCV, setGeneratingCV] = useState(false);
 
+    const { flash } = usePage<{ flash: any }>().props;
+
+    // Handle flash messages
+    React.useEffect(() => {
+        if (flash?.success) {
+            Swal.fire({
+                title: 'Sukses!',
+                text: flash.success,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Jika data sudah lengkap dan ada redirect_back, kembalikan ke halaman sebelumnya
+                if (completenessData?.completeness.overall_complete && flash.redirectBack) {
+                    window.location.href = flash.redirectBack;
+                }
+            });
+        }
+
+        if (flash?.error) {
+            Swal.fire({
+                title: 'Error!',
+                text: flash.error,
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    }, [flash, completenessData]);
+
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
-        setForm(prev => ({
+        setData(prev => ({
             ...prev,
             [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value
         }));
@@ -335,57 +357,33 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
         e.preventDefault();
         setMessage(null);
 
-        if (!form.village) {
+        if (!data.address) {
             setMessage({
                 type: 'error',
-                text: 'Kelurahan/Desa harus diisi'
+                text: 'Alamat harus diisi'
             });
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
 
-        try {
-            const submitData = {
-                ...form,
-                gender: convertGenderForDb(form.gender),
-                date_of_birth: formatDate(form.date_of_birth),
-                npwp: form.punyaNpwp ? null : form.npwp
-            };
+        // Buat FormData untuk handle file upload
+        const formData = new FormData();
+        formData.append('name', data.name);
+        formData.append('email', data.email);
+        formData.append('phone_number', data.phone_number);
+        formData.append('address', data.address);
+        formData.append('institution', data.institution);
+        formData.append('major_id', data.major_id.toString());
+        formData.append('year_graduated', data.year_graduated.toString());
 
-            await router.post('/candidate/data-pribadi', submitData, {
-                onSuccess: (page: any) => {
-                    setMessage({
-                        type: 'success',
-                        text: 'Data berhasil disimpan!'
-                    });
-
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-
-                    setTimeout(() => {
-                        setMessage(null);
-                    }, 3000);
-                },
-                onError: (errors) => {
-                    setMessage({
-                        type: 'error',
-                        text: 'Terjadi kesalahan saat menyimpan data'
-                    });
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                },
-                preserveScroll: true,
-                preserveState: true
-            });
-        } catch (error) {
-            console.error('Error submitting form:', error);
-            setMessage({
-                type: 'error',
-                text: 'Terjadi kesalahan saat menyimpan data'
-            });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (file) {
+            formData.append('cv', file);
         }
+
+        // Submit form
+        post('/personal-data/update', {
+            data: formData,
+        });
     };
 
     const renderDataTambahanForm = () => {
@@ -698,12 +696,14 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                        >
-                            Save & Next
-                        </button>
+                        <div style={{ textAlign: 'center', marginTop: '30px' }}>
+                            <button
+                                type="submit"
+                                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                            >
+                                {processing ? 'Memproses...' : 'Simpan Data'}
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>

@@ -1,5 +1,4 @@
 import { usePage } from '@inertiajs/react';
-import React from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import Footer from '../../../components/Footer';
 import Header from '../../../components/Header';
@@ -11,197 +10,187 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const PageWrapper = styled.div`
-  background: #fff;
-  min-height: 100vh;
-  padding-top: 80px;
-  padding-bottom: 40px;
+    padding: 40px 0;
+    min-height: 80vh;
 `;
 
-const ApplicationHistoryContainer = styled.div`
-  padding: 40px 0;
-  max-width: 900px;
-  margin: 0 auto;
+const ContentContainer = styled.div`
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 `;
 
-const Title = styled.h1`
-  color: #1DA1F2;
-  font-size: 32px;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 8px;
+const PageTitle = styled.h1`
+    font-size: 28px;
+    color: #1a73e8;
+    margin-bottom: 30px;
+    text-align: center;
 `;
 
-const Description = styled.p`
-  text-align: center;
-  color: #657786;
-  margin-bottom: 32px;
-  font-size: 15px;
+const ApplicationsTable = styled.div`
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 `;
 
-const ApplicationCard = styled.div<{ status: string }>`
-  background: ${(props) => (props.status === 'rejected' ? '#f3f4f6' : '#fff')};
-  border-radius: 16px;
-  padding: 24px 32px;
-  margin-bottom: 20px;
-  border: 1px solid #e5e7eb;
+const TableHeader = styled.div`
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    padding: 16px 24px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: bold;
+    color: #495057;
 `;
 
-const JobHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-`;
-
-const JobTitleSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const JobTitle = styled.h3`
-  font-size: 22px;
-  font-weight: 600;
-  color: #111;
-  margin: 0;
-`;
-
-const StatusBadge = styled.span<{ status: string }>`
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  background: ${(props) => {
-    if (props.status === 'rejected') return '#ff4444';
-    if (props.status === 'department') return '#e8f2ff';
-    return '#e8f2ff';
-  }};
-  color: ${(props) => {
-    if (props.status === 'rejected') return '#fff';
-    if (props.status === 'department') return '#1DA1F2';
-    return '#1DA1F2';
-  }};
-`;
-
-const Company = styled.div`
-  margin: 0 0 8px 0;
-  color: #111;
-  font-weight: 600;
-  font-size: 14px;
-`;
-
-const JobDescription = styled.p`
-  margin: 0 0 16px 0;
-  color: #4b5563;
-  font-size: 14px;
-  line-height: 1.5;
-`;
-
-const JobDetails = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  color: #4b5563;
-  font-size: 14px;
-
-  span {
-    display: flex;
+const ApplicationRow = styled.div`
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    padding: 16px 24px;
+    border-bottom: 1px solid #dee2e6;
     align-items: center;
-    gap: 8px;
-  }
+
+    &:hover {
+        background-color: #f8f9fa;
+    }
 `;
 
-const DetailIcon = styled.span`
-  color: #1DA1F2;
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
+const CompanyName = styled.span`
+    color: #6c757d;
+    font-size: 14px;
+    display: block;
 `;
 
-const ActionButton = styled.button<{ status: string }>`
-  background: #1DA1F2;
-  color: #fff;
-  border: none;
-  padding: 6px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
+const JobTitle = styled.span`
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 4px;
+    display: block;
+`;
+
+const StatusBadge = styled.span<{ color: string }>`
+    background-color: ${props => props.color};
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+`;
+
+const JobLocation = styled.div`
+    color: #6c757d;
+    font-size: 14px;
+`;
+
+const JobType = styled.div`
+    color: #6c757d;
+    font-size: 14px;
+`;
+
+const EmptyState = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    color: #6c757d;
+`;
+
+const EmptyStateIcon = styled.div`
+    font-size: 40px;
+    margin-bottom: 20px;
+    color: #dee2e6;
+`;
+
+const ApplyLink = styled.a`
+    display: inline-block;
+    background-color: #1a73e8;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-top: 20px;
+
+    &:hover {
+        background-color: #1557b0;
+        color: white;
+    }
 `;
 
 interface Application {
-  status_id: number;
-  title: string;
-  company: string;
-  description: string;
-  location: string;
-  type: string;
-  deadline: string;
+    id: number;
+    status_id: number;
+    status_name: string;
+    status_color: string;
+    job: {
+        id: number;
+        title: string;
+        company: string;
+        location: string;
+        type: string;
+    };
+    applied_at: string;
+    updated_at: string;
 }
 
-const ApplicationHistory: React.FC = () => {
-  // Ambil data dari backend
-  const { applications = [] } = usePage().props as unknown as { applications: Application[] };
+interface ApplicationHistoryProps {
+    applications: Application[];
+}
 
-  return (
-    <>
-      <GlobalStyle />
-      <Header />
-      <PageWrapper>
-        <ApplicationHistoryContainer>
-          <Title>Riwayat Lamaran</Title>
-          <Description>
-            Berikut adalah riwayat lamaran pekerjaan yang telah Anda apply sebelumnya
-          </Description>
-          {applications.map((application, index) => (
-            <ApplicationCard key={index} status={application.status_id === 2 ? 'rejected' : 'pending'}>
-              <JobHeader>
-                <JobTitleSection>
-                  <JobTitle>{application.title}</JobTitle>
-                  <StatusBadge status="department">
-                    Department
-                  </StatusBadge>
-                </JobTitleSection>
-                {application.status_id === 2 ? (
-                  <StatusBadge status="rejected">
-                    Tidak Lolos
-                  </StatusBadge>
-                ) : (
-                  <ActionButton status="pending">
-                    Lihat Detail
-                  </ActionButton>
-                )}
-              </JobHeader>
-              <Company>{application.company}</Company>
-              <JobDescription>{application.description}</JobDescription>
-              <JobDetails>
-                <span>
-                  <DetailIcon>
-                    <i className="fa-solid fa-building" style={{ fontSize: 14 }} />
-                  </DetailIcon>
-                  {application.location}
-                </span>
-                <span>
-                  <DetailIcon>
-                    <i className="fa-solid fa-clock" style={{ fontSize: 14 }} />
-                  </DetailIcon>
-                  {application.type}
-                </span>
-                <span>
-                  <DetailIcon>
-                    <i className="fa-solid fa-calendar" style={{ fontSize: 14 }} />
-                  </DetailIcon>
-                  Lamar Sebelum {application.deadline}
-                </span>
-              </JobDetails>
-            </ApplicationCard>
-          ))}
-        </ApplicationHistoryContainer>
-      </PageWrapper>
-      <Footer />
-    </>
-  );
+const ApplicationHistory = () => {
+    const { applications } = usePage<ApplicationHistoryProps>().props;
+
+    return (
+        <>
+            <GlobalStyle />
+            <Header />
+            <PageWrapper>
+                <ContentContainer>
+                    <PageTitle>Riwayat Lamaran</PageTitle>
+
+                    {applications.length > 0 ? (
+                        <ApplicationsTable>
+                            <TableHeader>
+                                <div>Lowongan</div>
+                                <div>Lokasi</div>
+                                <div>Tipe</div>
+                                <div>Tanggal Apply</div>
+                                <div>Status</div>
+                            </TableHeader>
+
+                            {applications.map((application) => (
+                                <ApplicationRow key={application.id}>
+                                    <div>
+                                        <JobTitle>{application.job.title}</JobTitle>
+                                        <CompanyName>{application.job.company}</CompanyName>
+                                    </div>
+                                    <JobLocation>{application.job.location}</JobLocation>
+                                    <JobType>{application.job.type}</JobType>
+                                    <div>{application.applied_at}</div>
+                                    <div>
+                                        <StatusBadge color={application.status_color}>
+                                            {application.status_name}
+                                        </StatusBadge>
+                                    </div>
+                                </ApplicationRow>
+                            ))}
+                        </ApplicationsTable>
+                    ) : (
+                        <EmptyState>
+                            <EmptyStateIcon>📋</EmptyStateIcon>
+                            <h3>Belum Ada Lamaran</h3>
+                            <p>Anda belum pernah mengajukan lamaran pekerjaan.</p>
+                            <ApplyLink href="/job-hiring">Cari Lowongan</ApplyLink>
+                        </EmptyState>
+                    )}
+                </ContentContainer>
+            </PageWrapper>
+            <Footer />
+        </>
+    );
 };
 
 export default ApplicationHistory;

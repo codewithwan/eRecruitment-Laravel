@@ -50,4 +50,33 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(Candidate::class, 'user_id');
     }
+
+    public function isProfileComplete()
+    {
+        // Periksa data pribadi
+        if (empty($this->name) ||
+            empty($this->email) ||
+            empty($this->phone_number) ||
+            empty($this->address)) {
+            return false;
+        }
+
+        // Periksa data pendidikan
+        $education = CandidatesEducations::where('user_id', $this->id)->first();
+        if (!$education ||
+            empty($education->institution) ||
+            empty($education->major_id) ||
+            empty($education->year_graduated)) {
+            return false;
+        }
+
+        // Periksa data lainnya jika ada
+        // Contoh: apakah CV sudah diupload?
+        $hasCV = Storage::disk('public')->exists('cv/'.$this->id.'.pdf');
+        if (!$hasCV) {
+            return false;
+        }
+
+        return true;
+    }
 }

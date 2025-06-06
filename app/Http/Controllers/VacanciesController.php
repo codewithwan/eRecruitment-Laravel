@@ -237,16 +237,18 @@ class VacanciesController extends Controller
 
     public function show($id)
     {
-        $vacancy = \App\Models\Vacancies::findOrFail($id);
+        $job = Vacancies::with('company')->findOrFail($id);
 
-        $job = [
-            'job_description' => $vacancy->job_description ?? '',
-            'requirements' => $vacancy->requirements ?? [],
-            'benefits' => $vacancy->benefits ?? [],
-        ];
-
-        return \Inertia\Inertia::render('candidate/detail-job/detail-job', [
-            'job' => $job,
+        return Inertia::render('candidate/detail-job/detail-job', [
+            'job' => [
+                'title' => $job->title,
+                'company' => [
+                    'name' => $job->company->name,
+                ],
+                'job_description' => $job->job_description,
+                'requirements' => $job->requirements,
+                'benefits' => $job->benefits,
+            ],
         ]);
     }
 }

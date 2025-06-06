@@ -1,23 +1,20 @@
-import { useState, ChangeEvent, FormEvent, useEffect } from "react";
-import { FormType } from '../types/FormTypes';
+import SocialMediaList from "@/components/forms/SocialMediaList";
+import { router } from '@inertiajs/react';
+import axios from 'axios';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import InputField from "../components/InputField";
 import SelectField from "../components/SelectField";
 import SidebarNav from "../components/SidebarNav";
-import PendidikanForm from '../components/forms/ListEducationForm';
-import TambahPendidikanForm from '../components/forms/AddEducationForm';
-import PengalamanKerjaForm from './WorkExperienceForm';
-import TambahPengalamanForm from '../components/forms/AddExperience';
-import OrganisasiForm from '../components/forms/Organization';
-import TambahOrganisasiForm from '../components/forms/AddOrganizationiForm';
-import PrestasiForm from '../components/forms/Achievement';
+import PrestasiListForm from '../components/forms/AchievementListForm';
 import TambahPrestasiForm from '../components/forms/AddAchievement';
-import SocialMediaForm from '../components/forms/SocialMediaForm';
+import TambahPengalamanForm from '../components/forms/AddExperience';
+import TambahOrganisasiForm from '../components/forms/AddOrganizationiForm';
 import TambahSocialMediaForm from '../components/forms/AddSocialMediaForm';
 import DataTambahanForm from '../components/forms/AdditionalDataForm';
-import axios from 'axios';
-import { router } from '@inertiajs/react';
-import PrestasiListForm from '../components/forms/AchievementListForm';
-import SocialMediaList from "@/components/forms/SocialMediaList";
+import PendidikanForm from '../components/forms/ListEducationForm';
+import OrganisasiForm from '../components/forms/Organization';
+import { FormType } from '../types/FormTypes';
+import PengalamanKerjaForm from './WorkExperienceForm';
 
 // Tambahkan komponen Alert
 const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }) => (
@@ -41,27 +38,85 @@ const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }
     </div>
 );
 
-// Custom ProfileHeader dengan icon profile biru
-const CustomProfileHeader = ({ name, email }: { name: string; email: string }) => (
-    <div className="bg-white border-b border-gray-200">
-        <div className="mx-6 py-6">
-            <div className="flex items-center space-x-4">
-                {/* Icon Profile Biru */}
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
+// Custom ProfileHeader dengan icon profile biru + dropdown menu
+const CustomProfileHeader = ({ name, email }: { name: string; email: string }) => {
+    const [open, setOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Tutup dropdown jika klik di luar
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+        <div className="bg-white border-b border-gray-200">
+            <div className="mx-6 py-6 flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                    {/* Icon Profile Biru */}
+                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    {/* Info User */}
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
+                        <p className="text-gray-600">{email}</p>
+                    </div>
                 </div>
-                
-                {/* Info User */}
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
-                    <p className="text-gray-600">{email}</p>
+                {/* Dropdown Menu */}
+                <div className="relative" ref={dropdownRef}>
+                    <button
+                        onClick={() => setOpen(!open)}
+                        className="w-12 h-12 flex items-center justify-center bg-white border-2 border-dashed border-gray-400 rounded-lg focus:outline-none"
+                        aria-label="Menu"
+                    >
+                        {/* Ikon tiga titik horizontal */}
+                        <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24">
+                            <circle cx="6" cy="12" r="2" fill="currentColor" />
+                            <circle cx="12" cy="12" r="2" fill="currentColor" />
+                            <circle cx="18" cy="12" r="2" fill="currentColor" />
+                        </svg>
+                    </button>
+                    {open && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white border-2 border-dashed border-gray-400 rounded shadow-lg z-50">
+                            <button
+                                onClick={() => router.visit('/dashboard')}
+                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                                Dasbor
+                            </button>
+                            <button
+                                onClick={() => router.visit('/profile')}
+                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                                Profil
+                            </button>
+                            <button
+                                onClick={() => router.visit('/job-hiring')}
+                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                                Lowongan Pekerjaan
+                            </button>
+                            <button
+                                onClick={() => router.visit('/application-history')}
+                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                                Lamaran
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 interface PengalamanKerja {
     id?: number;
@@ -379,7 +434,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                 type: 'error',
                 text: 'Data belum lengkap untuk generate CV!'
             });
-            
+
             setTimeout(() => {
                 setMessage(null);
             }, 5000);
@@ -388,15 +443,15 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
 
         setGeneratingCV(true);
         setMessage(null);
-        
+
         try {
             console.log('Starting CV generation...');
-            
+
             const response = await axios.get('/candidate/cv/generate');
 
             if (response.data.success) {
                 console.log('CV generated successfully:', response.data);
-                
+
                 setMessage({
                     type: 'success',
                     text: `${response.data.message} File: ${response.data.data.filename}`,
@@ -419,14 +474,14 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
 
         } catch (error: any) {
             console.error('Error generating CV:', error);
-            
+
             let errorMessage = 'Gagal generate CV';
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error.message) {
                 errorMessage = error.message;
             }
-            
+
             setMessage({
                 type: 'error',
                 text: errorMessage
@@ -548,7 +603,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
         if (activeForm === FormType.DATA_TAMBAHAN) {
             return renderDataTambahanForm();
         }
-        
+
         // Default case - DATA_PRIBADI
         return (
             <div className="bg-white rounded-lg shadow-sm text-black">
@@ -660,7 +715,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
             {message && (
                 <Alert type={message.type} message={message.text} />
             )}
-            
+
             <CustomProfileHeader
                 name={form.name}
                 email={form.email}

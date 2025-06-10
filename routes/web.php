@@ -199,6 +199,15 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.cv.test');
 });
 
+Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(function () {
+    // Route untuk form data pribadi (GET)
+    Route::get('/data-pribadi', [CandidateController::class, 'profile'])
+        ->name('candidate.data-pribadi');
+
+    Route::get('/education', [CandidateController::class, 'getEducation']);
+    Route::post('/education', [CandidateController::class, 'storeEducation']);
+});
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/candidate.php';

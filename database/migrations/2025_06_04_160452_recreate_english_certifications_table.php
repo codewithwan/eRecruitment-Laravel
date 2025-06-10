@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Drop tabel jika ada
+        
         Schema::dropIfExists('english_certifications');
         
-        // Buat ulang dengan struktur yang benar
+        
         Schema::create('english_certifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('name'); // Pastikan kolom ini ada
+            $table->string('name'); 
             $table->string('certificate_file')->nullable();
             $table->timestamps();
         });

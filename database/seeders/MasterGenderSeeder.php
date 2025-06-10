@@ -3,26 +3,23 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\MasterGender;
 
 class MasterGenderSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run()
     {
-        DB::table('master_genders')->insert([
-            [
-                'name' => 'male',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'female',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        // Data gender default
+        $genders = [
+            ['name' => 'Pria'],
+            ['name' => 'Wanita'],
+        ];
+
+        foreach ($genders as $gender) {
+            MasterGender::updateOrCreate(
+                ['name' => $gender['name']],
+                $gender
+            );
+        }
     }
 }

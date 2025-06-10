@@ -106,8 +106,8 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
             return;
         }
 
-        if (!formData.description || formData.description.length < 100) {
-            setMessage({ type: 'error', text: 'Deskripsi minimal 100 karakter' });
+        if (!formData.description || formData.description.length < 10) {
+            setMessage({ type: 'error', text: 'Deskripsi minimal 10 karakter' });
             setLoading(false);
             return;
         }
@@ -216,7 +216,7 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                         name="description"
                         value={formData.description}
                         onChange={handleChange}
-                        placeholder="Masukkan deskripsi organisasi min. 100 karakter"
+                        placeholder="Masukkan deskripsi organisasi min. 10 karakter"
                         className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-32 
                             focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-gray-50"
                     />

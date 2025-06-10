@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Validation\ValidationException;
+use App\Models\MasterGender;
 
 class CandidateController extends Controller
 {
@@ -38,10 +39,23 @@ class CandidateController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
+        $education = CandidatesEducations::where('user_id', $user->id)->first(); // Tambahkan ini
+        
+        // Ambil semua data gender dari master_genders
+        $genders = MasterGender::all();
 
-        // Ubah dari DataPribadiForm ke PersonalData
         return Inertia::render('PersonalData', [
-            'users' => $user,
+            'education' => $education, // Tambahkan ini
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+            'genders' => $genders->map(function($gender) {
+                return [
+                    'value' => $gender->name,
+                    'label' => $gender->name
+                ];
+            })
         ]);
     }
 
@@ -49,14 +63,24 @@ class CandidateController extends Controller
     {
         $user = Auth::user();
         $profile = CandidatesProfiles::where('user_id', $user->id)->first();
-
-        // Ubah dari DataPribadiForm ke PersonalData
+        $education = CandidatesEducations::where('user_id', $user->id)->first(); // Tambahkan ini
+        
+        // Ambil semua data gender dari master_genders
+        $genders = MasterGender::all();
+        
         return Inertia::render('PersonalData', [
             'profile' => $profile,
+            'education' => $education, // Tambahkan ini
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
-            ]
+            ],
+            'genders' => $genders->map(function($gender) {
+                return [
+                    'value' => $gender->name,
+                    'label' => $gender->name
+                ];
+            })
         ]);
     }
 

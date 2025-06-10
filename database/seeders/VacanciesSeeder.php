@@ -8,42 +8,97 @@ use App\Models\Companies;
 use App\Models\JobTypes;
 use App\Models\User;
 use App\Models\Vacancies;
+use App\Models\MasterMajor;
 use Illuminate\Database\Seeder;
 
 class VacanciesSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get a user to associate with the jobs
         $user = User::where('role', UserRole::HR->value)->first() ?? User::factory()->create(['role' => UserRole::HR->value]);
-
-        // Get department IDs
         $departments = Department::pluck('id', 'name');
 
-        // Create companies
-        $mka = Companies::firstOrCreate(
-            ['name' => 'PT MITRA KARYA ANALITIKA'],  // Changed to all caps
-            [
-                'description' => 'Perusahaan teknologi yang berfokus pada pengembangan hardware.',
-                'address' => 'Semarang'
-            ]
-        );
+        // Ambil jurusan dari master_majors
+        $ti = MasterMajor::where('name', 'Teknik Informatika')->first();
+        $manajemen = MasterMajor::where('name', 'Manajemen')->first();
+        $komunikasi = MasterMajor::where('name', 'Komunikasi')->first();
+        $dkv = MasterMajor::where('name', 'Desain Komunikasi Visual')->first();
+        $psikologi = MasterMajor::where('name', 'Psikologi')->first();
+        $akuntansi = MasterMajor::where('name', 'Akuntansi')->first();
 
+        $mka = Companies::firstOrCreate(
+            ['name' => 'PT MITRA KARYA ANALITIKA'],
+            ['description' => 'Perusahaan teknologi yang berfokus pada pengembangan hardware.', 'address' => 'Semarang']
+        );
         $aka = Companies::firstOrCreate(
             ['name' => 'PT AUTENTIK KARYA ANALITIKA'],
-            [
-                'description' => 'Perusahaan yang bergerak di bidang jasa pengujian dan analisa.',
-                'address' => 'Jakarta'
-            ]
+            ['description' => 'Perusahaan yang bergerak di bidang jasa pengujian dan analisa.', 'address' => 'Jakarta']
         );
 
-        // Create job types
         $fullTime = JobTypes::firstOrCreate(['name' => 'Full Time']);
         $partTime = JobTypes::firstOrCreate(['name' => 'Part Time']);
         $contract = JobTypes::firstOrCreate(['name' => 'Contract']);
         $intern = JobTypes::firstOrCreate(['name' => 'Internship']);
 
         $vacancies = [
+            [
+                'title' => 'FRONTEND DEVELOPER',
+                'department_id' => $departments['IT'],
+                'company_id' => $mka->id,
+                'type_id' => $fullTime->id,
+                'location' => 'Semarang',
+                'major_id' => $ti?->id, // <--- filter jurusan
+                'requirements' => [
+                    'Min. S1 Teknik Informatika/Sistem Informasi',
+                    'Menguasai React.js, Vue.js, atau Angular',
+                ],
+                'job_description' => 'Mengembangkan dan memelihara aplikasi web.',
+                'benefits' => ['BPJS', 'Gaji di atas UMR'],
+                'user_id' => $user->id,
+            ],
+            [
+                'title' => 'MARKETING INTERN',
+                'department_id' => $departments['Marketing'],
+                'company_id' => $aka->id,
+                'type_id' => $intern->id,
+                'location' => 'Jakarta',
+                'major_id' => $komunikasi?->id,
+                'requirements' => [
+                    'Mahasiswa semester akhir',
+                    'Jurusan Marketing/Komunikasi',
+                ],
+                'job_description' => 'Membantu tim marketing.',
+                'benefits' => ['Uang Transport', 'Sertifikat'],
+                'user_id' => $user->id,
+            ],
+            [
+                'title' => 'UI/UX DESIGNER',
+                'department_id' => $departments['IT'],
+                'company_id' => $mka->id,
+                'type_id' => $partTime->id,
+                'location' => 'Semarang',
+                'major_id' => $dkv?->id,
+                'requirements' => [
+                    'Min. D3 Desain Komunikasi Visual',
+                ],
+                'job_description' => 'Mendesain tampilan aplikasi web dan mobile.',
+                'benefits' => ['BPJS', 'Gaji Proyek'],
+                'user_id' => $user->id,
+            ],
+            [
+                'title' => 'HR INTERN',
+                'department_id' => $departments['HR'],
+                'company_id' => $aka->id,
+                'type_id' => $intern->id,
+                'location' => 'Jakarta',
+                'major_id' => $psikologi?->id,
+                'requirements' => [
+                    'Mahasiswa Psikologi/Manajemen',
+                ],
+                'job_description' => 'Membantu proses rekrutmen dan administrasi HR.',
+                'benefits' => ['Uang Saku', 'Sertifikat'],
+                'user_id' => $user->id,
+            ],
             [
                 'title' => 'BUSINESS EXECUTIVE',
                 'department_id' => $departments['Marketing'],
@@ -61,38 +116,6 @@ class VacanciesSeeder extends Seeder
                 'user_id' => $user->id,
             ],
             [
-                'title' => 'FRONTEND DEVELOPER',
-                'department_id' => $departments['IT'],
-                'company_id' => $mka->id,
-                'type_id' => $fullTime->id,
-                'location' => 'Semarang',
-                'requirements' => [
-                    'Min. S1 Teknik Informatika/Sistem Informasi',
-                    'Menguasai React.js, Vue.js, atau Angular',
-                    'Memahami HTML, CSS, dan JavaScript',
-                    'Pengalaman 2 tahun di bidang Frontend Development',
-                ],
-                'job_description' => 'Mengembangkan dan memelihara aplikasi web dengan fokus pada user interface dan user experience.',
-                'benefits' => ['BPJS', 'Gaji di atas UMR', 'Tunjangan Hari Raya', 'Remote Working'],
-                'user_id' => $user->id,
-            ],
-            [
-                'title' => 'MARKETING INTERN',
-                'department_id' => $departments['Marketing'],
-                'company_id' => $aka->id,
-                'type_id' => $intern->id,
-                'location' => 'Jakarta',
-                'requirements' => [
-                    'Mahasiswa semester akhir',
-                    'Jurusan Marketing/Komunikasi',
-                    'Kreatif dan inovatif',
-                    'Mampu menggunakan social media untuk marketing',
-                ],
-                'job_description' => 'Membantu tim marketing dalam kampanye digital dan analisis pasar.',
-                'benefits' => ['Uang Transport', 'Sertifikat', 'Training'],
-                'user_id' => $user->id,
-            ],
-            [
                 'title' => 'BACKEND DEVELOPER',
                 'department_id' => $departments['IT'],
                 'company_id' => $mka->id,
@@ -106,22 +129,6 @@ class VacanciesSeeder extends Seeder
                 ],
                 'job_description' => 'Mengembangkan backend system dan API untuk aplikasi perusahaan.',
                 'benefits' => ['BPJS', 'Gaji di atas UMR', 'WFH Option', 'Training'],
-                'user_id' => $user->id,
-            ],
-            [
-                'title' => 'UI/UX DESIGNER',
-                'department_id' => $departments['IT'],
-                'company_id' => $mka->id,
-                'type_id' => $partTime->id,
-                'location' => 'Semarang',
-                'requirements' => [
-                    'Min. D3 Desain Komunikasi Visual',
-                    'Menguasai Figma, Adobe XD, atau Sketch',
-                    'Berpengalaman membuat prototype aplikasi',
-                    'Kreatif dan komunikatif',
-                ],
-                'job_description' => 'Mendesain tampilan aplikasi web dan mobile serta melakukan usability testing.',
-                'benefits' => ['BPJS', 'Gaji Proyek', 'Remote Working'],
                 'user_id' => $user->id,
             ],
             [
@@ -194,8 +201,9 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $mka->id,
                 'type_id' => $contract->id,
                 'location' => 'Semarang',
+                'major_id' => $manajemen?->id, // <-- pastikan ini ID jurusan Manajemen
                 'requirements' => [
-                    'S1 Teknik Informatika/Manajemen',
+                    'S1 Manajemen',
                     'Pengalaman minimal 2 tahun sebagai PM',
                     'Mampu memimpin tim',
                     'Komunikatif dan bertanggung jawab',
@@ -210,14 +218,12 @@ class VacanciesSeeder extends Seeder
                 'company_id' => $aka->id,
                 'type_id' => $intern->id,
                 'location' => 'Jakarta',
+                'major_id' => $psikologi?->id,
                 'requirements' => [
                     'Mahasiswa Psikologi/Manajemen',
-                    'Komunikatif dan teliti',
-                    'Mampu mengoperasikan MS Office',
-                    'Bersedia magang minimal 3 bulan',
                 ],
                 'job_description' => 'Membantu proses rekrutmen dan administrasi HR.',
-                'benefits' => ['Uang Saku', 'Sertifikat', 'Pengalaman Kerja'],
+                'benefits' => ['Uang Saku', 'Sertifikat'],
                 'user_id' => $user->id,
             ],
             [
@@ -302,6 +308,56 @@ class VacanciesSeeder extends Seeder
                     "Training",
                     "Other benefits"
                 ],
+                'user_id' => $user->id,
+            ],
+            [
+                'title' => 'STAFF ACCOUNTING',
+                'department_id' => $departments['Akuntansi'],
+                'company_id' => $mka->id,
+                'type_id' => $fullTime->id,
+                'location' => 'Semarang',
+                'major_id' => $akuntansi?->id, // <-- pastikan ini ID jurusan Akuntansi
+                'requirements' => [
+                    'S1 Akuntansi',
+                    'Menguasai software akuntansi',
+                    'Teliti dan bertanggung jawab',
+                ],
+                'job_description' => 'Mengelola laporan keuangan perusahaan.',
+                'benefits' => ['BPJS', 'Gaji UMR', 'Tunjangan Hari Raya'],
+                'user_id' => $user->id,
+            ],
+            [
+                'title' => 'PSYCHOLOGIST STAFF',
+                'department_id' => $departments['HR'],
+                'company_id' => $mka->id,
+                'type_id' => $fullTime->id,
+                'location' => 'Semarang',
+                'major_id' => $psikologi?->id, // <-- jurusan Psikologi
+                'requirements' => [
+                    'S1 Psikologi',
+                    'Berpengalaman dalam asesmen psikologi',
+                    'Mampu melakukan konseling karyawan',
+                    'Komunikatif dan empati tinggi',
+                ],
+                'job_description' => 'Melakukan asesmen, konseling, dan pengembangan SDM di perusahaan.',
+                'benefits' => ['BPJS', 'Gaji Kompetitif', 'Tunjangan Kesehatan'],
+                'user_id' => $user->id,
+            ],
+            [
+                'title' => 'RECRUITMENT SPECIALIST',
+                'department_id' => $departments['HR'],
+                'company_id' => $aka->id,
+                'type_id' => $fullTime->id,
+                'location' => 'Jakarta',
+                'major_id' => $psikologi?->id, // <-- jurusan Psikologi
+                'requirements' => [
+                    'S1 Psikologi',
+                    'Pengalaman minimal 1 tahun di bidang rekrutmen',
+                    'Mampu melakukan interview dan psikotes',
+                    'Mampu bekerja dalam tim',
+                ],
+                'job_description' => 'Bertanggung jawab dalam proses rekrutmen dan seleksi karyawan.',
+                'benefits' => ['BPJS', 'Bonus Rekrutmen', 'Sertifikat'],
                 'user_id' => $user->id,
             ],
         ];

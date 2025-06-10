@@ -51,6 +51,9 @@ class UserSeeder extends Seeder
             'no_ektp' => $this->faker->unique()->numerify('################'),
         ]);
 
+        // Hapus user id 2 jika ada
+        User::where('id', 2)->delete();
+
         // Tambahkan user id = 2
         User::create([
             'id' => 2,

@@ -1,23 +1,21 @@
-import { useState, ChangeEvent, FormEvent, useEffect } from "react";
-import { FormType } from '../types/FormTypes';
+import SocialMediaList from "@/components/forms/SocialMediaList";
+import { router, useForm, usePage } from '@inertiajs/react';
+import axios from 'axios';
+import React, { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import Swal from 'sweetalert2';
 import InputField from "../components/InputField";
 import SelectField from "../components/SelectField";
 import SidebarNav from "../components/SidebarNav";
-import PendidikanForm from '../components/forms/ListEducationForm';
-import TambahPendidikanForm from '../components/forms/AddEducationForm';
-import PengalamanKerjaForm from './WorkExperienceForm';
-import TambahPengalamanForm from '../components/forms/AddExperience';
-import OrganisasiForm from '../components/forms/Organization';
-import TambahOrganisasiForm from '../components/forms/AddOrganizationiForm';
-import PrestasiForm from '../components/forms/Achievement';
+import PrestasiListForm from '../components/forms/AchievementListForm';
 import TambahPrestasiForm from '../components/forms/AddAchievement';
-import SocialMediaForm from '../components/forms/SocialMediaForm';
+import TambahPengalamanForm from '../components/forms/AddExperience';
+import TambahOrganisasiForm from '../components/forms/AddOrganizationiForm';
 import TambahSocialMediaForm from '../components/forms/AddSocialMediaForm';
 import DataTambahanForm from '../components/forms/AdditionalDataForm';
-import axios from 'axios';
-import { router } from '@inertiajs/react';
-import PrestasiListForm from '../components/forms/AchievementListForm';
-import SocialMediaList from "@/components/forms/SocialMediaList";
+import PendidikanForm from '../components/forms/ListEducationForm';
+import OrganisasiForm from '../components/forms/Organization';
+import { FormType } from '../types/FormTypes';
+import PengalamanKerjaForm from './WorkExperienceForm';
 
 // Tambahkan komponen Alert
 const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }) => (
@@ -41,27 +39,85 @@ const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }
     </div>
 );
 
-// Custom ProfileHeader dengan icon profile biru
-const CustomProfileHeader = ({ name, email }: { name: string; email: string }) => (
-    <div className="bg-white border-b border-gray-200">
-        <div className="mx-6 py-6">
-            <div className="flex items-center space-x-4">
-                {/* Icon Profile Biru */}
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
+// Custom ProfileHeader dengan icon profile biru + dropdown menu
+const CustomProfileHeader = ({ name, email }: { name: string; email: string }) => {
+    const [open, setOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Tutup dropdown jika klik di luar
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+        <div className="bg-white border-b border-gray-200">
+            <div className="mx-6 py-6 flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                    {/* Icon Profile Biru */}
+                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    {/* Info User */}
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
+                        <p className="text-gray-600">{email}</p>
+                    </div>
                 </div>
-                
-                {/* Info User */}
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
-                    <p className="text-gray-600">{email}</p>
+                {/* Dropdown Menu */}
+                <div className="relative" ref={dropdownRef}>
+                    <button
+                        onClick={() => setOpen(!open)}
+                        className="w-12 h-12 flex items-center justify-center bg-white border-2 border-dashed border-gray-400 rounded-lg focus:outline-none"
+                        aria-label="Menu"
+                    >
+                        {/* Ikon tiga titik horizontal */}
+                        <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24">
+                            <circle cx="6" cy="12" r="2" fill="currentColor" />
+                            <circle cx="12" cy="12" r="2" fill="currentColor" />
+                            <circle cx="18" cy="12" r="2" fill="currentColor" />
+                        </svg>
+                    </button>
+                    {open && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white border-2 border-dashed border-gray-400 rounded shadow-lg z-50">
+                            <button
+                                onClick={() => router.visit('/dashboard')}
+                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                                Dasbor
+                            </button>
+                            <button
+                                onClick={() => router.visit('/profile')}
+                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                                Profil
+                            </button>
+                            <button
+                                onClick={() => router.visit('/job-hiring')}
+                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                                Lowongan Pekerjaan
+                            </button>
+                            <button
+                                onClick={() => router.visit('/application-history')}
+                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                            >
+                                Lamaran
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 interface PengalamanKerja {
     id?: number;
@@ -161,26 +217,32 @@ enum SubFormType {
 
 // Ubah nama komponen agar konsisten
 const PersonalData: React.FC<Props> = ({ profile, user }) => {
-    const [form, setForm] = useState({
-        no_ektp: profile?.no_ektp || '',
-        gender: profile?.gender ? convertGender(profile.gender) : '',
+    const { data, setData, post, processing, errors } = useForm({
+        name: user?.name || '',
+        email: user?.email || '',
         phone_number: profile?.phone_number || '',
+        address: profile?.address || '',
+        no_ektp: profile?.no_ektp || '',
+        gender: profile ? convertGender(profile.gender) : '',
         npwp: profile?.npwp || '',
         about_me: profile?.about_me || '',
         place_of_birth: profile?.place_of_birth || '',
-        date_of_birth: formatDate(profile?.date_of_birth) || '',
-        address: profile?.address || '',
+        date_of_birth: formatDate(profile?.date_of_birth),
         province: profile?.province || '',
         city: profile?.city || '',
         district: profile?.district || '',
         village: profile?.village || '',
         rt: profile?.rt || '',
         rw: profile?.rw || '',
-        punyaNpwp: false,
-        name: user?.name || '',
-        email: user?.email || ''
+        punyaNpwp: profile?.npwp ? false : true,
+        institution: profile?.institution || '',
+        major_id: profile?.major_id || '',
+        year_graduated: profile?.year_graduated || '',
+        cv: null as File | null,
+        redirect_back: null as string | null
     });
 
+    const [file, setFile] = useState<File | null>(null);
     const [activeForm, setActiveForm] = useState<FormType>(FormType.DATA_PRIBADI);
     const [subForm, setSubForm] = useState<SubFormType>(SubFormType.NONE);
     const [showTambahPengalaman, setShowTambahPengalaman] = useState(false);
@@ -197,10 +259,38 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
     const [loadingCompleteness, setLoadingCompleteness] = useState(false);
     const [generatingCV, setGeneratingCV] = useState(false);
 
+    const { flash } = usePage<{ flash: any }>().props;
+
+    // Handle flash messages
+    React.useEffect(() => {
+        if (flash?.success) {
+            Swal.fire({
+                title: 'Sukses!',
+                text: flash.success,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Redirect ke halaman sebelumnya jika ada redirect_back
+                if (data.redirect_back) {
+                    window.location.href = data.redirect_back;
+                }
+            });
+        }
+
+        if (flash?.error) {
+            Swal.fire({
+                title: 'Error!',
+                text: flash.error,
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    }, [flash, completenessData]);
+
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
-        setForm(prev => ({
+        setData(prev => ({
             ...prev,
             [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value
         }));
@@ -280,57 +370,33 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
         e.preventDefault();
         setMessage(null);
 
-        if (!form.village) {
+        if (!data.address) {
             setMessage({
                 type: 'error',
-                text: 'Kelurahan/Desa harus diisi'
+                text: 'Alamat harus diisi'
             });
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
 
-        try {
-            const submitData = {
-                ...form,
-                gender: convertGenderForDb(form.gender),
-                date_of_birth: formatDate(form.date_of_birth),
-                npwp: form.punyaNpwp ? null : form.npwp
-            };
+        // Buat FormData untuk handle file upload
+        const formData = new FormData();
+        formData.append('name', data.name);
+        formData.append('email', data.email);
+        formData.append('phone_number', data.phone_number);
+        formData.append('address', data.address);
+        formData.append('institution', data.institution);
+        formData.append('major_id', data.major_id.toString());
+        formData.append('year_graduated', data.year_graduated.toString());
 
-            await router.post('/candidate/data-pribadi', submitData, {
-                onSuccess: (page: any) => {
-                    setMessage({
-                        type: 'success',
-                        text: 'Data berhasil disimpan!'
-                    });
-
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-
-                    setTimeout(() => {
-                        setMessage(null);
-                    }, 3000);
-                },
-                onError: (errors) => {
-                    setMessage({
-                        type: 'error',
-                        text: 'Terjadi kesalahan saat menyimpan data'
-                    });
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                },
-                preserveScroll: true,
-                preserveState: true
-            });
-        } catch (error) {
-            console.error('Error submitting form:', error);
-            setMessage({
-                type: 'error',
-                text: 'Terjadi kesalahan saat menyimpan data'
-            });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (file) {
+            formData.append('cv', file);
         }
+
+        // Submit form
+        post('/personal-data/update', {
+            data: formData,
+        });
     };
 
     const renderDataTambahanForm = () => {
@@ -379,7 +445,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                 type: 'error',
                 text: 'Data belum lengkap untuk generate CV!'
             });
-            
+
             setTimeout(() => {
                 setMessage(null);
             }, 5000);
@@ -388,15 +454,15 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
 
         setGeneratingCV(true);
         setMessage(null);
-        
+
         try {
             console.log('Starting CV generation...');
-            
+
             const response = await axios.get('/candidate/cv/generate');
 
             if (response.data.success) {
                 console.log('CV generated successfully:', response.data);
-                
+
                 setMessage({
                     type: 'success',
                     text: `${response.data.message} File: ${response.data.data.filename}`,
@@ -419,14 +485,14 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
 
         } catch (error: any) {
             console.error('Error generating CV:', error);
-            
+
             let errorMessage = 'Gagal generate CV';
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error.message) {
                 errorMessage = error.message;
             }
-            
+
             setMessage({
                 type: 'error',
                 text: errorMessage
@@ -548,7 +614,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
         if (activeForm === FormType.DATA_TAMBAHAN) {
             return renderDataTambahanForm();
         }
-        
+
         // Default case - DATA_PRIBADI
         return (
             <div className="bg-white rounded-lg shadow-sm text-black">
@@ -556,14 +622,14 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
                         <div className="grid grid-cols-2 gap-6 text-black">
                             <div>
-                                <InputField label="No. E-KTP" name="no_ektp" value={form.no_ektp} onChange={handleChange} />
-                                <InputField label="Nama Lengkap" name="name" value={form.name} onChange={handleChange} />
-                                <InputField label="Email" name="email" type="email" value={form.email} onChange={handleChange} />
+                                <InputField label="No. E-KTP" name="no_ektp" value={data.no_ektp} onChange={handleChange} />
+                                <InputField label="Nama Lengkap" name="name" value={data.name} onChange={handleChange} />
+                                <InputField label="Email" name="email" type="email" value={data.email} onChange={handleChange} />
 
                                 <SelectField
                                     label="Gender"
                                     name="gender"
-                                    value={form.gender}
+                                    value={data.gender}
                                     onChange={handleChange}
                                     options={[
                                         { value: 'Pria', label: 'Pria' },
@@ -575,26 +641,26 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                                 <InputField
                                     label="No. Telepon"
                                     name="phone_number"
-                                    value={form.phone_number}
+                                    value={data.phone_number}
                                     onChange={handleChange}
                                 />
                                 <div className="space-y-2">
                                     <InputField
                                         label="NPWP"
                                         name="npwp"
-                                        value={form.npwp}
+                                        value={data.npwp}
                                         onChange={handleChange}
-                                        disabled={form.punyaNpwp}
+                                        disabled={data.punyaNpwp}
                                     />
                                     <label className="inline-flex items-center text-sm text-gray-600">
                                         <input
                                             type="checkbox"
                                             name="punyaNpwp"
-                                            checked={form.punyaNpwp}
+                                            checked={data.punyaNpwp}
                                             onChange={(e) => {
                                                 handleChange(e);
                                                 if (e.target.checked) {
-                                                    setForm(prev => ({
+                                                    setData(prev => ({
                                                         ...prev,
                                                         npwp: ''
                                                     }));
@@ -612,7 +678,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                             <label className="block mb-1 text-sm font-medium text-gray-700">Tentang Saya</label>
                             <textarea
                                 name="about_me"
-                                value={form.about_me}
+                                value={data.about_me}
                                 onChange={handleChange}
                                 placeholder="Ceritakan tentang Anda min. 200 karakter"
                                 className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-24
@@ -622,33 +688,35 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
 
                         <h3 className="font-semibold border-b pb-2">Kelahiran</h3>
                         <div className="grid grid-cols-2 gap-6">
-                            <InputField label="Tempat Lahir" name="place_of_birth" value={form.place_of_birth} onChange={handleChange} />
-                            <InputField label="Tanggal Lahir" name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} />
+                            <InputField label="Tempat Lahir" name="place_of_birth" value={data.place_of_birth} onChange={handleChange} />
+                            <InputField label="Tanggal Lahir" name="date_of_birth" type="date" value={data.date_of_birth} onChange={handleChange} />
                         </div>
 
                         <h3 className="font-semibold border-b pb-2">Alamat</h3>
                         <div className="grid grid-cols-2 gap-6">
                             <div>
-                                <InputField label="Alamat" name="address" value={form.address} onChange={handleChange} />
-                                <InputField label="Provinsi" name="province" value={form.province} onChange={handleChange} />
-                                <InputField label="Kecamatan" name="district" value={form.district} onChange={handleChange} />
-                                <InputField label="Kelurahan/Desa" name="village" value={form.village} onChange={handleChange} />
+                                <InputField label="Alamat" name="address" value={data.address} onChange={handleChange} />
+                                <InputField label="Provinsi" name="province" value={data.province} onChange={handleChange} />
+                                <InputField label="Kecamatan" name="district" value={data.district} onChange={handleChange} />
+                                <InputField label="Kelurahan/Desa" name="village" value={data.village} onChange={handleChange} />
                             </div>
                             <div>
-                                <InputField label="Kota/Kabupaten" name="city" value={form.city} onChange={handleChange} />
+                                <InputField label="Kota/Kabupaten" name="city" value={data.city} onChange={handleChange} />
                                 <div className="grid grid-cols-2 gap-4">
-                                    <InputField label="RT" name="rt" value={form.rt} onChange={handleChange} />
-                                    <InputField label="RW" name="rw" value={form.rw} onChange={handleChange} />
+                                    <InputField label="RT" name="rt" value={data.rt} onChange={handleChange} />
+                                    <InputField label="RW" name="rw" value={data.rw} onChange={handleChange} />
                                 </div>
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                        >
-                            Save & Next
-                        </button>
+                        <div style={{ textAlign: 'center', marginTop: '30px' }}>
+                            <button
+                                type="submit"
+                                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                            >
+                                {processing ? 'Memproses...' : 'Simpan Data'}
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -660,10 +728,10 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
             {message && (
                 <Alert type={message.type} message={message.text} />
             )}
-            
+
             <CustomProfileHeader
-                name={form.name}
-                email={form.email}
+                name={data.name}
+                email={data.email}
             />
 
             <div className="mx-6 flex space-x-6">

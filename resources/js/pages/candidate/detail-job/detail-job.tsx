@@ -1,15 +1,24 @@
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 import React from 'react';
 import styled from 'styled-components';
+import Swal from 'sweetalert2';
 import Footer from '../../../components/Footer';
 import Header from '../../../components/Header';
 
 interface JobDetailProps {
     job: {
+        id: number;
+        title: string;
+        company: { name: string };
         job_description: string;
         requirements: string[];
         benefits: string[];
+        major_id: number;
+        major_name: string | null;
     };
+    userMajor: number | null;
+    isMajorMatched: boolean;
 }
 
 const PageWrapper = styled.div`
@@ -103,11 +112,130 @@ const ApplyButton = styled.button`
     }
 `;
 
-const JobDetailPage: React.FC = () => {
-    const { job } = usePage<{ job: JobDetailProps['job'] }>().props;
+const MajorWarning = styled.div`
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-left: 5px solid #ffeeba;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+`;
 
-    const handleApply = async () => {
-        alert('Fitur apply belum tersedia.');
+const WarningIcon = styled.span`
+    font-size: 24px;
+`;
+
+const MajorMatch = styled.div`
+    background-color: #d4edda;
+    color: #155724;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-left: 5px solid #c3e6cb;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+`;
+
+const MatchIcon = styled.span`
+    font-size: 24px;
+`;
+
+const JobDetailPage: React.FC = () => {
+    const { job, userMajor, isMajorMatched, flash } = usePage<JobDetailProps & { flash: any }>().props;
+
+    React.useEffect(() => {
+        // Tampilkan flash messages dari backend
+        if (flash?.success) {
+            Swal.fire({
+                title: 'Sukses!',
+                text: flash.success,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                window.location.href = '/jobs/application-history';
+            });
+        }
+
+        if (flash?.error) {
+            Swal.fire({
+                title: 'Perhatian!',
+                text: flash.error,
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+        }
+    }, [flash]);
+
+    const handleApply = () => {
+        // Ambil ID dari URL jika job.id tidak tersedia
+        const urlParts = window.location.pathname.split('/');
+        const jobId = job?.id || urlParts[urlParts.length - 1];
+
+        if (!jobId || isNaN(Number(jobId))) {
+            Swal.fire('Error', 'ID lowongan tidak ditemukan', 'error');
+            return;
+        }
+
+        // Jika jurusan matching (seperti pada screenshot), proses apply
+        // Jangan menambahkan pengecekan !isMajorMatched di sini karena isMajorMatched sudah true
+        // berdasarkan screenshot yang diberikan
+        Swal.fire({
+            title: 'Apply Lowongan',
+            text: `Anda yakin ingin apply lowongan ${job?.title || ''}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Apply',
+            cancelButtonText: 'Batal'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await axios.post(`/candidate/apply/${jobId}`, {}, {
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        }
+                    });
+
+                    if (response.data.success) {
+                        Swal.fire({
+                            title: 'Sukses!',
+                            text: response.data.message || 'Lamaran berhasil dikirim!',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            // Redirect ke halaman application history
+                            window.location.href = response.data.redirect || '/jobs/application-history';
+                        });
+                    }
+                } catch (error: any) {
+                    console.error("Apply error:", error);
+                    // Handle error dari backend
+                    let errorMsg = 'Terjadi kesalahan saat apply';
+                    let redirectUrl = null;
+
+                    if (error.response && error.response.data) {
+                        errorMsg = error.response.data.message || errorMsg;
+                        redirectUrl = error.response.data.redirect;
+                    }
+
+                    Swal.fire({
+                        title: 'Perhatian',
+                        text: errorMsg,
+                        icon: 'warning',
+                        confirmButtonText: redirectUrl ? 'Lengkapi Data' : 'OK'
+                    }).then(() => {
+                        if (redirectUrl) {
+                            const currentUrl = window.location.href;
+                            const redirectPath = `${redirectUrl}?redirect_back=${encodeURIComponent(currentUrl)}`;
+                            window.location.href = redirectPath;
+                        }
+                    });
+                }
+            }
+        });
     };
 
     return (
@@ -115,17 +243,45 @@ const JobDetailPage: React.FC = () => {
             <Header />
             <PageWrapper>
                 <HeroSection>
-                    <JobTitle>Detail Pekerjaan</JobTitle>
+                    <JobTitle>{job?.title}</JobTitle>
+                    <CompanyTitle>{job?.company?.name}</CompanyTitle>
                 </HeroSection>
                 <ContentContainer>
+                    {/* Tampilkan peringatan kesesuaian jurusan */}
+                    {userMajor === null ? (
+                        <MajorWarning>
+                            <WarningIcon>⚠️</WarningIcon>
+                            <div>
+                                <strong>Data jurusan belum lengkap!</strong> Mohon lengkapi data pendidikan Anda terlebih dahulu
+                                untuk dapat melamar lowongan ini.
+                            </div>
+                        </MajorWarning>
+                    ) : isMajorMatched ? (
+                        <MajorMatch>
+                            <MatchIcon>✓</MatchIcon>
+                            <div>
+                                <strong>Jurusan Anda cocok!</strong> Lowongan ini membutuhkan jurusan {job?.major_name}
+                                yang sesuai dengan jurusan Anda.
+                            </div>
+                        </MajorMatch>
+                    ) : (
+                        <MajorWarning>
+                            <WarningIcon>⚠️</WarningIcon>
+                            <div>
+                                <strong>Jurusan tidak sesuai!</strong> Lowongan ini membutuhkan jurusan {job?.major_name}
+                                yang tidak sesuai dengan jurusan Anda.
+                            </div>
+                        </MajorWarning>
+                    )}
+
                     <InfoSection>
                         <SectionHeading>Job Description</SectionHeading>
-                        <JobDescription>{job.job_description}</JobDescription>
+                        <JobDescription>{job?.job_description}</JobDescription>
                     </InfoSection>
                     <InfoSection>
                         <SectionHeading>Requirements</SectionHeading>
                         <List>
-                            {job.requirements?.map((requirement, index) => (
+                            {job?.requirements?.map((requirement, index) => (
                                 <ListItem key={index}>{requirement}</ListItem>
                             ))}
                         </List>
@@ -133,12 +289,23 @@ const JobDetailPage: React.FC = () => {
                     <InfoSection>
                         <SectionHeading>Benefits</SectionHeading>
                         <List>
-                            {job.benefits?.map((benefit, index) => (
+                            {job?.benefits?.map((benefit, index) => (
                                 <ListItem key={index}>{benefit}</ListItem>
                             ))}
                         </List>
                     </InfoSection>
-                    <ApplyButton onClick={handleApply}>Apply</ApplyButton>
+
+                    {/* Button Apply dengan kondisi */}
+                    <ApplyButton
+                        onClick={handleApply}
+                        disabled={!isMajorMatched}
+                        style={{
+                            backgroundColor: !isMajorMatched ? '#cccccc' : '#1a73e8',
+                            cursor: !isMajorMatched ? 'not-allowed' : 'pointer'
+                        }}
+                    >
+                        {!isMajorMatched ? 'Tidak Dapat Apply (Jurusan Tidak Sesuai)' : 'Apply'}
+                    </ApplyButton>
                 </ContentContainer>
             </PageWrapper>
             <Footer />

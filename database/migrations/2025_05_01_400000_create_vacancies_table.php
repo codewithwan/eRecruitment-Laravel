@@ -24,6 +24,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
+
+        // Tambahkan kolom major_id pada tabel vacancies
+        Schema::table('vacancies', function (Blueprint $table) {
+            $table->unsignedBigInteger('major_id')->nullable()->after('type_id');
+            $table->foreign('major_id')->references('id')->on('master_majors')->onDelete('set null');
+        });
     }
 
     /**

@@ -9,7 +9,7 @@ class CreateCandidatesProfilesTable extends Migration
     {
         Schema::create('candidates_profiles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('no_ektp', 16);
             $table->foreignId('gender_id')->constrained('master_genders'); // ubah dari enum gender ke foreign key
             $table->string('phone_number');

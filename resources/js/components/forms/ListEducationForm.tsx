@@ -1,5 +1,5 @@
-import React, { useState, FormEvent } from 'react';
 import { useEducation } from '@/hooks/useEducation';
+import React, { FormEvent, useState } from 'react';
 import TambahPendidikanForm from './AddEducationForm';
 
 // Add Alert component

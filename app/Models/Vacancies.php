@@ -15,9 +15,11 @@ class Vacancies extends Model
         'department_id',
         'company_id',
         'type_id',
+        'major_id',
         'location',
         'requirements',
         'benefits',
+        'job_description',
     ];
 
     protected $casts = [
@@ -27,7 +29,7 @@ class Vacancies extends Model
 
     public function department(): BelongsTo
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsTo(Department::class);
     }
 
     public function company(): BelongsTo
@@ -35,13 +37,24 @@ class Vacancies extends Model
         return $this->belongsTo(Companies::class, 'company_id');
     }
 
+    // Perbaiki relasi ini - pastikan model dan namespace benar
     public function jobType(): BelongsTo
     {
-        return $this->belongsTo(JobTypes::class, 'type_id');
+        // Ganti dengan namespace yang benar, misalnya jika nama model adalah JobTypes bukan JobType
+        return $this->belongsTo(\App\Models\JobTypes::class, 'type_id');
+        
+        // Atau jika namespace berbeda
+        // return $this->belongsTo(\App\Models\Master\JobType::class, 'type_id');
     }
 
-    public function user(): BelongsTo
+    public function major(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(MasterMajor::class, 'major_id');
+    }
+    
+    public function periods()
+    {
+        return $this->belongsToMany(Periods::class, 'vacancies_periods', 'vacancy_id', 'period_id')
+            ->withTimestamps();
     }
 }

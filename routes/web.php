@@ -3,15 +3,18 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\VacanciesController;
 use App\Http\Controllers\CandidateController;
+use App\Http\Controllers\JobsController;
+use App\Http\Controllers\ApplicationHistoryController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ResetPasswordController;
 use App\Models\AboutUs;
 use App\Http\Controllers\ContactsController;
+use App\Http\Controllers\PersonalDataController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
-Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('job-hiring');
+Route::get('/job-hiring', [JobsController::class, 'jobHiring'])->name('job-hiring');
 Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacanciesLandingPage'])->name('job-hiring-landing-page');
 Route::get('/job-detail/{id}', [VacanciesController::class, 'show'])->name('job.detail');
 Route::get('/application-history', function () {
@@ -27,7 +30,7 @@ Route::get('/contact', [ContactsController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactsController::class, 'store'])->name('contact.store');
 
 Route::get('/about-us', function () {
-    $aboutUs = \App\Models\AboutUs::with('company')->get();
+    $aboutUs = \App\Models\AboutUs::with('companies')->get();
     return Inertia::render('landing-page/about-us', [
         'aboutUs' => $aboutUs,
     ]);
@@ -76,11 +79,11 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.work-experience.delete');
     Route::get('/candidate/work-experiences', [CandidateController::class, 'indexWorkExperiences'])
         ->name('candidate.work-experiences');
-    
+
     // Rute untuk Edit Pengalaman Kerja
     Route::get('/candidate/work-experience/{id}/edit', [CandidateController::class, 'editWorkExperience'])
         ->name('candidate.work-experience.edit');
-    
+
     // Achievement routes
     Route::get('/candidate/achievements', [CandidateController::class, 'indexAchievements'])
         ->name('candidate.achievements');
@@ -92,18 +95,22 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.achievement.delete');
 });
 
+// Profile routes
 Route::middleware(['auth'])->group(function () {
-    // Profile routes
     Route::get('/profile', [CandidateController::class, 'profile'])->name('user.profile');
-    
-    // Education routes
+});
+
+// Education routes
+Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/education', [CandidateController::class, 'showEducationForm'])
         ->name('candidate.education');
     Route::post('/candidate/education', [CandidateController::class, 'storeEducation'])
         ->name('candidate.education.store');
     Route::get('/candidate/education/data', [CandidateController::class, 'getEducation']);
-    
-    // Organization routes
+});
+
+// Organization routes
+Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/organizations', [CandidateController::class, 'indexOrganizations'])
         ->name('candidate.organizations');
     Route::post('/candidate/organization', [CandidateController::class, 'storeOrganization'])
@@ -112,32 +119,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.organization.update');
 });
 
+// Social Media routes
 Route::middleware(['auth'])->group(function () {
-    // ...existing routes...
-    Route::get('/candidate/achievements', [CandidateController::class, 'indexAchievements']);
-    // ...existing routes...
-    Route::post('/candidate/organization', [CandidateController::class, 'storeOrganization']);
-    Route::put('/candidate/organization/{id}', [CandidateController::class, 'updateOrganization']);
-    // ...existing routes...
-    Route::post('/candidate/achievement', [CandidateController::class, 'storeAchievement']);
-    Route::put('/candidate/achievement/{id}', [CandidateController::class, 'updateAchievement']);
-});
-
-Route::middleware(['auth'])->group(function () {
-    // ...existing routes...
-    Route::put('/candidate/achievement/{id}', [CandidateController::class, 'updateAchievement'])
-        ->name('candidate.achievement.update');
-    Route::get('/candidate/achievement/{id}', [CandidateController::class, 'showAchievement']);
-});
-
-Route::middleware(['auth'])->group(function () {
-    // ...existing routes...
-    Route::get('/candidate/achievement/{id}', [CandidateController::class, 'showAchievement'])
-        ->name('candidate.achievement.show');
-});
-
-Route::middleware(['auth'])->group(function () {
-    // ...existing routes...
     Route::get('/candidate/social-media', [CandidateController::class, 'indexSocialMedia']);
     Route::post('/candidate/social-media', [CandidateController::class, 'storeSocialMedia']);
     Route::put('/candidate/social-media/{id}', [CandidateController::class, 'updateSocialMedia']);
@@ -155,8 +138,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.skills.update');
     Route::delete('/candidate/skills/{id}', [CandidateController::class, 'deleteSkill'])
         ->name('candidate.skills.delete');
+});
 
-    // Languages routes
+// Languages routes
+Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/languages', [CandidateController::class, 'indexLanguages'])
         ->name('candidate.languages.index');
     Route::post('/candidate/languages', [CandidateController::class, 'storeLanguage'])
@@ -165,26 +150,34 @@ Route::middleware(['auth'])->group(function () {
         ->name('candidate.languages.update');
     Route::delete('/candidate/languages/{id}', [CandidateController::class, 'deleteLanguage'])
         ->name('candidate.languages.delete');
+});
 
-    // Courses routes
+// Courses routes
+Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/courses', [CandidateController::class, 'indexCourses'])
         ->name('candidate.courses.index');
     Route::post('/candidate/courses', [CandidateController::class, 'storeCourse'])
         ->name('candidate.courses.store');
+});
 
-    // Certifications routes
+// Certifications routes
+Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/certifications', [CandidateController::class, 'indexCertifications'])
         ->name('candidate.certifications.index');
     Route::post('/candidate/certifications', [CandidateController::class, 'storeCertification'])
         ->name('candidate.certifications.store');
+});
 
-    // English Certifications routes
+// English Certifications routes
+Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/english-certifications', [CandidateController::class, 'indexEnglishCertifications'])
         ->name('candidate.english-certifications.index');
     Route::post('/candidate/english-certifications', [CandidateController::class, 'storeEnglishCertification'])
         ->name('candidate.english-certifications.store');
+});
 
-    // CV Generation routes
+// CV Generation routes
+Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/data-completeness', [CandidateController::class, 'checkDataCompleteness'])
         ->name('candidate.data-completeness');
     Route::get('/candidate/cv/generate', [CandidateController::class, 'generateCV'])
@@ -198,6 +191,33 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/cv/test', [CandidateController::class, 'testPDF'])
         ->name('candidate.cv.test');
 });
+
+// Job Recommendations route
+Route::get('/candidate/job-recommendations', [CandidateController::class, 'jobRecommendations'])->middleware('auth');
+
+// Tambahkan route untuk apply lowongan
+Route::middleware(['auth', 'role:candidate'])->group(function () {
+    // Routes untuk personal data dan application history
+    Route::get('/personal-data', [PersonalDataController::class, 'index'])->name('candidate.personal-data');
+    Route::post('/personal-data/update', [PersonalDataController::class, 'update'])->name('candidate.personal-data.update');
+    Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('candidate.application-history');
+
+    // Route untuk apply job
+    Route::post('/candidate/apply/{id}', [JobsController::class, 'apply'])->name('candidate.apply');
+});
+
+// Routes untuk kandidat
+Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(function () {
+    // Detail job dan apply
+    Route::get('/job/{id}', [JobsController::class, 'detail'])->name('candidate.job.detail');
+    Route::post('/apply/{id}', [JobsController::class, 'apply'])->name('candidate.apply');
+
+    // Application history
+    Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('candidate.application-history');
+});
+
+// Job hiring publik
+Route::get('/job-hiring', [JobsController::class, 'jobHiring'])->name('job-hiring');
 
 Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(function () {
     // Route untuk form data pribadi (GET)

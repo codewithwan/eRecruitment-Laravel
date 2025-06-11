@@ -14,8 +14,8 @@ class CandidatesEducations extends Model
         'user_id',
         'education_level',
         'faculty',
-        'major_id', // ubah dari 'major' ke 'major_id'
-        'institution_id', // ubah dari institution_name ke institution_id
+        'major_id', // tetap mereferensi ke master_majors
+        'institution_name', // ubah kembali dari institution_id ke institution_name
         'gpa',
         'year_in',
         'year_out'
@@ -31,8 +31,5 @@ class CandidatesEducations extends Model
         return $this->belongsTo(MasterMajor::class, 'major_id');
     }
 
-    public function institution()
-    {
-        return $this->belongsTo(\App\Models\MasterInstitution::class, 'institution_id');
-    }
+    // Hapus relasi institution karena tidak lagi menggunakan master institution
 }

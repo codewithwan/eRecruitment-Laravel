@@ -1,17 +1,21 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCandidatesProfilesTable extends Migration
+return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         Schema::create('candidates_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('no_ektp', 16);
-            $table->foreignId('gender_id')->constrained('master_genders'); // ubah dari enum gender ke foreign key
+            $table->string('gender', 10); // langsung gunakan string gender, bukan foreign key
             $table->string('phone_number');
             $table->string('npwp')->nullable();
             $table->text('about_me');
@@ -28,8 +32,11 @@ class CreateCandidatesProfilesTable extends Migration
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::dropIfExists('candidates_profiles');
     }
-}
+};

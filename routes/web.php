@@ -36,6 +36,26 @@ Route::get('/about-us', function () {
     ]);
 })->name('about-us');
 
+// API routes untuk AJAX requests
+Route::middleware(['auth'])->group(function () {
+    // Route untuk get majors
+    Route::get('/api/majors', function () {
+        try {
+            $majors = \App\Models\MasterMajor::orderBy('name', 'asc')->get();
+            return response()->json($majors);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching majors: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Gagal mengambil data program studi'
+            ], 500);
+        }
+    });
+    
+    // Route untuk education - INI YANG DIGUNAKAN
+    Route::get('/api/candidate/education', [CandidateController::class, 'getEducation']);
+    Route::post('/api/candidate/education', [CandidateController::class, 'storeEducation']);
+});
+
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     return Auth::user()->role === UserRole::HR
@@ -52,11 +72,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/data-pribadi', [CandidateController::class, 'profile'])
         ->name('candidate.data-pribadi');
 
-    Route::get('/candidate/education/data', [CandidateController::class, 'getEducation'])
-        ->name('candidate.education.data');
-
-    Route::post('/candidate/education/update', [CandidateController::class, 'storeEducation'])
-        ->name('candidate.education.update');
+    // HAPUS ROUTE EDUCATION YANG DUPLIKAT INI
+    // Route::get('/candidate/education/data', [CandidateController::class, 'getEducation'])
+    //     ->name('candidate.education.data');
+    // Route::post('/candidate/education/update', [CandidateController::class, 'storeEducation'])
+    //     ->name('candidate.education.update');
 
     // Tambah pengalaman kerja (POST)
     Route::post('/candidate/work-experience', [CandidateController::class, 'storeWorkExperience'])
@@ -100,14 +120,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [CandidateController::class, 'profile'])->name('user.profile');
 });
 
-// Education routes
-Route::middleware(['auth'])->group(function () {
-    Route::get('/candidate/education', [CandidateController::class, 'showEducationForm'])
-        ->name('candidate.education');
-    Route::post('/candidate/education', [CandidateController::class, 'storeEducation'])
-        ->name('candidate.education.store');
-    Route::get('/candidate/education/data', [CandidateController::class, 'getEducation']);
-});
+// HAPUS ROUTE EDUCATION YANG DUPLIKAT INI JUGA
+// Route::middleware(['auth'])->group(function () {
+//     Route::get('/candidate/education', [CandidateController::class, 'showEducationForm'])
+//         ->name('candidate.education');
+//     Route::post('/candidate/education', [CandidateController::class, 'storeEducation'])
+//         ->name('candidate.education.store');
+//     Route::get('/candidate/education/data', [CandidateController::class, 'getEducation']);
+// });
 
 // Organization routes
 Route::middleware(['auth'])->group(function () {
@@ -219,14 +239,15 @@ Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(functi
 // Job hiring publik
 Route::get('/job-hiring', [JobsController::class, 'jobHiring'])->name('job-hiring');
 
-Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(function () {
-    // Route untuk form data pribadi (GET)
-    Route::get('/data-pribadi', [CandidateController::class, 'profile'])
-        ->name('candidate.data-pribadi');
-
-    Route::get('/education', [CandidateController::class, 'getEducation']);
-    Route::post('/education', [CandidateController::class, 'storeEducation']);
-});
+// HAPUS ROUTE EDUCATION YANG DUPLIKAT INI JUGA
+// Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(function () {
+//     // Route untuk form data pribadi (GET)
+//     Route::get('/data-pribadi', [CandidateController::class, 'profile'])
+//         ->name('candidate.data-pribadi');
+//
+//     Route::get('/education', [CandidateController::class, 'getEducation']);
+//     Route::post('/education', [CandidateController::class, 'storeEducation']);
+// });
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

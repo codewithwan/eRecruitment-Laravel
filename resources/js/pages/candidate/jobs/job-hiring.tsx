@@ -1,4 +1,4 @@
-import { Inertia } from '@inertiajs/inertia';
+import { router } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import Footer from '../../../components/Footer';
@@ -258,7 +258,7 @@ const JobHiring: React.FC<Props> = ({ jobs = [], recommendations: initialRecomme
                       <span>⭐ Score: {score}</span>
                     </JobDetails>
                   </JobInfo>
-                  <DetailButton onClick={() => Inertia.visit(`/candidate/job/${vacancy.id}`)}>
+                  <DetailButton onClick={() => router.visit(`/candidate/job/${vacancy.id}`)}>
                     Lihat Detail
                   </DetailButton>
                 </JobCard>
@@ -299,7 +299,7 @@ const JobHiring: React.FC<Props> = ({ jobs = [], recommendations: initialRecomme
                       <span>👥 {typeof job.department === 'object' ? job.department?.name : job.department}</span>
                     </JobDetails>
                   </JobInfo>
-                  <DetailButton onClick={() => Inertia.visit(`/job-detail/${job.id}`)}>
+                  <DetailButton onClick={() => router.visit(`/candidate/job/${job.id}`)}>
                     Lihat Detail
                   </DetailButton>
                 </JobCard>

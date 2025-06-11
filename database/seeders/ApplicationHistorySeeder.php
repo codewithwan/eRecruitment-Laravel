@@ -11,7 +11,7 @@ class ApplicationHistorySeeder extends Seeder
     public function run(): void
     {
         // Get necessary data
-        $applications = DB::table('applications')->take(3)->get();
+        $applications = DB::table('applications')->take(2)->get(); // Changed from 3 to 2
         $selections = DB::table('selection')->get();
         $assessments = DB::table('assessments')->get();
         $interviews = DB::table('interviews')->get();
@@ -19,11 +19,11 @@ class ApplicationHistorySeeder extends Seeder
         $statuses = DB::table('statuses')->get();
 
         // Check if we have the required data
-        if ($applications->count() < 3 || $selections->count() < 1 ||
+        if ($applications->count() < 2 || $selections->count() < 1 || // Changed from 3 to 2
             $assessments->count() < 2 || $interviews->count() < 1 ||
             $users->count() < 1 || $statuses->count() < 1) {
             echo "Data tidak cukup untuk seeding application history.\n";
-            echo "Applications: " . $applications->count() . " (need 3)\n";
+            echo "Applications: " . $applications->count() . " (need 2)\n"; // Changed from 3 to 2
             echo "Selections: " . $selections->count() . " (need 1)\n";
             echo "Assessments: " . $assessments->count() . " (need 2)\n";
             echo "Interviews: " . $interviews->count() . " (need 1)\n";
@@ -46,51 +46,11 @@ class ApplicationHistorySeeder extends Seeder
         // Reviewer ID (HR personnel)
         $reviewerId = $users->first()->id ?? 1;
 
-        // Application 1: Complete flow through all stages
+        // Application 1: Failed at psikotest stage (formerly Application 2)
         DB::table('application_history')->insert([
             // Administration stage (completed & qualified)
             [
                 'application_id' => $applications[0]->id,
-                'selection_id' => $administrationId,
-                'assessments_id' => null,
-                'interviews_id' => null,
-                'reviewed_by' => $reviewerId,
-                'statuses_id' => $completedStatusId,
-                'is_qualified' => true,
-                'created_at' => Carbon::now()->subDays(10),
-                'updated_at' => Carbon::now()->subDays(9),
-            ],
-            // Psikotest stage (completed & qualified)
-            [
-                'application_id' => $applications[0]->id,
-                'selection_id' => $psikotestId,
-                'assessments_id' => $assessments[0]->id,
-                'interviews_id' => null,
-                'reviewed_by' => $reviewerId,
-                'statuses_id' => $completedStatusId,
-                'is_qualified' => true,
-                'created_at' => Carbon::now()->subDays(8),
-                'updated_at' => Carbon::now()->subDays(6),
-            ],
-            // Wawancara stage (in progress)
-            [
-                'application_id' => $applications[0]->id,
-                'selection_id' => $wawancaraId,
-                'assessments_id' => null,
-                'interviews_id' => $interviews[0]->id,
-                'reviewed_by' => $reviewerId,
-                'statuses_id' => $inProgressStatusId,
-                'is_qualified' => null, // pending result
-                'created_at' => Carbon::now()->subDays(5),
-                'updated_at' => Carbon::now()->subDays(5),
-            ],
-        ]);
-
-        // Application 2: Failed at psikotest stage
-        DB::table('application_history')->insert([
-            // Administration stage (completed & qualified)
-            [
-                'application_id' => $applications[1]->id,
                 'selection_id' => $administrationId,
                 'assessments_id' => null,
                 'interviews_id' => null,
@@ -102,9 +62,9 @@ class ApplicationHistorySeeder extends Seeder
             ],
             // Psikotest stage (completed & not qualified)
             [
-                'application_id' => $applications[1]->id,
+                'application_id' => $applications[0]->id,
                 'selection_id' => $psikotestId,
-                'assessments_id' => $assessments[1]->id,
+                'assessments_id' => $assessments[0]->id,
                 'interviews_id' => null,
                 'reviewed_by' => $reviewerId,
                 'statuses_id' => $completedStatusId,
@@ -114,10 +74,10 @@ class ApplicationHistorySeeder extends Seeder
             ]
         ]);
 
-        // Application 3: Still in administration stage
+        // Application 2: Still in administration stage (formerly Application 3)
         DB::table('application_history')->insert([
             [
-                'application_id' => $applications[2]->id,
+                'application_id' => $applications[1]->id,
                 'selection_id' => $administrationId,
                 'assessments_id' => null,
                 'interviews_id' => null,

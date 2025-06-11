@@ -19,6 +19,7 @@ interface JobDetailProps {
     };
     userMajor: number | null;
     isMajorMatched: boolean;
+    [key: string]: any; // Add index signature to satisfy PageProps constraint
 }
 
 const PageWrapper = styled.div`
@@ -170,72 +171,68 @@ const JobDetailPage: React.FC = () => {
         }
     }, [flash]);
 
-    const handleApply = () => {
-        // Ambil ID dari URL jika job.id tidak tersedia
-        const urlParts = window.location.pathname.split('/');
-        const jobId = job?.id || urlParts[urlParts.length - 1];
+    const handleApply = async () => {
+        try {
+            // Check if education data is complete first
+            const educationResponse = await axios.get('/api/candidate/education');
+            const educationData = educationResponse.data;
 
-        if (!jobId || isNaN(Number(jobId))) {
-            Swal.fire('Error', 'ID lowongan tidak ditemukan', 'error');
-            return;
-        }
-
-        // Jika jurusan matching (seperti pada screenshot), proses apply
-        // Jangan menambahkan pengecekan !isMajorMatched di sini karena isMajorMatched sudah true
-        // berdasarkan screenshot yang diberikan
-        Swal.fire({
-            title: 'Apply Lowongan',
-            text: `Anda yakin ingin apply lowongan ${job?.title || ''}?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Apply',
-            cancelButtonText: 'Batal'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    const response = await axios.post(`/candidate/apply/${jobId}`, {}, {
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-                        }
-                    });
-
-                    if (response.data.success) {
-                        Swal.fire({
-                            title: 'Sukses!',
-                            text: response.data.message || 'Lamaran berhasil dikirim!',
-                            icon: 'success',
-                            confirmButtonText: 'OK'
-                        }).then(() => {
-                            // Redirect ke halaman application history
-                            window.location.href = response.data.redirect || '/jobs/application-history';
-                        });
-                    }
-                } catch (error: any) {
-                    console.error("Apply error:", error);
-                    // Handle error dari backend
-                    let errorMsg = 'Terjadi kesalahan saat apply';
-                    let redirectUrl = null;
-
-                    if (error.response && error.response.data) {
-                        errorMsg = error.response.data.message || errorMsg;
-                        redirectUrl = error.response.data.redirect;
-                    }
-
-                    Swal.fire({
-                        title: 'Perhatian',
-                        text: errorMsg,
-                        icon: 'warning',
-                        confirmButtonText: redirectUrl ? 'Lengkapi Data' : 'OK'
-                    }).then(() => {
-                        if (redirectUrl) {
-                            const currentUrl = window.location.href;
-                            const redirectPath = `${redirectUrl}?redirect_back=${encodeURIComponent(currentUrl)}`;
-                            window.location.href = redirectPath;
-                        }
-                    });
-                }
+            if (!educationData || !educationData.education_level ||
+                !educationData.faculty || !educationData.major_id ||
+                !educationData.institution_name || !educationData.gpa) {
+                Swal.fire({
+                    title: 'Perhatian',
+                    text: 'Data pendidikan belum lengkap. Lengkapi data pendidikan terlebih dahulu.',
+                    icon: 'warning',
+                    confirmButtonText: 'Lengkapi Data'
+                }).then(() => {
+                    window.location.href = '/personal-data?redirect_back=/candidate/job/' + job.id;
+                });
+                return;
             }
-        });
+
+            // If education data is complete, proceed with application
+            const response = await axios.post(`/candidate/apply/${job.id}`, {}, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                }
+            });
+
+            if (response.data.success) {
+                Swal.fire({
+                    title: 'Sukses!',
+                    text: response.data.message || 'Lamaran berhasil dikirim!',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // Redirect ke halaman application history
+                    window.location.href = response.data.redirect || '/jobs/application-history';
+                });
+            }
+        } catch (error: any) {
+            console.error("Apply error:", error);
+            // Handle error dari backend
+            let errorMsg = 'Terjadi kesalahan saat apply';
+            let redirectUrl = null;
+
+            if (error.response && error.response.data) {
+                errorMsg = error.response.data.message || errorMsg;
+                redirectUrl = error.response.data.redirect;
+            }
+
+            Swal.fire({
+                title: 'Perhatian',
+                text: errorMsg,
+                icon: 'warning',
+                confirmButtonText: redirectUrl ? 'Lengkapi Data' : 'OK'
+            }).then(() => {
+                if (redirectUrl) {
+                    const currentUrl = window.location.href;
+                    const redirectPath = `${redirectUrl}?redirect_back=${encodeURIComponent(currentUrl)}`;
+                    window.location.href = redirectPath;
+                }
+            });
+        }
     };
 
     return (

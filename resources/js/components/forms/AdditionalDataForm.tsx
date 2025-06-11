@@ -1064,9 +1064,13 @@ const DataTambahanForm: React.FC<DataTambahanFormProps> = ({
                 </div>
             )}
 
-            <div className="border-b border-gray-200 pb-4 mb-6">
-                <h2 className="text-xl font-semibold text-blue-600">Data Tambahan</h2>
-                <p className="text-sm text-gray-600 mt-1">Lengkapi data tambahan di bawah ini</p>
+            <div className="p-6 border-b">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-blue-600">Data Tambahan</h2>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                    Lengkapi data tambahan di bawah ini
+                </p>
             </div>
 
             <div className="p-6 space-y-6">

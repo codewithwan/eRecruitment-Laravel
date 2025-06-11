@@ -14,9 +14,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             MasterMajorSeeder::class,
-            MasterGendersSeeder::class,
-            MasterInstitutionSeeder::class,
-            MasterGenderSeeder::class,
             CandidatesProfilesSeeder::class,
             CandidatesWorkExperiencesSeeder::class,
             CandidatesOrganizationsSeeder::class,

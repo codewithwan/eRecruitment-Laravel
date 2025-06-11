@@ -227,6 +227,7 @@ const TambahPrestasiForm: React.FC<TambahPrestasiFormProps> = ({
                 <InputField
                     label="Nama Kompetisi"
                     name="namaKompetisi"
+                    type="text"
                     value={formData.namaKompetisi}
                     onChange={handleChange}
                     placeholder="Masukkan nama kompetisi"

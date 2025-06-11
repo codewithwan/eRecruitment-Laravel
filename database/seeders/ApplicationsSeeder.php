@@ -12,15 +12,7 @@ class ApplicationsSeeder extends Seeder
     {
         DB::table('applications')->insert([
             [
-                'id' => 1,
-                'user_id' => 1,
-                'vacancies_id' => 1,
-                'status_id' => 1,
-                'created_at' => Carbon::now()->subDays(2),
-                'updated_at' => Carbon::now()->subDays(2),
-            ],
-            [
-                'id' => 2,
+                // Removed 'id' field to let auto-increment handle it
                 'user_id' => 2,
                 'vacancies_id' => 2,
                 'status_id' => 1,
@@ -28,7 +20,7 @@ class ApplicationsSeeder extends Seeder
                 'updated_at' => Carbon::now()->subDays(1),
             ],
             [
-                'id' => 3,
+                // Removed 'id' field to let auto-increment handle it
                 'user_id' => 3,
                 'vacancies_id' => 2,
                 'status_id' => 1,

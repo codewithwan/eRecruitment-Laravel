@@ -7,14 +7,15 @@ use App\Models\Candidate;
 use App\Models\Vacancies;
 use App\Models\Applications;
 use App\Models\CandidatesEducations;
-use App\Models\MasterMajor; // Tambahkan ini
-use App\Models\CandidatesProfile; // Tambahkan ini
+use App\Models\MasterMajor;
+use App\Models\CandidatesProfile;
 use App\Models\CandidatesProfiles;
+use App\Models\JobApplication; // Add this import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage; // Tambahkan ini
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class JobsController extends Controller
@@ -38,61 +39,66 @@ class JobsController extends Controller
 
     public function apply(Request $request, $id)
     {
-        $user = Auth::user();
-
-        // Ambil data profile kandidat
-        $profile = CandidatesProfiles::where('user_id', $user->id)->first();
-        $education = CandidatesEducations::where('user_id', $user->id)->first();
-
-        // Cek kelengkapan data pribadi
-        if (!$profile || empty($user->name) || empty($user->email) || empty($profile->phone_number)) {
+        try {
+            // Find the vacancy
+            $vacancy = Vacancies::findOrFail($id);
+            
+            // Check if user has already applied
+            $existingApplication = Applications::where('vacancies_id', $id)
+                ->where('user_id', Auth::id())
+                ->first();
+                
+            if ($existingApplication) {
+                return response()->json([
+                    'message' => 'Anda sudah pernah melamar pekerjaan ini.'
+                ], 422);
+            }
+            
+            // Check if the education data is complete
+            $education = CandidatesEducations::where('user_id', Auth::id())->first();
+            if (!$education) {
+                return response()->json([
+                    'message' => 'Data pendidikan belum lengkap. Lengkapi data pendidikan terlebih dahulu.'
+                ], 422);
+            }
+            
+            // Check for required education fields
+            $requiredFields = ['education_level', 'faculty', 'major_id', 'institution_name', 'gpa'];
+            $missingFields = [];
+            
+            foreach ($requiredFields as $field) {
+                if (empty($education->$field)) {
+                    $missingFields[] = $field;
+                }
+            }
+            
+            if (!empty($missingFields)) {
+                return response()->json([
+                    'message' => 'Data pendidikan belum lengkap',
+                    'errors' => ['education' => 'Data pendidikan belum lengkap: ' . implode(', ', $missingFields)]
+                ], 422);
+            }
+            
+            // Create application - USE vacancies_id INSTEAD OF vacancy_id
+            $application = new Applications();
+            $application->user_id = Auth::id();
+            $application->vacancies_id = $id; // Changed from vacancy_id to vacancies_id
+            $application->status_id = 1;
+            $application->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Lamaran berhasil dikirim!',
+                'redirect' => '/candidate/application-history' // FIX: Changed from /jobs/application-history to /candidate/application-history
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error applying for job: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Nama, email, dan nomor telepon wajib diisi.',
-                'redirect' => route('candidate.data-pribadi', ['redirect_back' => url()->current()])
-            ], 422);
+                'message' => 'Terjadi kesalahan saat mengirim lamaran: ' . $e->getMessage()
+            ], 500);
         }
-        if (empty($profile->address)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Alamat wajib diisi.',
-                'redirect' => route('candidate.data-pribadi', ['redirect_back' => url()->current()])
-            ], 422);
-        }
-        // Cek pendidikan
-        if (
-            !$education ||
-            empty($education->institution) ||
-            is_null($education->major_id) ||
-            is_null($education->year_graduated)
-        ) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data pendidikan belum lengkap.',
-                'redirect' => route('candidate.data-pribadi', ['redirect_back' => url()->current()])
-            ], 422);
-        }
-
-        // Jika sudah lengkap, simpan lamaran
-        $alreadyApplied = Applications::where('user_id', $user->id)->where('vacancies_id', $id)->exists();
-        if ($alreadyApplied) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda sudah pernah melamar lowongan ini.',
-            ], 422);
-        }
-
-        Applications::create([
-            'user_id' => $user->id,
-            'vacancies_id' => $id,
-            'status_id' => 1, // pending
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Lamaran berhasil dikirim!',
-            'redirect' => route('application-history')
-        ]);
     }
 
     public function show()

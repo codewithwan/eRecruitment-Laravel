@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\CandidatesProfiles;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Enums\UserRole;
 
@@ -13,9 +12,6 @@ class CandidatesProfilesSeeder extends Seeder
 {
     public function run(): void
     {
-        $male = DB::table('master_genders')->where('name', 'male')->first();
-        $female = DB::table('master_genders')->where('name', 'female')->first();
-
         $candidates = User::where('role', UserRole::CANDIDATE)->get();
 
         foreach ($candidates as $user) {
@@ -23,7 +19,7 @@ class CandidatesProfilesSeeder extends Seeder
                 ['user_id' => $user->id],
                 [
                     'no_ektp' => $user->no_ektp,
-                    'gender_id' => rand(0, 1) ? ($male->id ?? 1) : ($female->id ?? 2),
+                    'gender' => rand(0, 1) ? 'male' : 'female', // Langsung gunakan string
                     'phone_number' => '08' . rand(1000000000, 9999999999),
                     'npwp' => rand(0, 1) ? '1234567890' . rand(100, 999) : null,
                     'about_me' => 'Saya seorang kandidat yang berdedikasi.',

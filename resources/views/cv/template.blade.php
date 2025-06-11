@@ -192,11 +192,24 @@
 
                 <!-- Pendidikan -->
                 @if($education)
-                    <h3>PENDIDIKAN</h3>
-                    <strong>{{ $education['level'] }}</strong><br>
-                    <em>{{ $education['institution'] }} | {{ $education['year_in'] }} - {{ $education['year_out'] }}</em><br>
-                    Fakultas {{ $education['faculty'] }} - {{ $education['major'] }}<br>
-                    IPK: {{ $education['gpa'] }}
+                <div class="section">
+                    <div class="section-title">PENDIDIKAN</div>
+                    <div class="item">
+                        <div class="item-title">{{ $education->education_level }}</div>
+                        <div class="item-subtitle">
+                            {{ $education->institution_name }} | {{ $education->year_in ?? '' }} - 
+                            @if($education->is_current)
+                                Sekarang
+                            @else
+                                {{ $education->year_out ?? '' }}
+                            @endif
+                        </div>
+                        <div class="item-description">
+                            Fakultas {{ $education->faculty }} - {{ optional($education->major)->name ?? '' }}<br>
+                            IPK: {{ $education->gpa }}
+                        </div>
+                    </div>
+                </div>
                 @endif
 
                 <!-- Organizations -->
@@ -282,25 +295,13 @@
                 </div>
                 @endif
 
-                <!-- Languages -->
-                @if(isset($languages) && $languages->count() > 0)
+                <!-- Courses -->
+                @if(isset($courses) && $courses->count() > 0)
                 <div class="section">
-                    <div class="section-title">BAHASA</div>
+                    <div class="section-title">KURSUS</div>
                     <ul class="skills-list">
-                        @foreach($languages as $language)
-                        <li>{{ $language->language_name }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-                @endif
-
-                <!-- English Certifications -->
-                @if(isset($englishCertifications) && $englishCertifications->count() > 0)
-                <div class="section">
-                    <div class="section-title">SERTIFIKAT BAHASA INGGRIS</div>
-                    <ul class="skills-list">
-                        @foreach($englishCertifications as $cert)
-                        <li>{{ $cert->name }}</li>
+                        @foreach($courses as $course)
+                        <li>{{ $course->course_name ?? $course->name ?? 'Kursus' }}</li>
                         @endforeach
                     </ul>
                 </div>
@@ -318,13 +319,25 @@
                 </div>
                 @endif
 
-                <!-- Courses -->
-                @if(isset($courses) && $courses->count() > 0)
+                <!-- Languages -->
+                @if(isset($languages) && $languages->count() > 0)
                 <div class="section">
-                    <div class="section-title">KURSUS</div>
+                    <div class="section-title">BAHASA</div>
                     <ul class="skills-list">
-                        @foreach($courses as $course)
-                        <li>{{ $course->course_name ?? $course->name ?? 'Kursus' }}</li>
+                        @foreach($languages as $language)
+                        <li>{{ $language->language_name }} @if($language->proficiency_level)({{ $language->proficiency_level }})@endif</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+
+                <!-- English Certifications -->
+                @if(isset($englishCertifications) && $englishCertifications->count() > 0)
+                <div class="section">
+                    <div class="section-title">SERTIFIKASI BAHASA INGGRIS</div>
+                    <ul class="skills-list">
+                        @foreach($englishCertifications as $cert)
+                        <li>{{ $cert->name }}</li>
                         @endforeach
                     </ul>
                 </div>

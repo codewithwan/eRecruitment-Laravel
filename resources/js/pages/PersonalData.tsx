@@ -170,6 +170,9 @@ interface Props {
         village: string;
         rt: string;
         rw: string;
+        institution?: string;
+        major_id?: string;
+        year_graduated?: string;
     };
     user: {
         name: string;
@@ -217,13 +220,15 @@ enum SubFormType {
 
 // Ubah nama komponen agar konsisten
 const PersonalData: React.FC<Props> = ({ profile, user }) => {
+    // Ubah di bagian inisialisasi form data
     const { data, setData, post, processing, errors } = useForm({
         name: user?.name || '',
         email: user?.email || '',
         phone_number: profile?.phone_number || '',
         address: profile?.address || '',
         no_ektp: profile?.no_ektp || '',
-        gender: profile ? convertGender(profile.gender) : '',
+        // Konversi gender dari database (male/female) ke format tampilan (Pria/Wanita)
+        gender: profile ? (profile.gender === 'male' ? 'Pria' : profile.gender === 'female' ? 'Wanita' : '') : '',
         npwp: profile?.npwp || '',
         about_me: profile?.about_me || '',
         place_of_birth: profile?.place_of_birth || '',
@@ -370,33 +375,96 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
         e.preventDefault();
         setMessage(null);
 
-        if (!data.address) {
+        try {
+            // Konversi gender dari format tampilan (Pria/Wanita) ke format database (male/female)
+            const dbGender = data.gender === 'Pria' ? 'male' : data.gender === 'Wanita' ? 'female' : '';
+            
+            // Prepare data for API
+            const dataPribadi = {
+                no_ektp: data.no_ektp,
+                gender: dbGender,
+                phone_number: data.phone_number,
+                npwp: data.punyaNpwp ? '' : data.npwp,
+                about_me: data.about_me,
+                place_of_birth: data.place_of_birth,
+                date_of_birth: data.date_of_birth,
+                address: data.address,
+                province: data.province,
+                city: data.city,
+                district: data.district,
+                village: data.village,
+                rt: data.rt,
+                rw: data.rw
+            };
+            
+            console.log('Sending data to server:', dataPribadi);
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            // Use axios with CSRF token and proper headers
+            const response = await axios.post('/candidate/data-pribadi', dataPribadi, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+            });
+            
+            console.log('Server response:', response.data);
+            
+            // Check if response is successful
+            if (response.status === 200) {
+                setMessage({
+                    type: 'success',
+                    text: 'Data pribadi berhasil disimpan'
+                });
+                
+                // Scroll to top to show success message
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                setTimeout(() => setMessage(null), 3000);
+            } else {
+                throw new Error('Unexpected response status');
+            }
+            
+        } catch (error: any) {
+            console.error('Error saving data:', error);
+            
+            let errorMessage = 'Terjadi kesalahan';
+            
+            // Handle different types of errors
+            if (error.response) {
+                // Server responded with error status
+                if (error.response.status === 422) {
+                    // Validation errors
+                    const validationErrors = error.response.data?.errors;
+                    if (validationErrors) {
+                        errorMessage = Object.values(validationErrors).flat().join(', ');
+                    } else {
+                        errorMessage = 'Data tidak valid';
+                    }
+                } else if (error.response.status === 401) {
+                    errorMessage = 'Sesi telah berakhir, silakan login kembali';
+                    // Redirect to login
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else if (error.response.data?.message) {
+                    errorMessage = error.response.data.message;
+                }
+            } else if (error.request) {
+                // Network error
+                errorMessage = 'Tidak dapat terhubung ke server';
+            }
+            
             setMessage({
                 type: 'error',
-                text: 'Alamat harus diisi'
+                text: errorMessage
             });
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
         }
-
-        // Buat FormData untuk handle file upload
-        const formData = new FormData();
-        formData.append('name', data.name);
-        formData.append('email', data.email);
-        formData.append('phone_number', data.phone_number);
-        formData.append('address', data.address);
-        formData.append('institution', data.institution);
-        formData.append('major_id', data.major_id.toString());
-        formData.append('year_graduated', data.year_graduated.toString());
-
-        if (file) {
-            formData.append('cv', file);
-        }
-
-        // Submit form
-        post('/personal-data/update', {
-            data: formData,
-        });
     };
 
     const renderDataTambahanForm = () => {

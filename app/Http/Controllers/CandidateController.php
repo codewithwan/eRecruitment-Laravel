@@ -61,28 +61,32 @@ class CandidateController extends Controller
         ]);
     }
 
+    /**
+     * Display the profile page.
+     */
     public function profile()
     {
         $user = Auth::user();
         $profile = CandidatesProfiles::where('user_id', $user->id)->first();
-        $education = CandidatesEducations::where('user_id', $user->id)->first(); // Tambahkan ini
+        $education = CandidatesEducations::where('user_id', $user->id)->first();
         
-        // Ambil semua data gender dari master_genders
-        $genders = MasterGender::all();
+        // Format profile data jika ada
+        $profileData = $profile ? $profile->toArray() : null;
+        
+        // Log data untuk debugging
+        \Log::info('Profile data being sent to frontend:', ['profile' => $profileData]);
         
         return Inertia::render('PersonalData', [
-            'profile' => $profile,
-            'education' => $education, // Tambahkan ini
+            'profile' => $profileData,
+            'education' => $education,
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
             ],
-            'genders' => $genders->map(function($gender) {
-                return [
-                    'value' => $gender->name,
-                    'label' => $gender->name
-                ];
-            })
+            'genders' => [
+                ['value' => 'Pria', 'label' => 'Pria'],
+                ['value' => 'Wanita', 'label' => 'Perempuan']
+            ]
         ]);
     }
 
@@ -104,18 +108,66 @@ class CandidateController extends Controller
                 'village' => 'required|string',
                 'rt' => 'required|string',
                 'rw' => 'required|string',
+            ], [
+                'no_ektp.required' => 'No. E-KTP harus diisi',
+                'no_ektp.max' => 'No. E-KTP maksimal 16 karakter',
+                'gender.required' => 'Gender harus dipilih',
+                'gender.in' => 'Gender tidak valid',
+                'phone_number.required' => 'No. telepon harus diisi',
+                'about_me.required' => 'Tentang saya harus diisi',
+                'place_of_birth.required' => 'Tempat lahir harus diisi',
+                'date_of_birth.required' => 'Tanggal lahir harus diisi',
+                'date_of_birth.date' => 'Format tanggal lahir tidak valid',
+                'address.required' => 'Alamat harus diisi',
+                'province.required' => 'Provinsi harus diisi',
+                'city.required' => 'Kota harus diisi',
+                'district.required' => 'Kecamatan harus diisi',
+                'village.required' => 'Kelurahan/Desa harus diisi',
+                'rt.required' => 'RT harus diisi',
+                'rw.required' => 'RW harus diisi',
             ]);
 
-            $result = CandidatesProfiles::storeProfile($validated, Auth::id());
+            $result = CandidatesProfiles::updateOrCreate(
+                ['user_id' => Auth::id()],
+                $validated
+            );
 
+            // Return JSON response for AJAX requests
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data berhasil disimpan!',
+                    'data' => $result
+                ]);
+            }
+
+            // Return redirect for non-AJAX requests
             return back()->with('flash', [
                 'type' => 'success',
                 'message' => 'Data berhasil disimpan!'
             ]);
 
         } catch (ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            
             return back()->withErrors($e->errors());
+            
         } catch (\Exception $e) {
+            \Log::error('Error saving profile data: ' . $e->getMessage());
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat menyimpan data'
+                ], 500);
+            }
+            
             return back()->with('flash', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menyimpan data'
@@ -153,31 +205,99 @@ class CandidateController extends Controller
         ]);
     }
 
-    public function getEducation()
-    {
-        // getEducation()
-        $education = CandidatesEducations::where('user_id', Auth::id())->first();
-        return response()->json($education);
-    }
-
     public function storeEducation(Request $request)
     {
-        $validated = $request->validate([
-            'education_level' => 'required|string',
-            'faculty' => 'required|string',
-            'major' => 'required|string',
-            'institution_name' => 'required|string',
-            'gpa' => 'required|numeric|between:0,4',
-            'year_in' => 'required|integer',
-            'year_out' => 'required|integer'
-        ]);
+        try {
+            \Log::info('Storing education data. Request:', $request->all());
 
-        $education = CandidatesEducations::updateOrCreate(
-            ['user_id' => Auth::id()],
-            $validated
-        );
+            $validated = $request->validate([
+                'education_level' => 'required|string',
+                'faculty' => 'required|string',
+                'major_id' => 'required|exists:master_majors,id',
+                'institution_name' => 'required|string',
+                'gpa' => 'required|numeric|between:0,4',
+                'year_in' => 'required|integer',
+                'year_out' => 'nullable|integer'
+            ]);
 
-        return response()->json($education);
+            \Log::info('Validated data:', $validated);
+
+            $education = CandidatesEducations::updateOrCreate(
+                ['user_id' => Auth::id()],
+                $validated
+            );
+            
+            // Get fresh data with major
+            $education->refresh();
+            $major = \App\Models\MasterMajor::find($education->major_id);
+
+            $responseData = [
+                'id' => $education->id,
+                'education_level' => $education->education_level,
+                'faculty' => $education->faculty,
+                'major_id' => (string)$education->major_id,
+                'major' => $major ? $major->name : null,
+                'institution_name' => $education->institution_name,
+                'gpa' => $education->gpa,
+                'year_in' => $education->year_in,
+                'year_out' => $education->year_out
+            ];
+
+            \Log::info('Education stored successfully:', $responseData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data pendidikan berhasil disimpan',
+                'data' => $responseData
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error storing education data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error storing education data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getEducation()
+    {
+        try {
+            \Log::info('Getting education data for user: ' . Auth::id());
+            
+            $education = CandidatesEducations::where('user_id', Auth::id())->first();
+            
+            if (!$education) {
+                \Log::info('No education data found');
+                return response()->json(null);
+            }
+
+            // Get major data
+            $major = \App\Models\MasterMajor::find($education->major_id);
+            
+            $educationData = [
+                'id' => $education->id,
+                'education_level' => $education->education_level,
+                'faculty' => $education->faculty,
+                'major_id' => (string)$education->major_id,
+                'major' => $major ? $major->name : null,
+                'institution_name' => $education->institution_name,
+                'gpa' => $education->gpa,
+                'year_in' => $education->year_in,
+                'year_out' => $education->year_out
+            ];
+
+            \Log::info('Education data retrieved:', $educationData);
+            
+            return response()->json($educationData);
+
+        } catch (\Exception $e) {
+            \Log::error('Error getting education data: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error getting education data',
+                'error' => $e->getMessage() 
+            ], 500);
+        }
     }
 
     public function getAllWorkExperiences()
@@ -314,7 +434,7 @@ class CandidateController extends Controller
                 'description.required' => 'Deskripsi harus diisi',
                 'description.min' => 'Deskripsi minimal 10 karakter',
                 'start_month.required' => 'Bulan masuk harus dipilih',
-                'start_year.required' => 'Tahun masuk harus dipilih',
+                'start_year.required' => 'Tahun masuk harus diisi',
                 'end_month.required_if' => 'Bulan keluar harus dipilih jika tidak aktif',
                 'end_year.required_if' => 'Tahun keluar harus dipilih jika tidak aktif',
             ]);

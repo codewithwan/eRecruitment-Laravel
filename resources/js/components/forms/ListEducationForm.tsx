@@ -55,23 +55,25 @@ const ListPendidikanForm: React.FC<ListPendidikanFormProps> = ({
             const formData = new FormData(e.currentTarget);
             const data = Object.fromEntries(formData);
 
-            await updateEducation(data as any);
+            await updateEducation(data as any, () => {
+                // Success callback - langsung kembali ke list view dan tampilkan pesan
+                setIsEditing(false);
+                setMessage({
+                    type: 'success',
+                    text: 'Data berhasil disimpan!'
+                });
 
-            setMessage({
-                type: 'success',
-                text: 'Data berhasil disimpan!'
+                // Scroll to top
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+
+                // Auto hide after 3 seconds
+                setTimeout(() => {
+                    setMessage(null);
+                }, 3000);
             });
-
-            // Scroll to top
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-
-            // Auto hide after 3 seconds
-            setTimeout(() => {
-                setMessage(null);
-            }, 3000);
 
         } catch (error) {
             console.error('Error updating education:', error);
@@ -79,6 +81,7 @@ const ListPendidikanForm: React.FC<ListPendidikanFormProps> = ({
                 type: 'error',
                 text: 'Terjadi kesalahan saat menyimpan data'
             });
+            setIsEditing(false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
@@ -94,6 +97,7 @@ const ListPendidikanForm: React.FC<ListPendidikanFormProps> = ({
                     education_level: '',
                     faculty: '',
                     major: '',
+                    major_id: '',
                     institution_name: '',
                     gpa: '',
                     year_in: '',
@@ -108,11 +112,12 @@ const ListPendidikanForm: React.FC<ListPendidikanFormProps> = ({
 
     return (
         <div className="bg-white rounded-lg shadow-sm">
+            {/* Notifikasi hanya ditampilkan sekali di sini */}
+            {message && <Alert type={message.type} message={message.text} />}
+            
             <div className="p-6 border-b">
-                {message && <Alert type={message.type} message={message.text} />}
-
                 <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">Pendidikan</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Pendidikan</h2>
                     {education && (
                         <button
                             type="button"
@@ -125,34 +130,34 @@ const ListPendidikanForm: React.FC<ListPendidikanFormProps> = ({
                 </div>
             </div>
 
-            <div className="p-6 text-gray-800">
-                {message && <Alert type={message.type} message={message.text} />}
+            <div className="p-6 text-gray-900">
+                {/* Hapus duplikat notifikasi dari sini */}
                 {education ? (
                     <div className="mb-4 p-4 border rounded-lg">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <p className="text-gray-600">Tingkat Pendidikan</p>
-                                <p className="font-medium text-gray-800">{education.education_level}</p>
+                                <p className="font-medium text-gray-900">{education.education_level}</p>
                             </div>
                             <div>
                                 <p className="text-gray-600">Fakultas</p>
-                                <p className="font-medium text-gray-800">{education.faculty}</p>
+                                <p className="font-medium text-gray-900">{education.faculty}</p>
                             </div>
                             <div>
                                 <p className="text-gray-600">Program Studi</p>
-                                <p className="font-medium text-gray-800">{education.major}</p>
+                                <p className="font-medium text-gray-900">{education.major}</p>
                             </div>
                             <div>
                                 <p className="text-gray-600">Institusi</p>
-                                <p className="font-medium text-gray-800">{education.institution_name}</p>
+                                <p className="font-medium text-gray-900">{education.institution_name}</p>
                             </div>
                             <div>
                                 <p className="text-gray-600">IPK</p>
-                                <p className="font-medium text-gray-800">{education.gpa}</p>
+                                <p className="font-medium text-gray-900">{education.gpa}</p>
                             </div>
                             <div>
                                 <p className="text-gray-600">Tahun</p>
-                                <p className="font-medium text-gray-800">{education.year_in} - {education.year_out}</p>
+                                <p className="font-medium text-gray-900">{education.year_in} - {education.year_out}</p>
                             </div>
                         </div>
                     </div>
@@ -162,7 +167,7 @@ const ListPendidikanForm: React.FC<ListPendidikanFormProps> = ({
                         onClick={() => setIsEditing(true)}
                         className="text-blue-600 flex items-center space-x-2 hover:text-blue-700"
                     >
-                        <span>+ Tambah Pendidikan</span>
+                        <span className="text-gray-900">+ Tambah Pendidikan</span>
                     </button>
                 )}
             </div>

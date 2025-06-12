@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use App\Models\Applications;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -48,7 +49,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function candidate()
     {
-        return $this->hasOne(Candidate::class, 'user_id');
+        return $this->hasMany(Applications::class, 'user_id');
     }
 
     public function isProfileComplete()

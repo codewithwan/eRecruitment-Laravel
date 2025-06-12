@@ -310,7 +310,7 @@ const ApplicationHistory: React.FC<ApplicationHistoryProps> = ({ applications = 
                             <EmptyStateIcon>📋</EmptyStateIcon>
                             <h3>Belum Ada Lamaran</h3>
                             <p>Anda belum pernah mengajukan lamaran pekerjaan.</p>
-                            <ApplyLink href="/job-hiring">Cari Lowongan</ApplyLink>
+                            <ApplyLink href="/candidate/jobs">Cari Lowongan</ApplyLink>
                         </EmptyState>
                     )}
 

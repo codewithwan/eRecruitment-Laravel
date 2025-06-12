@@ -112,8 +112,8 @@ const Header: React.FC = () => {
           <Nav>
             <NavLink href="/">Dasbor</NavLink>
             <NavLink href="/candidate/profile">Profil</NavLink>
-            <NavLink href="/job-hiring">Lowongan Pekerjaan</NavLink>
-            <NavLink href="/application-history">Lamaran</NavLink>
+            <NavLink href="/candidate/jobs">Lowongan Pekerjaan</NavLink>
+            <NavLink href="/candidate/application-history">Lamaran</NavLink>
           </Nav>
         </CenterMenu>
         <Actions>

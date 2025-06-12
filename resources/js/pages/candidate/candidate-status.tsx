@@ -11,9 +11,9 @@ const CandidateStatus = () => {
         <div className="text-xl font-bold text-gray-800">MITRA KARYA GROUP</div>
 
         <ul className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex space-x-6 text-gray-800 font-medium text-[16px]">
-          <li><a href="/dashboard" className="hover:text-blue-600">Profil</a></li>
-          <li><a href="/jobs" className="hover:text-blue-600">Lowongan Pekerjaan</a></li>
-          <li><a href="/applications" className="hover:text-blue-600">Lamaran</a></li>
+          <li><a href="/candidate/profile" className="hover:text-blue-600">Profil</a></li>
+          <li><a href="/candidate/jobs" className="hover:text-blue-600">Lowongan Pekerjaan</a></li>
+          <li><a href="/candidate/application-history" className="hover:text-blue-600">Lamaran</a></li>
         </ul>
 
         <img src="../images/profileicon.png" alt="Profile Icon"

@@ -14,7 +14,8 @@ use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\PersonalDataController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
-Route::get('/job-hiring', [JobsController::class, 'jobHiring'])->name('job-hiring');
+// Updated to use the same controller method as candidate/jobs
+Route::get('/job-hiring', [JobsController::class, 'index'])->name('job-hiring');
 Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacanciesLandingPage'])->name('job-hiring-landing-page');
 Route::get('/job-detail/{id}', [VacanciesController::class, 'show'])->name('job.detail');
 Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
@@ -225,17 +226,15 @@ Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(functi
     Route::get('/job/{id}', [JobsController::class, 'detail'])->name('candidate.job.detail');
     Route::post('/apply/{id}', [JobsController::class, 'apply'])->name('candidate.apply');
 
-    // Application history
-    Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('candidate.application-history');
+    // Removed application history route - now handled in candidate.php
 });
 
-// Tambahkan redirect untuk URL lama ke URL baru
-Route::get('/application-history', function() {
-    return redirect()->route('candidate.application-history');
-});
+// No redirect needed as the route is defined above and in candidate.php
 
-// Job hiring publik
-Route::get('/job-hiring', [JobsController::class, 'jobHiring'])->name('job-hiring');
+// Redirect /lowongan ke /job-hiring-landing-page untuk konsistensi
+Route::get('/lowongan', function() {
+    return redirect('/job-hiring-landing-page');
+});
 
 // HAPUS ROUTE EDUCATION YANG DUPLIKAT INI JUGA
 // Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(function () {

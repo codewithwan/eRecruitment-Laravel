@@ -32,6 +32,14 @@ class Applications extends Model
     }
     
     /**
+     * Alias untuk relasi vacancy, untuk kompatibilitas dengan kode yang menggunakan job
+     */
+    public function job()
+    {
+        return $this->belongsTo(Vacancies::class, 'vacancies_id');
+    }
+    
+    /**
      * Relasi ke status
      */
     public function status()

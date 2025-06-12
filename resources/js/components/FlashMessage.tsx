@@ -21,7 +21,7 @@ const FlashMessage: React.FC = () => {
       }).then((result) => {
         if (result.isConfirmed || result.isDismissed) {
           // Redirect ke halaman application-history
-          window.location.href = '/application-history';
+          window.location.href = '/candidate/application-history';
         }
       });
     }

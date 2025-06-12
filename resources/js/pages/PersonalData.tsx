@@ -100,13 +100,13 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
                                 Profil
                             </button>
                             <button
-                                onClick={() => router.visit('/job-hiring')}
+                                onClick={() => router.visit('/candidate/jobs')}
                                 className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
                             >
                                 Lowongan Pekerjaan
                             </button>
                             <button
-                                onClick={() => router.visit('/application-history')}
+                                onClick={() => router.visit('/candidate/application-history')}
                                 className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
                             >
                                 Lamaran
@@ -378,7 +378,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
         try {
             // Konversi gender dari format tampilan (Pria/Wanita) ke format database (male/female)
             const dbGender = data.gender === 'Pria' ? 'male' : data.gender === 'Wanita' ? 'female' : '';
-            
+
             // Prepare data for API
             const dataPribadi = {
                 no_ektp: data.no_ektp,
@@ -396,12 +396,12 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                 rt: data.rt,
                 rw: data.rw
             };
-            
+
             console.log('Sending data to server:', dataPribadi);
-            
+
             // Get CSRF token
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            
+
             // Use axios with CSRF token and proper headers
             const response = await axios.post('/candidate/data-pribadi', dataPribadi, {
                 headers: {
@@ -410,29 +410,29 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                     'X-CSRF-TOKEN': csrfToken,
                 },
             });
-            
+
             console.log('Server response:', response.data);
-            
+
             // Check if response is successful
             if (response.status === 200) {
                 setMessage({
                     type: 'success',
                     text: 'Data pribadi berhasil disimpan'
                 });
-                
+
                 // Scroll to top to show success message
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                
+
                 setTimeout(() => setMessage(null), 3000);
             } else {
                 throw new Error('Unexpected response status');
             }
-            
+
         } catch (error: any) {
             console.error('Error saving data:', error);
-            
+
             let errorMessage = 'Terjadi kesalahan';
-            
+
             // Handle different types of errors
             if (error.response) {
                 // Server responded with error status
@@ -457,12 +457,12 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                 // Network error
                 errorMessage = 'Tidak dapat terhubung ke server';
             }
-            
+
             setMessage({
                 type: 'error',
                 text: errorMessage
             });
-            
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };

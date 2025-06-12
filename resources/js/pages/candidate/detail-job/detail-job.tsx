@@ -158,7 +158,7 @@ const JobDetailPage: React.FC = () => {
                 confirmButtonText: 'OK'
             }).then(() => {
                 // Update URL untuk application history
-                window.location.href = '/application-history';
+                window.location.href = '/candidate/application-history';
             });
         }
 
@@ -221,7 +221,7 @@ const JobDetailPage: React.FC = () => {
             }
 
             // If education data is complete, proceed with application
-            const response = await axios.post(`/candidate/apply/${job.id}`, {}, { headers });
+            const response = await axios.post(`/candidate/jobs/${job.id}/apply`, {}, { headers });
 
             if (response.data.success) {
                 Swal.fire({

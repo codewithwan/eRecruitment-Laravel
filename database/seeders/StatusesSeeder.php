@@ -2,33 +2,41 @@
 
 namespace Database\Seeders;
 
+use App\Models\Statuses;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class StatusesSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('statuses')->updateOrInsert(
-            ['id' => 1],
-            ['name' => 'Pending', 'updated_at' => now(), 'created_at' => now()]
-        );
-        DB::table('statuses')->updateOrInsert(
-            ['id' => 2],
-            ['name' => 'In Progress', 'updated_at' => now(), 'created_at' => now()]
-        );
-        DB::table('statuses')->updateOrInsert(
-            ['id' => 3],
-            ['name' => 'Completed', 'updated_at' => now(), 'created_at' => now()]
-        );
-        DB::table('statuses')->updateOrInsert(
-            ['id' => 4],
-            ['name' => 'Rejected', 'updated_at' => now(), 'created_at' => now()]
-        );
-        DB::table('statuses')->updateOrInsert(
-            ['id' => 5],
-            ['name' => 'Hired', 'updated_at' => now(), 'created_at' => now()]
-        );
+        $statuses = [
+            [
+                'name' => 'Pending',
+                'color' => '#FFA500', // Orange
+                'description' => 'Aplikasi sedang diproses'
+            ],
+            [
+                'name' => 'Interviewed',
+                'color' => '#4B89DC', // Blue
+                'description' => 'Kandidat telah diinterview'
+            ],
+            [
+                'name' => 'Accepted',
+                'color' => '#8CC152', // Green
+                'description' => 'Lamaran diterima'
+            ],
+            [
+                'name' => 'Rejected',
+                'color' => '#DA4453', // Red
+                'description' => 'Lamaran ditolak'
+            ]
+        ];
+
+        foreach ($statuses as $status) {
+            Statuses::firstOrCreate(
+                ['name' => $status['name']],
+                $status
+            );
+        }
     }
 }

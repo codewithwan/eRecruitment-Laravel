@@ -230,11 +230,12 @@ const JobDetailPage: React.FC = () => {
                     icon: 'success',
                     confirmButtonText: 'OK'
                 }).then(() => {
-                    // Perbaikan: selalu gunakan URL dari server dan pastikan ada fallback
+                    // Gunakan URL dari server jika tersedia
                     if (response.data.redirect) {
                         window.location.href = response.data.redirect;
                     } else {
-                        window.location.href = '/candidate/application-history'; // URL fallback
+                        // Fallback URL yang benar
+                        window.location.href = '/candidate/application-history';
                     }
                 });
             }

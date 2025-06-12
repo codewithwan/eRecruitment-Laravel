@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Applications extends Model
 {
@@ -12,25 +10,32 @@ class Applications extends Model
         'user_id',
         'vacancies_id',
         'status_id',
+        'resume_path',
+        'cover_letter_path',
     ];
-
-    public function user(): BelongsTo
+    
+    /**
+     * Relasi ke user
+     */
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
-
-    public function vacancy(): BelongsTo
+    
+    /**
+     * Relasi ke lowongan
+     * Pastikan menggunakan nama kolom yang benar (vacancies_id)
+     */
+    public function vacancy()
     {
         return $this->belongsTo(Vacancies::class, 'vacancies_id');
     }
-
-    public function status(): BelongsTo
+    
+    /**
+     * Relasi ke status
+     */
+    public function status()
     {
         return $this->belongsTo(Statuses::class, 'status_id');
-    }
-
-    public function histories(): HasMany
-    {
-        return $this->hasMany(ApplicationsHistory::class, 'application_id');
     }
 }

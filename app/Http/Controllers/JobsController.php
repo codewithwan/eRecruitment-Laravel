@@ -40,19 +40,22 @@ class JobsController extends Controller
     public function apply(Request $request, $id)
     {
         try {
-            // Find the vacancy
-            $vacancy = Vacancies::findOrFail($id);
-
             // Check if user has already applied
             $existingApplication = Applications::where('user_id', Auth::id())
                 ->where('vacancies_id', $id)
                 ->first();
 
             if ($existingApplication) {
+                \Log::info('User already applied for job', [
+                    'user_id' => Auth::id(),
+                    'job_id' => $id,
+                    'redirect_url' => route('candidate.application-history')
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda sudah pernah melamar pekerjaan ini.',
-                    'redirect' => route('candidate.application-history') // Perbaikan: gunakan route name yang benar
+                    'redirect' => route('candidate.application-history')
                 ], 422);
             }
 
@@ -63,51 +66,46 @@ class JobsController extends Controller
                     'message' => 'Data pendidikan belum lengkap. Lengkapi data pendidikan terlebih dahulu.'
                 ], 422);
             }
-
-            // Check for required education fields
-            $requiredFields = ['education_level', 'faculty', 'major_id', 'institution_name', 'gpa'];
-            $missingFields = [];
-
-            foreach ($requiredFields as $field) {
-                if (empty($education->$field)) {
-                    $missingFields[] = $field;
-                }
-            }
-
-            if (!empty($missingFields)) {
-                return response()->json([
-                    'message' => 'Data pendidikan belum lengkap',
-                    'errors' => ['education' => 'Data pendidikan belum lengkap: ' . implode(', ', $missingFields)]
-                ], 422);
-            }
-
-            // Create application - USE vacancies_id INSTEAD OF vacancy_id
-            $application = new Applications();
-            $application->user_id = Auth::id();
-            $application->vacancies_id = $id; // Changed from vacancy_id to vacancies_id
-
-            // Dapatkan status "Applied" dari tabel statuses, bukan application_statuses
-            $status = \App\Models\Statuses::where('name', 'Applied')->first();
-            if (!$status) {
-                // Buat status default jika tidak ada
-                $status = \App\Models\Statuses::create([
-                    'name' => 'Applied',
-                    'color' => '#f39c12'
+            
+            // Ambil status default (Pending)
+            $pendingStatus = Statuses::where('name', 'Pending')->first();
+            if (!$pendingStatus) {
+                $pendingStatus = Statuses::create([
+                    'name' => 'Pending',
+                    'color' => '#FFA500', // Orange for pending
+                    'description' => 'Aplikasi sedang menunggu review'
                 ]);
             }
-
-            $application->status_id = $status->id;
-            $application->save();
-
+            
+            // Buat aplikasi baru
+            $application = Applications::create([
+                'user_id' => Auth::id(),
+                'vacancies_id' => $id,
+                'status_id' => $pendingStatus->id,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            \Log::info('User successfully applied for job', [
+                'user_id' => Auth::id(),
+                'job_id' => $id,
+                'application_id' => $application->id
+            ]);
+            
+            // Return sukses
             return response()->json([
                 'success' => true,
                 'message' => 'Lamaran berhasil dikirim!',
-                'application_id' => $application->id,
-                'redirect' => route('candidate.application-history') // Perbaikan: gunakan route name yang benar
+                'redirect' => route('candidate.application-history')
             ]);
-
+            
         } catch (\Exception $e) {
-            \Log::error('Error applying for job: ' . $e->getMessage());
+            \Log::error('Error while applying for job', [
+                'user_id' => Auth::id(),
+                'job_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat mengirim lamaran: ' . $e->getMessage()

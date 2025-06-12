@@ -12,49 +12,26 @@ class Vacancies extends Model
 
     protected $fillable = [
         'title',
-        'department_id',
-        'company_id',
-        'type_id',
-        'major_id',
         'location',
+        'type_id',
+        'company_id',
         'requirements',
-        'benefits',
         'job_description',
     ];
-
-    protected $casts = [
-        'requirements' => 'array',
-        'benefits' => 'array',
-    ];
-
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
-
-    public function company(): BelongsTo
+    
+    /**
+     * Relasi ke perusahaan
+     */
+    public function company()
     {
         return $this->belongsTo(Companies::class, 'company_id');
     }
-
-    // Perbaiki relasi ini - pastikan model dan namespace benar
-    public function jobType(): BelongsTo
-    {
-        // Ganti dengan namespace yang benar, misalnya jika nama model adalah JobTypes bukan JobType
-        return $this->belongsTo(\App\Models\JobTypes::class, 'type_id');
-        
-        // Atau jika namespace berbeda
-        // return $this->belongsTo(\App\Models\Master\JobType::class, 'type_id');
-    }
-
-    public function major(): BelongsTo
-    {
-        return $this->belongsTo(MasterMajor::class, 'major_id');
-    }
     
-    public function periods()
+    /**
+     * Relasi ke tipe pekerjaan
+     */
+    public function jobType()
     {
-        return $this->belongsToMany(Periods::class, 'vacancies_periods', 'vacancy_id', 'period_id')
-            ->withTimestamps();
+        return $this->belongsTo(JobTypes::class, 'type_id');
     }
 }

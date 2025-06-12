@@ -225,7 +225,7 @@ Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(functi
     Route::get('/job/{id}', [JobsController::class, 'detail'])->name('candidate.job.detail');
     Route::post('/apply/{id}', [JobsController::class, 'apply'])->name('candidate.apply');
 
-    // Application history - PERBAIKAN
+    // Application history
     Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('candidate.application-history');
 });
 

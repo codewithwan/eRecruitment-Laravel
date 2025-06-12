@@ -17,9 +17,6 @@ Route::get('/', [VacanciesController::class, 'index'])->name('home');
 Route::get('/job-hiring', [JobsController::class, 'jobHiring'])->name('job-hiring');
 Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacanciesLandingPage'])->name('job-hiring-landing-page');
 Route::get('/job-detail/{id}', [VacanciesController::class, 'show'])->name('job.detail');
-Route::get('/application-history', function () {
-    return Inertia::render('candidate/jobs/application-history');
-})->name('application-history');
 Route::post('/reset-password', [ResetPasswordController::class, 'update'])->name('password.update');
 
 Route::get('/data-pribadi', function () {
@@ -50,7 +47,7 @@ Route::middleware(['auth'])->group(function () {
             ], 500);
         }
     });
-    
+
     // Route untuk education - INI YANG DIGUNAKAN
     Route::get('/api/candidate/education', [CandidateController::class, 'getEducation']);
     Route::post('/api/candidate/education', [CandidateController::class, 'storeEducation']);
@@ -220,10 +217,6 @@ Route::middleware(['auth', 'role:candidate'])->group(function () {
     // Routes untuk personal data dan application history
     Route::get('/personal-data', [PersonalDataController::class, 'index'])->name('candidate.personal-data');
     Route::post('/personal-data/update', [PersonalDataController::class, 'update'])->name('candidate.personal-data.update');
-    Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('candidate.application-history');
-
-    // Route untuk apply job
-    Route::post('/candidate/apply/{id}', [JobsController::class, 'apply'])->name('candidate.apply');
 });
 
 // Routes untuk kandidat
@@ -232,8 +225,13 @@ Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->group(functi
     Route::get('/job/{id}', [JobsController::class, 'detail'])->name('candidate.job.detail');
     Route::post('/apply/{id}', [JobsController::class, 'apply'])->name('candidate.apply');
 
-    // Application history
+    // Application history - PERBAIKAN
     Route::get('/application-history', [ApplicationHistoryController::class, 'index'])->name('candidate.application-history');
+});
+
+// Tambahkan redirect untuk URL lama ke URL baru
+Route::get('/application-history', function() {
+    return redirect()->route('candidate.application-history');
 });
 
 // Job hiring publik

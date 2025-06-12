@@ -157,7 +157,8 @@ const JobDetailPage: React.FC = () => {
                 icon: 'success',
                 confirmButtonText: 'OK'
             }).then(() => {
-                window.location.href = '/jobs/application-history';
+                // Update URL untuk application history
+                window.location.href = '/application-history';
             });
         }
 
@@ -173,30 +174,54 @@ const JobDetailPage: React.FC = () => {
 
     const handleApply = async () => {
         try {
-            // Check if education data is complete first
-            const educationResponse = await axios.get('/api/candidate/education');
-            const educationData = educationResponse.data;
+            // Ambil CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-            if (!educationData || !educationData.education_level ||
-                !educationData.faculty || !educationData.major_id ||
-                !educationData.institution_name || !educationData.gpa) {
+            if (!csrfToken) {
                 Swal.fire({
-                    title: 'Perhatian',
-                    text: 'Data pendidikan belum lengkap. Lengkapi data pendidikan terlebih dahulu.',
-                    icon: 'warning',
-                    confirmButtonText: 'Lengkapi Data'
+                    title: 'Error',
+                    text: 'CSRF token tidak ditemukan. Silahkan refresh halaman.',
+                    icon: 'error',
+                    confirmButtonText: 'Refresh'
                 }).then(() => {
-                    window.location.href = '/personal-data?redirect_back=/candidate/job/' + job.id;
+                    window.location.reload();
                 });
                 return;
             }
 
-            // If education data is complete, proceed with application
-            const response = await axios.post(`/candidate/apply/${job.id}`, {}, {
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            // Set headers untuk request
+            const headers = {
+                'X-CSRF-TOKEN': csrfToken,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+
+            // Check if education data is complete first
+            try {
+                const educationResponse = await axios.get('/api/candidate/education', { headers });
+                const educationData = educationResponse.data;
+
+                if (!educationData || !educationData.education_level ||
+                    !educationData.faculty || !educationData.major_id ||
+                    !educationData.institution_name || !educationData.gpa) {
+
+                    Swal.fire({
+                        title: 'Perhatian',
+                        text: 'Data pendidikan belum lengkap. Lengkapi data pendidikan terlebih dahulu.',
+                        icon: 'warning',
+                        confirmButtonText: 'Lengkapi Data'
+                    }).then(() => {
+                        window.location.href = '/candidate/personal-data?redirect_back=/candidate/job/' + job.id;
+                    });
+                    return;
                 }
-            });
+            } catch (educationError) {
+                console.error("Error checking education:", educationError);
+                // Lanjutkan proses apply, server akan melakukan validasi
+            }
+
+            // If education data is complete, proceed with application
+            const response = await axios.post(`/candidate/apply/${job.id}`, {}, { headers });
 
             if (response.data.success) {
                 Swal.fire({
@@ -205,12 +230,17 @@ const JobDetailPage: React.FC = () => {
                     icon: 'success',
                     confirmButtonText: 'OK'
                 }).then(() => {
-                    // Redirect ke halaman application history
-                    window.location.href = response.data.redirect || '/jobs/application-history';
+                    // Perbaikan: selalu gunakan URL dari server dan pastikan ada fallback
+                    if (response.data.redirect) {
+                        window.location.href = response.data.redirect;
+                    } else {
+                        window.location.href = '/candidate/application-history'; // URL fallback
+                    }
                 });
             }
         } catch (error: any) {
             console.error("Apply error:", error);
+
             // Handle error dari backend
             let errorMsg = 'Terjadi kesalahan saat apply';
             let redirectUrl = null;
@@ -220,16 +250,23 @@ const JobDetailPage: React.FC = () => {
                 redirectUrl = error.response.data.redirect;
             }
 
+            // Ubah kondisi button dan logika redirect
+            const isAlreadyApplied = errorMsg === 'Anda sudah pernah melamar pekerjaan ini.';
+
             Swal.fire({
-                title: 'Perhatian',
+                title: isAlreadyApplied ? 'Informasi' : 'Perhatian',
                 text: errorMsg,
-                icon: 'warning',
-                confirmButtonText: redirectUrl ? 'Lengkapi Data' : 'OK'
-            }).then(() => {
-                if (redirectUrl) {
-                    const currentUrl = window.location.href;
-                    const redirectPath = `${redirectUrl}?redirect_back=${encodeURIComponent(currentUrl)}`;
-                    window.location.href = redirectPath;
+                icon: isAlreadyApplied ? 'info' : 'warning',
+                confirmButtonText: isAlreadyApplied ? 'Lihat Riwayat Lamaran' : (redirectUrl ? 'Lengkapi Data' : 'OK')
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (isAlreadyApplied) {
+                        window.location.href = '/candidate/application-history';
+                    } else if (redirectUrl) {
+                        const currentUrl = window.location.href;
+                        const redirectPath = `${redirectUrl}?redirect_back=${encodeURIComponent(currentUrl)}`;
+                        window.location.href = redirectPath;
+                    }
                 }
             });
         }

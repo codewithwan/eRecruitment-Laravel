@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Applications;
-use App\Models\ApplicationStatutes;
+use App\Models\Statuses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -12,50 +12,58 @@ class ApplicationHistoryController extends Controller
 {
     public function index()
     {
-        // Ambil semua status untuk mappings
-        $statuses = ApplicationStatutes::all()->pluck('name', 'id')->toArray();
-
-        // Ambil lamaran user
-        $applications = Applications::with(['vacancy', 'vacancy.company', 'status'])
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($application) use ($statuses) {
+        try {
+            \Log::info('Starting application history retrieval for user: ' . Auth::id());
+            
+            // Ambil semua lamaran user yang login
+            $applications = Applications::where('user_id', Auth::id())
+                ->with(['vacancy:id,title,location,type', 'status:id,name,color'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+                
+            \Log::info('Retrieved ' . $applications->count() . ' applications');
+                
+            $formattedApplications = $applications->map(function ($application) {
+                // Pastikan semua relasi terload dengan benar
+                $vacancy = $application->vacancy;
+                $status = $application->status;
+                
+                if (!$status) {
+                    \Log::warning('Status not found for application ID: ' . $application->id);
+                }
+                
                 return [
                     'id' => $application->id,
                     'status_id' => $application->status_id,
-                    'status_name' => $statuses[$application->status_id] ?? 'Unknown',
-                    'status_color' => $this->getStatusColor($application->status_id),
+                    'status_name' => $status ? $status->name : 'Unknown',
+                    'status_color' => $status ? $status->color : '#999',
                     'job' => [
-                        'id' => $application->vacancy->id,
-                        'title' => $application->vacancy->title,
-                        'company' => $application->vacancy->company->name,
-                        'location' => $application->vacancy->location ?? '-',
-                        'type' => $application->vacancy->type ?? 'Full-time',
+                        'id' => $vacancy ? $vacancy->id : 0,
+                        'title' => $vacancy ? $vacancy->title : 'Unknown',
+                        'company' => $vacancy && $vacancy->company ? $vacancy->company->name : 'Unknown',
+                        'location' => $vacancy ? $vacancy->location : 'Unknown',
+                        'type' => $vacancy ? $vacancy->type : 'Unknown',
                     ],
                     'applied_at' => $application->created_at->format('d M Y'),
                     'updated_at' => $application->updated_at->format('d M Y'),
                 ];
             });
 
-        return Inertia::render('candidate/jobs/application-history', [
-            'applications' => $applications
-        ]);
-    }
-
-    private function getStatusColor($statusId)
-    {
-        switch ($statusId) {
-            case 1: // Pending
-                return '#f39c12'; // Orange
-            case 2: // Rejected
-                return '#e74c3c'; // Red
-            case 3: // Interview
-                return '#3498db'; // Blue
-            case 4: // Accepted
-                return '#27ae60'; // Green
-            default:
-                return '#95a5a6'; // Grey
+            return Inertia::render('candidate/application-history', [
+                'applications' => $formattedApplications
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in application history: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'exception' => $e
+            ]);
+            
+            // Return empty applications array with error message
+            return Inertia::render('candidate/application-history', [
+                'applications' => [],
+                'error' => 'Terjadi kesalahan saat memuat riwayat lamaran.'
+            ]);
         }
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Applications extends Model
 {
@@ -26,5 +27,10 @@ class Applications extends Model
     public function status(): BelongsTo
     {
         return $this->belongsTo(Statuses::class, 'status_id');
+    }
+
+    public function histories(): HasMany
+    {
+        return $this->hasMany(ApplicationsHistory::class, 'application_id');
     }
 }

@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import styled, { createGlobalStyle } from 'styled-components';
-import Footer from '../../../components/Footer';
-import Header from '../../../components/Header';
+import Footer from '../../components/Footer';
+import Header from '../../components/Header';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -149,7 +149,9 @@ const ApplicationHistory = () => {
             <Header />
             <PageWrapper>
                 <ContentContainer>
-                    <PageTitle>Riwayat Lamaran</PageTitle>
+                    <div style={{ marginTop: '40px' }}>
+                        <PageTitle>Riwayat Lamaran</PageTitle>
+                    </div>
 
                     {applications.length > 0 ? (
                         <ApplicationsTable>

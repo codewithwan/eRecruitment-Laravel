@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import Footer from '../../../components/Footer';
@@ -103,12 +104,12 @@ const FilterContainer = styled.div`
 `;
 
 interface FilterButtonProps {
-  active?: boolean;
+  $active?: boolean; // Gunakan $ prefix untuk transient prop
 }
 
 const FilterButton = styled.button<FilterButtonProps>`
-  background: ${(props) => (props.active ? '#0088FF' : '#fff')};
-  color: ${(props) => (props.active ? '#fff' : '#0088FF')};
+  background: ${(props) => (props.$active ? '#0088FF' : '#fff')};
+  color: ${(props) => (props.$active ? '#fff' : '#0088FF')};
   border: 1px solid #0088FF;
   border-radius: 20px;
   padding: 8px 20px;
@@ -119,7 +120,7 @@ const FilterButton = styled.button<FilterButtonProps>`
   white-space: nowrap;
 
   &:hover {
-    background: ${(props) => (props.active ? '#0077E6' : '#E6F4FF')};
+    background: ${(props) => (props.$active ? '#0077E6' : '#E6F4FF')};
   }
 `;
 
@@ -197,6 +198,14 @@ const JobHiring: React.FC<Props> = ({ jobs = [], recommendations: initialRecomme
   const [filteredJobs, setFilteredJobs] = useState<Job[]>(jobs || []);
 
   useEffect(() => {
+    // Set CSRF token for all AJAX requests
+    const token = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (token) {
+      axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+    }
+  }, []);
+
+  useEffect(() => {
     if (activeFilter === 'all') {
       setFilteredJobs(jobs || []);
     } else {
@@ -206,6 +215,17 @@ const JobHiring: React.FC<Props> = ({ jobs = [], recommendations: initialRecomme
 
   const filterJobs = (filter: string) => {
     setActiveFilter(filter);
+  };
+
+  // Function untuk navigasi dengan CSRF yang aman
+  const navigateToJobDetail = (jobId: number) => {
+    // Pastikan token CSRF tersedia sebelum navigasi
+    const token = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (token) {
+      axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+    }
+
+    router.visit(`/candidate/job/${jobId}`);
   };
 
   // Hilangkan duplikat nama perusahaan
@@ -258,7 +278,7 @@ const JobHiring: React.FC<Props> = ({ jobs = [], recommendations: initialRecomme
                       <span>⭐ Score: {score}</span>
                     </JobDetails>
                   </JobInfo>
-                  <DetailButton onClick={() => router.visit(`/candidate/job/${vacancy.id}`)}>
+                  <DetailButton onClick={() => navigateToJobDetail(vacancy.id)}>
                     Lihat Detail
                   </DetailButton>
                 </JobCard>
@@ -269,8 +289,9 @@ const JobHiring: React.FC<Props> = ({ jobs = [], recommendations: initialRecomme
             <Title>Open Positions</Title>
             <Underline />
             <FilterContainer>
+              {/* PERBAIKAN: Gunakan $active sebagai pengganti active */}
               <FilterButton
-                active={activeFilter === 'all'}
+                $active={activeFilter === 'all'}
                 onClick={() => filterJobs('all')}
               >
                 View All
@@ -278,7 +299,7 @@ const JobHiring: React.FC<Props> = ({ jobs = [], recommendations: initialRecomme
               {uniqueCompanies.map((company) => (
                 <FilterButton
                   key={company}
-                  active={activeFilter === company}
+                  $active={activeFilter === company}
                   onClick={() => filterJobs(company)}
                 >
                   {company}
@@ -299,7 +320,8 @@ const JobHiring: React.FC<Props> = ({ jobs = [], recommendations: initialRecomme
                       <span>👥 {typeof job.department === 'object' ? job.department?.name : job.department}</span>
                     </JobDetails>
                   </JobInfo>
-                  <DetailButton onClick={() => router.visit(`/candidate/job/${job.id}`)}>
+                  {/* PERBAIKAN: Gunakan navigateToJobDetail untuk handling navigasi */}
+                  <DetailButton onClick={() => navigateToJobDetail(job.id)}>
                     Lihat Detail
                   </DetailButton>
                 </JobCard>

@@ -42,18 +42,20 @@ class JobsController extends Controller
         try {
             // Find the vacancy
             $vacancy = Vacancies::findOrFail($id);
-            
+
             // Check if user has already applied
-            $existingApplication = Applications::where('vacancies_id', $id)
-                ->where('user_id', Auth::id())
+            $existingApplication = Applications::where('user_id', Auth::id())
+                ->where('vacancies_id', $id)
                 ->first();
-                
+
             if ($existingApplication) {
                 return response()->json([
-                    'message' => 'Anda sudah pernah melamar pekerjaan ini.'
+                    'success' => false,
+                    'message' => 'Anda sudah pernah melamar pekerjaan ini.',
+                    'redirect' => route('candidate.application-history') // Perbaikan: gunakan route name yang benar
                 ], 422);
             }
-            
+
             // Check if the education data is complete
             $education = CandidatesEducations::where('user_id', Auth::id())->first();
             if (!$education) {
@@ -61,37 +63,49 @@ class JobsController extends Controller
                     'message' => 'Data pendidikan belum lengkap. Lengkapi data pendidikan terlebih dahulu.'
                 ], 422);
             }
-            
+
             // Check for required education fields
             $requiredFields = ['education_level', 'faculty', 'major_id', 'institution_name', 'gpa'];
             $missingFields = [];
-            
+
             foreach ($requiredFields as $field) {
                 if (empty($education->$field)) {
                     $missingFields[] = $field;
                 }
             }
-            
+
             if (!empty($missingFields)) {
                 return response()->json([
                     'message' => 'Data pendidikan belum lengkap',
                     'errors' => ['education' => 'Data pendidikan belum lengkap: ' . implode(', ', $missingFields)]
                 ], 422);
             }
-            
+
             // Create application - USE vacancies_id INSTEAD OF vacancy_id
             $application = new Applications();
             $application->user_id = Auth::id();
             $application->vacancies_id = $id; // Changed from vacancy_id to vacancies_id
-            $application->status_id = 1;
+
+            // Dapatkan status "Applied" dari tabel statuses, bukan application_statuses
+            $status = \App\Models\Statuses::where('name', 'Applied')->first();
+            if (!$status) {
+                // Buat status default jika tidak ada
+                $status = \App\Models\Statuses::create([
+                    'name' => 'Applied',
+                    'color' => '#f39c12'
+                ]);
+            }
+
+            $application->status_id = $status->id;
             $application->save();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Lamaran berhasil dikirim!',
-                'redirect' => '/candidate/application-history' // FIX: Changed from /jobs/application-history to /candidate/application-history
+                'application_id' => $application->id,
+                'redirect' => route('candidate.application-history') // Perbaikan: gunakan route name yang benar
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error applying for job: ' . $e->getMessage());
             return response()->json([
@@ -162,51 +176,51 @@ class JobsController extends Controller
             $jobs = Vacancies::with(['company', 'department'])
                 ->orderBy('created_at', 'desc')
                 ->get();
-            
+
             // Tambahkan data tipe pekerjaan dari relasi
             foreach ($jobs as $job) {
                 // Tambahkan tipe dari relasi yang benar
                 $jobType = DB::table('job_types')->find($job->type_id);
                 $job->type = $jobType ? $jobType->name : 'Unknown';
-                
+
                 // Tambahkan deadline dari periods
                 $period = DB::table('periods')
                     ->join('vacancies_periods', 'periods.id', '=', 'vacancies_periods.period_id')
                     ->where('vacancies_periods.vacancy_id', $job->id)
                     ->first();
-                
+
                 // Tambahkan deadline ke objek job
                 $job->deadline = $period ? $period->end_time : 'Open';
-                
+
                 // Tambahkan deskripsi
                 $job->description = $job->job_description ?: 'No description available';
             }
-            
+
             $userMajorId = null;
             $recommendations = [];
             $candidateMajor = null;
-            
+
             // Jika user sudah login, tampilkan rekomendasi berdasarkan jurusan
             if (Auth::check()) {
                 $education = CandidatesEducations::where('user_id', Auth::id())->first();
                 if ($education) {
                     $userMajorId = $education->major_id;
-                    
+
                     // Ambil major name
                     if ($userMajorId) {
                         $major = MasterMajor::find($userMajorId);
                         $candidateMajor = $major ? $major->name : null;
                     }
-                    
+
                     // Filter lowongan yang sesuai dengan jurusan user
                     $matchedJobs = $jobs->filter(function($job) use ($userMajorId) {
                         return $job->major_id == $userMajorId;
                     });
-                    
+
                     // Buat rekomendasi dengan score
                     foreach ($matchedJobs as $job) {
                         $score = 100; // Default score untuk perfect match
-                        
+
                         $recommendations[] = [
                             'vacancy' => $job,
                             'score' => $score
@@ -214,10 +228,10 @@ class JobsController extends Controller
                     }
                 }
             }
-            
+
             // Data perusahaan untuk filter
             $companies = DB::table('companies')->pluck('name')->toArray();
-            
+
             return Inertia::render('candidate/jobs/job-hiring', [
                 'jobs' => $jobs,
                 'recommendations' => $recommendations,

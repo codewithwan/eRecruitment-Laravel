@@ -118,17 +118,25 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>{{ $user->name ?? 'Nama Lengkap' }}</h1>
-            <div class="contact-info">
-                {{ $user->email ?? '' }}
-                @if($profile && $profile->phone_number)
-                    | {{ $profile->phone_number }}
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                @if($profile && $profile->profile_image && Storage::disk('public')->exists($profile->profile_image))
+                    <img src="{{ Storage::disk('public')->path($profile->profile_image) }}" 
+                         style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 20px;" />
                 @endif
-                @if($profile && $profile->address)
-                    <br>{{ $profile->address }}
-                    @if($profile->city), {{ $profile->city }}@endif
-                    @if($profile->province), {{ $profile->province }}@endif
-                @endif
+                <div>
+                    <h1>{{ $user->name ?? 'Nama Lengkap' }}</h1>
+                    <div class="contact-info">
+                        {{ $user->email ?? '' }}
+                        @if($profile && $profile->phone_number)
+                            | {{ $profile->phone_number }}
+                        @endif
+                        @if($profile && $profile->address)
+                            <br>{{ $profile->address }}
+                            @if($profile->city), {{ $profile->city }}@endif
+                            @if($profile->province), {{ $profile->province }}@endif
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
 

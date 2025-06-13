@@ -1558,4 +1558,78 @@ public function jobRecommendations()
         'recommendations' => $recommendations,
     ]);
 }
+
+public function getProfileImage()
+{
+    try {
+        $userId = Auth::id();
+        $profile = CandidatesProfiles::where('user_id', $userId)->first();
+        
+        if ($profile && $profile->profile_image) {
+                // Generate public URL for the image
+            $imageUrl = Storage::disk('public')->url($profile->profile_image);
+            
+            return response()->json([
+                'success' => true,
+                'image' => $imageUrl
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'No profile image found'
+        ]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Error getting profile image: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error getting profile image'
+        ], 500);
+    }
+}
+
+public function uploadProfileImage(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'profile_image' => 'required|image|mimes:jpeg,jpg,png|max:2048',
+        ]);
+
+        $userId = Auth::id();
+        $profile = CandidatesProfiles::where('user_id', $userId)->first();
+        
+        if (!$profile) {
+            $profile = CandidatesProfiles::create(['user_id' => $userId]);
+        }
+
+        // Delete old image if exists
+        if ($profile->profile_image) {
+            Storage::disk('public')->delete($profile->profile_image);
+        }
+
+        // Store new image
+        $file = $request->file('profile_image');
+        $filename = time() . '_' . $userId . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('profile-images', $filename, 'public');
+
+        $profile->update(['profile_image' => $path]);
+
+        // Generate public URL for the image - this is the key fix
+        $imageUrl = asset('storage/' . $path);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile image uploaded successfully',
+            'image_url' => $imageUrl
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error uploading profile image: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error uploading profile image'
+        ], 500);
+    }
+}
 }

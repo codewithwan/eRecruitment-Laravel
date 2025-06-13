@@ -220,7 +220,7 @@ const TambahPendidikanForm: React.FC<TambahPendidikanFormProps> = ({
                             required
                             options={[
                                 { value: '', label: 'Pilih Jenjang Pendidikan' },
-                                { value: 'SMA/SMK', label: 'SMA/SMK' },
+                                 { value: 'SMA/SMK', label: 'SMA/SMK' },
                                 { value: 'D3', label: 'Diploma 3 (D3)' },
                                 { value: 'S1', label: 'Sarjana (S1)' },
                                 { value: 'S2', label: 'Magister (S2)' },

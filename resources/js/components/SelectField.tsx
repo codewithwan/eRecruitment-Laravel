@@ -1,14 +1,14 @@
 import React from 'react';
 
 interface Option {
-    value: string;
+    value: string | number;  // Modified to accept both string and number
     label: string;
 }
 
 interface SelectFieldProps {
     label: string;
     name: string;
-    value: string;
+    value: string | number;  // Modified to accept both string and number
     onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     options: Option[];
     required?: boolean;
@@ -26,8 +26,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
     disabled = false,
     className = ''
 }) => {
-    // Ensure value is never undefined or null
-    const safeValue = value ?? '';
+    // Convert value to string to ensure compatibility with select element
+    const safeValue = value?.toString() ?? '';
 
     return (
         <div className={`flex flex-col ${className}`}>
@@ -42,10 +42,14 @@ const SelectField: React.FC<SelectFieldProps> = ({
                 onChange={onChange}
                 required={required}
                 disabled={disabled}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 bg-white"
+                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 bg-white focus:outline-none"
             >
                 {options.map((option, index) => (
-                    <option key={`${option.value}-${index}`} value={option.value} className="text-gray-900">
+                    <option 
+                        key={`${option.value}-${index}`} 
+                        value={option.value.toString()} 
+                        className="text-gray-900"
+                    >
                         {option.label}
                     </option>
                 ))}

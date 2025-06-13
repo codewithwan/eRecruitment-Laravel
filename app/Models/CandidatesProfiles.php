@@ -29,6 +29,7 @@ class CandidatesProfiles extends Model
         'village',
         'rt',
         'rw',
+        'profile_image', // Tambah profile_image ke fillable
     ];
 
     protected $casts = [
@@ -86,5 +87,16 @@ class CandidatesProfiles extends Model
                 'message' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()
             ];
         }
+    }
+
+    /**
+     * Get profile image URL
+     */
+    public function getProfileImageUrlAttribute()
+    {
+        if ($this->profile_image) {
+            return \Storage::disk('public')->url($this->profile_image);
+        }
+        return null;
     }
 }

@@ -51,19 +51,25 @@ Route::middleware(['auth'])->group(function () {
         }
     });
     
-    // Route untuk education - INI YANG DIGUNAKAN
+    
     Route::get('/api/candidate/education', [CandidateController::class, 'getEducation']);
     Route::post('/api/candidate/education', [CandidateController::class, 'storeEducation']);
+    
+    
+    Route::get('/api/candidate/profile-image', [CandidateController::class, 'getProfileImage'])
+        ->name('candidate.profile-image.get');
+    Route::post('/api/candidate/profile-image', [CandidateController::class, 'uploadProfileImage'])
+        ->name('candidate.profile-image.upload');
 });
 
-// Redirect based on role
+
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {
     return Auth::user()->role === UserRole::HR
     ? redirect()->route('admin.dashboard')
     : redirect()->route('user.profile');
 })->name('dashboard');
 
-// Route untuk simpan data pribadi (POST)
+
 Route::post('/candidate/data-pribadi', [CandidateController::class, 'storeDataPribadi'])
     ->name('candidate.data-pribadi.store');
 
@@ -72,13 +78,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/data-pribadi', [CandidateController::class, 'profile'])
         ->name('candidate.data-pribadi');
 
-    // HAPUS ROUTE EDUCATION YANG DUPLIKAT INI
-    // Route::get('/candidate/education/data', [CandidateController::class, 'getEducation'])
-    //     ->name('candidate.education.data');
-    // Route::post('/candidate/education/update', [CandidateController::class, 'storeEducation'])
-    //     ->name('candidate.education.update');
 
-    // Tambah pengalaman kerja (POST)
     Route::post('/candidate/work-experience', [CandidateController::class, 'storeWorkExperience'])
         ->name('candidate.work-experience.store');
 
@@ -94,17 +94,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/candidate/work-experience/{id}', [CandidateController::class, 'showWorkExperience'])
         ->name('candidate.work-experience.show');
 
-    // Hapus pengalaman kerja (DELETE)
+ 
     Route::delete('/candidate/work-experience/{id}', [CandidateController::class, 'deleteWorkExperience'])
         ->name('candidate.work-experience.delete');
     Route::get('/candidate/work-experiences', [CandidateController::class, 'indexWorkExperiences'])
         ->name('candidate.work-experiences');
 
-    // Rute untuk Edit Pengalaman Kerja
+   
     Route::get('/candidate/work-experience/{id}/edit', [CandidateController::class, 'editWorkExperience'])
         ->name('candidate.work-experience.edit');
 
-    // Achievement routes
+    
     Route::get('/candidate/achievements', [CandidateController::class, 'indexAchievements'])
         ->name('candidate.achievements');
     Route::post('/candidate/achievement', [CandidateController::class, 'storeAchievement'])

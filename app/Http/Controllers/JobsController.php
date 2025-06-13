@@ -11,7 +11,7 @@ use App\Models\MasterMajor;
 use App\Models\CandidatesProfile;
 use App\Models\CandidatesProfiles;
 use App\Models\JobApplication; // Add this import
-use App\Models\Statuses;
+use App\Models\Selections;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -125,46 +125,45 @@ class JobsController extends Controller
                     'message' => 'Data pendidikan belum lengkap. Lengkapi data pendidikan terlebih dahulu.'
                 ], 422);
             }
-            
-            // Ambil status default (Pending)
-            $pendingStatus = Statuses::where('name', 'Pending')->first();
-            if (!$pendingStatus) {
-                $pendingStatus = Statuses::create([
-                    'name' => 'Pending',
-                    'color' => '#FFA500', // Orange for pending
-                    'description' => 'Aplikasi sedang menunggu review'
+
+            // Ambil selection default (Administrasi)
+            $initialSelection = Selections::where('name', 'Administrasi')->first();
+            if (!$initialSelection) {
+                $initialSelection = Selections::create([
+                    'name' => 'Administrasi',
+                    'description' => 'Tahap seleksi administrasi kandidat'
                 ]);
             }
-            
+
             // Buat aplikasi baru
             $application = Applications::create([
                 'user_id' => Auth::id(),
                 'vacancies_id' => $id,
-                'status_id' => $pendingStatus->id,
+                'selection_id' => $initialSelection->id,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
-            
+
             \Log::info('User successfully applied for job', [
                 'user_id' => Auth::id(),
                 'job_id' => $id,
                 'application_id' => $application->id
             ]);
-            
+
             // Return sukses
             return response()->json([
                 'success' => true,
                 'message' => 'Lamaran berhasil dikirim!',
                 'redirect' => route('candidate.application-history')
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error while applying for job', [
                 'user_id' => Auth::id(),
                 'job_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat mengirim lamaran: ' . $e->getMessage()

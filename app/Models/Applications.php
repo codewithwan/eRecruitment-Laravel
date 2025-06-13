@@ -9,11 +9,11 @@ class Applications extends Model
     protected $fillable = [
         'user_id',
         'vacancies_id',
-        'status_id',
+        'selection_id',
         'resume_path',
         'cover_letter_path',
     ];
-    
+
     /**
      * Relasi ke user
      */
@@ -21,7 +21,7 @@ class Applications extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
      * Relasi ke lowongan
      * Pastikan menggunakan nama kolom yang benar (vacancies_id)
@@ -30,7 +30,7 @@ class Applications extends Model
     {
         return $this->belongsTo(Vacancies::class, 'vacancies_id');
     }
-    
+
     /**
      * Alias untuk relasi vacancy, untuk kompatibilitas dengan kode yang menggunakan job
      */
@@ -38,12 +38,12 @@ class Applications extends Model
     {
         return $this->belongsTo(Vacancies::class, 'vacancies_id');
     }
-    
+
     /**
-     * Relasi ke status
+     * Relasi ke selection (replacing status relation)
      */
-    public function status()
+    public function selection()
     {
-        return $this->belongsTo(Statuses::class, 'status_id');
+        return $this->belongsTo(Selections::class, 'selection_id');
     }
 }

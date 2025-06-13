@@ -15,7 +15,7 @@ class ApplicationsSeeder extends Seeder
                 // Removed 'id' field to let auto-increment handle it
                 'user_id' => 2,
                 'vacancies_id' => 2,
-                'status_id' => 1,
+                'selection_id' => 1,
                 'created_at' => Carbon::now()->subDays(1),
                 'updated_at' => Carbon::now()->subDays(1),
             ],
@@ -23,7 +23,7 @@ class ApplicationsSeeder extends Seeder
                 // Removed 'id' field to let auto-increment handle it
                 'user_id' => 3,
                 'vacancies_id' => 2,
-                'status_id' => 1,
+                'selection_id' => 1,
                 'created_at' => Carbon::now()->subDays(1),
                 'updated_at' => Carbon::now()->subDays(1),
             ],

@@ -15,7 +15,6 @@ class CreateApplicationHistoryTable extends Migration
             $table->foreignId('assessments_id')->nullable()->constrained('assessments')->onDelete('set null');
             $table->foreignId('interviews_id')->nullable()->constrained('interviews')->onDelete('set null');
             $table->foreignId('reviewed_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('statuses_id')->constrained('statuses')->onDelete('cascade');
             $table->boolean('is_qualified')->nullable();
             $table->timestamps();
         });

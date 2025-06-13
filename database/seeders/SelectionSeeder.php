@@ -18,7 +18,9 @@ class SelectionSeeder extends Seeder
         $selectionTypes = [
             ['name' => 'Administrasi', 'description' => 'Tahap seleksi administrasi kandidat'],
             ['name' => 'Psikotest', 'description' => 'Tahap seleksi psikotest kandidat'],
-            ['name' => 'Wawancara', 'description' => 'Tahap seleksi wawancara kandidat']
+            ['name' => 'Wawancara', 'description' => 'Tahap seleksi wawancara kandidat'],
+            ['name' => 'Hired', 'description' => 'Lamaran diterima'],
+            ['name' => 'Rejected', 'description' => 'Lamaran ditolak']
         ];
 
         foreach ($selectionTypes as $selection) {

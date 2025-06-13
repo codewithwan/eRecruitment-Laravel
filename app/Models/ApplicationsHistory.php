@@ -14,29 +14,20 @@ class ApplicationsHistory extends Model
         'assessments_id',
         'interviews_id',
         'reviewed_by',
-        'statuses_id',
         'is_qualified',
         'notes',
         'created_by'
     ];
-    
+
     // Relasi ke Application
     public function application()
     {
         return $this->belongsTo(Applications::class, 'application_id');
     }
-    
-    // Relasi ke Status
-    public function status()
-    {
-        return $this->belongsTo(Statuses::class, 'statuses_id');
-    }
-    
+
     // Relasi ke reviewer (User)
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
-    
-    // Relasi lain jika diperlukan
 }

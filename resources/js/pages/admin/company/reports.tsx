@@ -29,6 +29,15 @@ type AdminUser = {
     email: string;
     position: string;
     registration_date: string;
+    interview_stage?: string;
+    final_score?: number;
+    selection_status?: string;
+    candidate_summary: {
+        psychological_score: number;
+        interview_score: number;
+        feedback_1: string;
+        feedback_2: string;
+    }[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -51,55 +60,53 @@ export default function ReportsDashboard() {
             email: 'Rizalfarhannanda@gmail.com',
             position: 'UI / UX',
             registration_date: 'Mar 20, 2025',
+            interview_stage: '1',
+            final_score: 85,
+            selection_status: '1',
+            candidate_summary: [
+                {
+                    psychological_score: 85,
+                    interview_score: 90,
+                    feedback_1: 'Strong technical skills',
+                    feedback_2: 'Good communication'
+                }
+            ]
         },
         {
             id: '02',
-            name: 'M. Hassan Naufal Zayyan',
+            name: 'Rizal Farhan Nanda',
             email: 'Rizalfarhannanda@gmail.com',
-            position: 'Back End',
-            registration_date: 'Mar 18, 2025',
+            position: 'UI / UX',
+            registration_date: 'Mar 20, 2025',
+            interview_stage: '2',
+            final_score: 85,
+            selection_status: '1',
+            candidate_summary: [
+                {
+                    psychological_score: 85,
+                    interview_score: 90,
+                    feedback_1: 'Strong technical skills',
+                    feedback_2: 'Good communication'
+                }
+            ]
         },
         {
             id: '03',
-            name: 'Ardan Ferdiansah',
+            name: 'Rizal Farhan Nanda',
             email: 'Rizalfarhannanda@gmail.com',
-            position: 'Front End',
-            registration_date: 'Mar 18, 2025',
-        },
-        {
-            id: '04',
-            name: 'Muhammad Ridwan',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'UX Writer',
+            position: 'UI / UX',
             registration_date: 'Mar 20, 2025',
-        },
-        {
-            id: '05',
-            name: 'Untara Eka Saputra',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'IT Spesialis',
-            registration_date: 'Mar 22, 2025',
-        },
-        {
-            id: '06',
-            name: 'Dea Derika Winahyu',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'UX Writer',
-            registration_date: 'Mar 20, 2025',
-        },
-        {
-            id: '07',
-            name: 'Kartika Yuliana',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'IT Spesialis',
-            registration_date: 'Mar 22, 2025',
-        },
-        {
-            id: '08',
-            name: 'Ayesha Dear Raisha',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'UX Writer',
-            registration_date: 'Mar 20, 2025',
+            interview_stage: '3',
+            final_score: 85,
+            selection_status: '1',
+            candidate_summary: [
+                {
+                    psychological_score: 85,
+                    interview_score: 90,
+                    feedback_1: 'Strong technical skills',
+                    feedback_2: 'Good communication'
+                }
+            ]
         },
     ]);
 
@@ -361,32 +368,47 @@ export default function ReportsDashboard() {
             </div>
 
             {/* View User Dialog */}
+            {/* View User Dialog */}
             <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>User Details</DialogTitle>
+                        <DialogTitle>{selectedUser?.name}</DialogTitle>
+                        <p className="text-sm text-gray-500">{selectedUser?.position}</p>
                     </DialogHeader>
                     {selectedUser && (
                         <div className="space-y-4">
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="font-medium">ID:</div>
-                                <div className="col-span-2">{selectedUser.id}</div>
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div className="border p-3 rounded shadow-sm h-24 flex flex-col justify-between">
+                                    <div className="text-gray-500 text-sm">Tahap saat ini</div>
+                                    <div className="text-2xl font-bold">{selectedUser.interview_stage}</div>
+                                    <div className="text-sm">Interview</div>
+                                </div>
+                                <div className="border p-3 rounded shadow-sm h-24 flex flex-col justify-between">
+                                    <div className="text-gray-500 text-sm">Nilai Terakhir</div>
+                                    <div className="text-2xl font-bold">{selectedUser.final_score}</div>
+                                    <div className="text-sm">&nbsp;</div>
+                                </div>
+                                <div className="border p-3 rounded shadow-sm h-24 flex flex-col justify-between">
+                                    <div className="text-gray-500 text-sm">Status Seleksi</div>
+                                    <div className="text-2xl font-bold">{selectedUser.selection_status}</div>
+                                    <div className="text-sm">&nbsp;</div>
+                                </div>
+                            </div>
 
-                                <div className="font-medium">Name:</div>
-                                <div className="col-span-2">{selectedUser.name}</div>
-
-                                <div className="font-medium">Email:</div>
-                                <div className="col-span-2">{selectedUser.email}</div>
-
-                                <div className="font-medium">Position:</div>
-                                <div className="col-span-2">{selectedUser.position}</div>
-
-                                <div className="font-medium">Registration Date:</div>
-                                <div className="col-span-2">{selectedUser.registration_date}</div>
+                            <div className="mt-4">
+                                <h4 className="font-semibold mb-2">Rangkuman Kandidat</h4>
+                                {selectedUser.candidate_summary.map((summary, index) => (
+                                    <ul key={index} className="list-disc list-inside text-sm space-y-1">
+                                        <li>Psikotest skor {summary.psychological_score}</li>
+                                        <li>Interview skor {summary.interview_score}</li>
+                                        <li>{summary.feedback_1}</li>
+                                        <li>{summary.feedback_2}</li>
+                                    </ul>
+                                ))}
                             </div>
                         </div>
                     )}
-                    <DialogFooter className="sm:justify-end">
+                    <DialogFooter className="sm:justify-end mt-4">
                         <Button onClick={() => setIsViewDialogOpen(false)} className="bg-blue-500 text-white hover:bg-blue-600">
                             Close
                         </Button>
@@ -462,6 +484,6 @@ export default function ReportsDashboard() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </AppLayout>
+        </AppLayout >
     );
 }

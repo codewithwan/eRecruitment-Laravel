@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 interface Education {
     id?: number;
@@ -22,9 +22,9 @@ export const useEducation = () => {
         try {
             setLoading(true);
             setError(null);
-            
+
             console.log('🔄 Fetching education data...');
-            
+
             const response = await axios.get('/api/candidate/education', {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -32,10 +32,10 @@ export const useEducation = () => {
                     'Cache-Control': 'no-cache'
                 }
             });
-            
+
             console.log('✅ Education data received:', response.data);
             setEducation(response.data);
-            
+
         } catch (error: any) {
             console.error('❌ Error fetching education:', error);
             if (error.response?.status === 404 || error.response?.data === null) {
@@ -53,30 +53,45 @@ export const useEducation = () => {
     const updateEducation = async (data: any, onSuccess?: () => void) => {
         try {
             setLoading(true);
+
+            // Get the CSRF token from the cookie instead of meta tag
+            // Laravel stores it in the XSRF-TOKEN cookie
+            const getCsrfToken = () => {
+                const match = document.cookie.match(new RegExp('(^| )XSRF-TOKEN=([^;]+)'));
+                return match ? decodeURIComponent(match[2]) : null;
+            };
+
+            const csrfToken = getCsrfToken();
+            console.log('🔐 Using CSRF Token:', csrfToken);
+
             const response = await fetch('/api/candidate/education', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': csrfToken || '',
                 },
+                credentials: 'include', // Important: include cookies in request
                 body: JSON.stringify(data),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update education');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('❌ Server returned error:', response.status, errorData);
+                throw new Error(errorData.message || 'Failed to update education');
             }
 
             const result = await response.json();
-            setEducation(result.data);
-            
-            // Call success callback if provided
+            console.log('✅ Education data updated:', result);
+            setEducation(result.data || result);
+
             if (onSuccess) {
                 onSuccess();
             }
-            
+
             return result;
         } catch (error) {
-            console.error('Error updating education:', error);
+            console.error('❌ Error updating education:', error);
             throw error;
         } finally {
             setLoading(false);

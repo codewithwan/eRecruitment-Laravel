@@ -11,7 +11,7 @@ const GlobalStyle = createGlobalStyle`
   body {
     background: #fff !important;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     overflow-wrap: break-word;
     word-wrap: break-word;
@@ -31,11 +31,11 @@ const ContentContainer = styled.div`
     padding: 20px;
     width: 100%;
     box-sizing: border-box;
-    
+
     @media (max-width: 1250px) {
         max-width: 95%;
     }
-    
+
     @media (max-width: 768px) {
         padding: 15px;
     }
@@ -94,7 +94,7 @@ const TableBody = styled.tbody`
         color: #000000; /* Ubah warna teks menjadi hitam */
         font-weight: 500; /* Tambahkan font weight agar lebih terlihat */
     }
-    
+
     .status-badge-cell {
         cursor: default; /* Override cursor untuk cell status */
         pointer-events: auto; /* Tetap menangkap event tapi akan di-cancel */
@@ -122,12 +122,12 @@ const EmptyState = styled.div`
     background-color: #f8f9fa;
     border-radius: 8px;
     margin: 30px 0;
-    
+
     h3 {
         color: #000000; /* Ubah warna teks menjadi hitam */
         font-weight: 600;
     }
-    
+
     p {
         color: #000000; /* Ubah warna teks menjadi hitam */
         font-weight: 500;
@@ -203,13 +203,13 @@ const ApplicationHistory: React.FC<ApplicationHistoryProps> = ({ applications = 
     const [isLoading, setIsLoading] = useState(false);
     const [applicationList, setApplicationList] = useState<Application[]>(applications);
     const [errorMessage, setErrorMessage] = useState(error);
-    
+
     // Hapus useEffect dengan router.reload()
-    
+
     // Fungsi refresh data yang lebih aman
     const refreshData = () => {
         setIsLoading(true);
-        
+
         // Gunakan fetch yang lebih sederhana
         fetch(window.location.href)
             .then(response => response.text())
@@ -240,16 +240,24 @@ const ApplicationHistory: React.FC<ApplicationHistoryProps> = ({ applications = 
         setSelectedApplication(null);
     };
 
+    // Add this function to handle profile click
+    const handleProfileClick = () => {
+        window.location.href = '/profile'; // This routes to personal data
+    };
+
     return (
         <>
             <GlobalStyle />
+            <ProfileIconWrapper onClick={handleProfileClick}>
+                <div className="profile-icon"></div>
+            </ProfileIconWrapper>
             <Header />
             <PageWrapper>
                 <ContentContainer>
                     <PageTitleWrapper>
                         <PageTitle style={{ marginTop: '80px' }}>Riwayat Lamaran</PageTitle>
                     </PageTitleWrapper>
-                    
+
                     <RefreshButton onClick={refreshData} disabled={isLoading}>
                         {isLoading && <LoadingSpinner />}
                         {isLoading ? 'Memuat...' : 'Refresh Data'}
@@ -378,7 +386,7 @@ const RefreshButton = styled.button<{ disabled: boolean }>`
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     &:hover {
         background-color: ${props => props.disabled ? '#cccccc' : '#1557b0'};
     }
@@ -394,7 +402,7 @@ const LoadingSpinner = styled.div`
     border-radius: 50%;
     border-top: 3px solid white;
     animation: spin 1s linear infinite;
-    
+
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -410,7 +418,7 @@ const ViewDetailButton = styled.button`
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
-    
+
     &:hover {
         background-color: #1557b0;
     }
@@ -463,7 +471,7 @@ const CloseButton = styled.button`
     font-size: 1.5rem;
     cursor: pointer;
     color: #495057;
-    
+
     &:hover {
         color: #0088FF;
     }
@@ -492,9 +500,32 @@ const Button = styled.button`
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    
+
     &:hover {
         background-color: #1557b0;
+    }
+`;
+
+const ProfileIconWrapper = styled.div`
+    position: fixed;
+    top: 18px;
+    right: 32px;
+    z-index: 1001;
+    cursor: pointer;
+
+    // Ensure our custom button appears above the Header component
+    .profile-icon {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border: 2px solid #1a73e8;
+        position: absolute;
+        top: 0;
+        right: 0;
     }
 `;
 

@@ -21,7 +21,6 @@ class DatabaseSeeder extends Seeder
             CandidatesSocialMediaSeeder::class,
             SuperAdminSeeder::class,
             DepartmentsTableSeeder::class,
-            StatusesSeeder::class,
             SelectionSeeder::class,
             CompaniesTableSeeder::class,
             JobTypesTableSeeder::class,

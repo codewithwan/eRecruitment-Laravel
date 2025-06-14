@@ -3,28 +3,47 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Applications extends Model
 {
     protected $fillable = [
         'user_id',
         'vacancies_id',
-        'status_id',
+        'selection_id',
+        'resume_path',
+        'cover_letter_path',
     ];
 
-    public function user(): BelongsTo
+    /**
+     * Relasi ke user
+     */
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function vacancy(): BelongsTo
+    /**
+     * Relasi ke lowongan
+     * Pastikan menggunakan nama kolom yang benar (vacancies_id)
+     */
+    public function vacancy()
     {
         return $this->belongsTo(Vacancies::class, 'vacancies_id');
     }
 
-    public function status(): BelongsTo
+    /**
+     * Alias untuk relasi vacancy, untuk kompatibilitas dengan kode yang menggunakan job
+     */
+    public function job()
     {
-        return $this->belongsTo(Statuses::class, 'status_id');
+        return $this->belongsTo(Vacancies::class, 'vacancies_id');
+    }
+
+    /**
+     * Relasi ke selection (replacing status relation)
+     */
+    public function selection()
+    {
+        return $this->belongsTo(Selections::class, 'selection_id');
     }
 }

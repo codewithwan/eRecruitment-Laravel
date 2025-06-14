@@ -12,49 +12,56 @@ class Vacancies extends Model
 
     protected $fillable = [
         'title',
-        'department_id',
-        'company_id',
-        'type_id',
-        'major_id',
         'location',
+        'type_id',
+        'company_id',
+        'department_id',
+        'major_id',
         'requirements',
-        'benefits',
         'job_description',
+        'benefits',
+        'user_id',
     ];
-
+    
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'requirements' => 'array',
         'benefits' => 'array',
     ];
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
-
-    public function company(): BelongsTo
+    /**
+     * Relasi ke perusahaan
+     */
+    public function company()
     {
         return $this->belongsTo(Companies::class, 'company_id');
     }
 
-    // Perbaiki relasi ini - pastikan model dan namespace benar
-    public function jobType(): BelongsTo
+    /**
+     * Relasi ke tipe pekerjaan
+     */
+    public function jobType()
     {
-        // Ganti dengan namespace yang benar, misalnya jika nama model adalah JobTypes bukan JobType
-        return $this->belongsTo(\App\Models\JobTypes::class, 'type_id');
-        
-        // Atau jika namespace berbeda
-        // return $this->belongsTo(\App\Models\Master\JobType::class, 'type_id');
+        return $this->belongsTo(JobTypes::class, 'type_id');
     }
 
-    public function major(): BelongsTo
+    /**
+     * Relasi ke departemen
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    /**
+     * Relasi ke jurusan
+     */
+    public function major()
     {
         return $this->belongsTo(MasterMajor::class, 'major_id');
-    }
-    
-    public function periods()
-    {
-        return $this->belongsToMany(Periods::class, 'vacancies_periods', 'vacancy_id', 'period_id')
-            ->withTimestamps();
     }
 }

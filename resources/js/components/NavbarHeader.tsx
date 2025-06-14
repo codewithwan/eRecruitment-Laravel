@@ -15,7 +15,7 @@ const NavbarHeader: React.FC = () => {
           <div className="absolute left-1/2 transform -translate-x-1/2 flex space-x-6">
             <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Dasbor</a>
             <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Profil</a>
-            <a href="/job-hiring" className="font-medium text-gray-600 hover:text-gray-900">Lowongan Pekerjaan</a>
+            <a href="/candidate/jobs" className="font-medium text-gray-600 hover:text-gray-900">Lowongan Pekerjaan</a>
             <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Lamaran</a>
           </div>
           {/* Kanan: Profil Dropdown */}

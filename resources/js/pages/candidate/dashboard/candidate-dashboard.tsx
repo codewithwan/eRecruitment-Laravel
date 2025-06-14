@@ -28,10 +28,10 @@
               <div className="font-bold text-xl text-blue-600">MITRA KARYA GROUP</div>
               {/* Tengah: Menu Navigasi */}
               <div className="absolute left-1/2 transform -translate-x-1/2 flex space-x-6">
-                <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Dasbor</a>
-                <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Profil</a>
-                <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Lowongan Pekerjaan</a>
-                <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Lamaran</a>
+                <a href="/candidate/dashboard" className="font-medium text-gray-600 hover:text-gray-900">Dasbor</a>
+                <a href="/candidate/profile" className="font-medium text-gray-600 hover:text-gray-900">Profil</a>
+                <a href="/candidate/jobs" className="font-medium text-gray-600 hover:text-gray-900">Lowongan Pekerjaan</a>
+                <a href="/candidate/application-history" className="font-medium text-gray-600 hover:text-gray-900">Lamaran</a>
               </div>
 
               {/* Kanan: Profil Dropdown */}
@@ -83,12 +83,21 @@
                       </div>
                     </div>
                     <div className="p-2">
-                      <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-black">
+                      <a href="/candidate/profile" className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-black">
                         Profil Saya
-                      </button>
-                      <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-black">
-                        Logout
-                      </button>
+                      </a>
+                      <a href="/candidate/jobs" className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-black">
+                        Lowongan Pekerjaan
+                      </a>
+                      <a href="/candidate/application-history" className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-black">
+                        Lamaran
+                      </a>
+                      <form method="POST" action="/logout">
+                        <input type="hidden" name="_token" value={document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''} />
+                        <button type="submit" className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-black">
+                          Logout
+                        </button>
+                      </form>
                     </div>
                   </div>
                 )}
@@ -101,7 +110,7 @@
 
           <div className="grid grid-cols-1 md:grid-cols-3 m-24">
             {/* Profil Card */}
-            <div className="w-[90%] max-w-md mx-auto border border-blue-800 rounded p-6 flex flex-col items-start bg-white hover:shadow-md transition outline outline-2 outline-[#0047FF]">
+            <a href="/candidate/profile" className="w-[90%] max-w-md mx-auto border border-blue-800 rounded p-6 flex flex-col items-start bg-white hover:shadow-md transition outline outline-2 outline-[#0047FF] cursor-pointer">
               <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -109,10 +118,10 @@
               </div>
               <h2 className="text-lg font-medium mb-2 text-black">Profil</h2>
               <p className="text-gray-600 text-start font-medium">Lengkapi Biodata Profil Anda</p>
-            </div>
+            </a>
 
             {/* Lowongan Pekerjaan Card */}
-            <div className="w-[90%] max-w-md mx-auto border border-blue-800 rounded p-6 flex flex-col items-start bg-white hover:shadow-md transition outline outline-2 outline-[#0047FF]">
+            <a href="/candidate/jobs" className="w-[90%] max-w-md mx-auto border border-blue-800 rounded p-6 flex flex-col items-start bg-white hover:shadow-md transition outline outline-2 outline-[#0047FF] cursor-pointer">
               <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -120,10 +129,10 @@
               </div>
               <h2 className="text-lg font-medium mb-2 text-black">Lowongan Pekerjaan</h2>
               <p className="text-gray-600 text-start font-medium">Lihat lowongan pekerjaan yang tersedia di sini</p>
-            </div>
+            </a>
 
             {/* Lamaran Card */}
-            <div className="w-[90%] max-w-md mx-auto border border-blue-800 rounded p-6 flex flex-col items-start bg-white hover:shadow-md transition outline outline-2 outline-[#0047FF]">
+            <a href="/candidate/application-history" className="w-[90%] max-w-md mx-auto border border-blue-800 rounded p-6 flex flex-col items-start bg-white hover:shadow-md transition outline outline-2 outline-[#0047FF] cursor-pointer">
               <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -131,7 +140,7 @@
               </div>
               <h2 className="text-lg font-medium mb-2 text-black">Lamaran</h2>
               <p className="text-gray-600 text-start font-medium">Lihat riwayat lamaran pekerjaan Anda di sini.</p>
-            </div>
+            </a>
           </div>
         </div>
 

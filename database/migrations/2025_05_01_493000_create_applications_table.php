@@ -12,7 +12,7 @@ class CreateApplicationsTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('vacancies_id')->constrained('vacancies')->onDelete('cascade');
-            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+            $table->foreignId('selection_id')->constrained('selection')->onDelete('cascade');
             $table->timestamps();     });
     }
 

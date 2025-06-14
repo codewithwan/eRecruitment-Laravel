@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Applications;
-use App\Models\ApplicationStatutes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -12,50 +11,121 @@ class ApplicationHistoryController extends Controller
 {
     public function index()
     {
-        // Ambil semua status untuk mappings
-        $statuses = ApplicationStatutes::all()->pluck('name', 'id')->toArray();
+        try {
+            // Ambil data aplikasi user yang sedang login
+            $applications = Applications::where('user_id', Auth::id())
+                ->with([
+                    'vacancy:id,title,location,type_id,company_id',
+                    'vacancy.company:id,name',
+                    'vacancy.jobType:id,name',
+                    'selection:id,name,description' // Changed from status to selection
+                ])
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        // Ambil lamaran user
-        $applications = Applications::with(['vacancy', 'vacancy.company', 'status'])
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($application) use ($statuses) {
+            // Format data untuk frontend
+            $formattedApplications = $applications->map(function ($application) {
+                $vacancy = $application->vacancy;
+                $selection = $application->selection; // Changed from status to selection
+
+                // Handle jika vacancy null
+                if (!$vacancy) {
+                    \Log::warning('Vacancy not found for application ID: ' . $application->id);
+                    return null;
+                }
+
                 return [
                     'id' => $application->id,
-                    'status_id' => $application->status_id,
-                    'status_name' => $statuses[$application->status_id] ?? 'Unknown',
-                    'status_color' => $this->getStatusColor($application->status_id),
+                    'status_id' => $application->selection_id ?? 1, // Changed from status_id to selection_id
+                    'status_name' => $selection ? $selection->name : 'Administrasi', // Changed default from Pending to Administrasi
+                    'status_color' => '#1a73e8', // Use a default color since selection may not have a color field
                     'job' => [
-                        'id' => $application->vacancy->id,
-                        'title' => $application->vacancy->title,
-                        'company' => $application->vacancy->company->name,
-                        'location' => $application->vacancy->location ?? '-',
-                        'type' => $application->vacancy->type ?? 'Full-time',
+                        'id' => $vacancy->id,
+                        'title' => $vacancy->title,
+                        'company' => $vacancy->company ? $vacancy->company->name : 'Unknown',
+                        'location' => $vacancy->location,
+                        'type' => $vacancy->jobType ? $vacancy->jobType->name : 'Full Time',
                     ],
-                    'applied_at' => $application->created_at->format('d M Y'),
-                    'updated_at' => $application->updated_at->format('d M Y'),
+                    'applied_at' => $application->created_at ? $application->created_at->toDateString() : now()->toDateString(),
+                    'updated_at' => $application->updated_at ? $application->updated_at->toDateString() : now()->toDateString(),
                 ];
-            });
+            })->filter()->values(); // Filter nulls and reindex
 
-        return Inertia::render('candidate/jobs/application-history', [
-            'applications' => $applications
-        ]);
+            // Debugging
+            \Log::info('Returning applications data', [
+                'count' => $formattedApplications->count(),
+                'data' => $formattedApplications
+            ]);
+
+            // Render dengan data
+            return Inertia::render('candidate/application-history', [
+                'applications' => $formattedApplications
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching application history: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return Inertia::render('candidate/application-history', [
+                'applications' => [],
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ]);
+        }
     }
 
-    private function getStatusColor($statusId)
+    // Untuk endpoint AJAX jika diperlukan
+    public function getApplications()
     {
-        switch ($statusId) {
-            case 1: // Pending
-                return '#f39c12'; // Orange
-            case 2: // Rejected
-                return '#e74c3c'; // Red
-            case 3: // Interview
-                return '#3498db'; // Blue
-            case 4: // Accepted
-                return '#27ae60'; // Green
-            default:
-                return '#95a5a6'; // Grey
+        try {
+            // Ambil data aplikasi user yang sedang login
+            $applications = Applications::where('user_id', Auth::id())
+                ->with([
+                    'vacancy:id,title,location,type_id,company_id',
+                    'vacancy.company:id,name',
+                    'vacancy.jobType:id,name',
+                    'selection:id,name,description' // Changed from status to selection
+                ])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Format data seperti fungsi index
+            $formattedApplications = $applications->map(function ($application) {
+                $vacancy = $application->vacancy;
+                $selection = $application->selection; // Changed from status to selection
+
+                // Handle jika vacancy null
+                if (!$vacancy) {
+                    \Log::warning('Vacancy not found for application ID: ' . $application->id);
+                    return null;
+                }
+
+                return [
+                    'id' => $application->id,
+                    'status_id' => $application->selection_id ?? 1, // Changed from status_id to selection_id
+                    'status_name' => $selection ? $selection->name : 'Administrasi', // Changed default from Pending to Administrasi
+                    'status_color' => '#1a73e8', // Use a default color since selection may not have a color field
+                    'job' => [
+                        'id' => $vacancy->id,
+                        'title' => $vacancy->title,
+                        'company' => $vacancy->company ? $vacancy->company->name : 'Unknown',
+                        'location' => $vacancy->location,
+                        'type' => $vacancy->jobType ? $vacancy->jobType->name : 'Full Time',
+                    ],
+                    'applied_at' => $application->created_at ? $application->created_at->toDateString() : now()->toDateString(),
+                    'updated_at' => $application->updated_at ? $application->updated_at->toDateString() : now()->toDateString(),
+                ];
+            })->filter()->values();
+
+            // Return JSON untuk AJAX
+            return response()->json([
+                'applications' => $formattedApplications
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

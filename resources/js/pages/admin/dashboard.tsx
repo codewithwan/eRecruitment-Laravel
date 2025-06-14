@@ -37,7 +37,7 @@ const dashboardStats = {
 };
 
 const recruitmentStageData = [
-    { name: 'Admin Review', value: 456, color: '#3B82F6' },
+    { name: 'Administration', value: 456, color: '#3B82F6' },
     { name: 'Assessment', value: 289, color: '#1D4ED8' },
     { name: 'Interview', value: 123, color: '#1E3A8A' }
 ];
@@ -137,7 +137,7 @@ export default function Dashboard() {
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card className="hover:shadow-lg transition-shadow border-blue-200">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Step 1: Admin Review</CardTitle>
+                            <CardTitle className="text-sm font-medium">Step 1: Administration</CardTitle>
                             <ClipboardList className="h-4 w-4 text-blue-600" />
                         </CardHeader>
                         <CardContent>
@@ -185,7 +185,7 @@ export default function Dashboard() {
                                         <XAxis dataKey="day" />
                                         <YAxis />
                                         <Tooltip />
-                                        <Bar dataKey="admin" fill="#3B82F6" name="Admin Review" />
+                                        <Bar dataKey="admin" fill="#3B82F6" name="Administration" />
                                         <Bar dataKey="assessment" fill="#1D4ED8" name="Assessment" />
                                         <Bar dataKey="interview" fill="#1E3A8A" name="Interview" />
                                     </BarChart>

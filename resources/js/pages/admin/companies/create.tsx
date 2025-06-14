@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Building2, Globe, Mail, MapPin, Phone, Plus } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -16,8 +16,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
     {
-        title: 'Companies',
-        href: '/dashboard/companies',
+        title: 'Company Management',
+        href: '/dashboard/company-management',
     },
     {
         title: 'Create Company',
@@ -47,7 +47,12 @@ export default function CreateCompany() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('companies.store'));
+        post(route('companies.store'), {
+            onSuccess: () => {
+                // Redirect ke company management setelah berhasil create
+                router.get(route('company-management.index'));
+            }
+        });
     };
 
     return (
@@ -58,9 +63,10 @@ export default function CreateCompany() {
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Link href={route('companies.index')}>
+                            <Link href={route('company-management.index')}>
                                 <Button variant="outline" size="sm">
                                     <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Back
                                 </Button>
                             </Link>
                             <h2 className="text-2xl font-semibold">Create Company</h2>
@@ -68,14 +74,14 @@ export default function CreateCompany() {
                     </div>
 
                     <div className="grid gap-6 lg:grid-cols-2">
-                        {/* New Company Form - Pindah ke kiri */}
+                        {/* New Company Form */}
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center gap-2">
                                     <Plus className="h-5 w-5 text-blue-600" />
-                                    <CardTitle>Subsidiary Company Information</CardTitle>
+                                    <CardTitle>Company Information</CardTitle>
                                 </div>
-                                <CardDescription>Enter the details for the new subsidiary company</CardDescription>
+                                <CardDescription>Enter the details for the new company</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,11 +91,11 @@ export default function CreateCompany() {
                                             id="name"
                                             value={data.name}
                                             onChange={(e) => setData('name', e.target.value)}
-                                            placeholder="Enter subsidiary company name"
+                                            placeholder="Enter company name"
                                             className={errors.name ? 'border-red-500' : ''}
                                         />
                                         {errors.name && (
-                                            <p className="text-sm text-red-500">{errors.name}</p>
+                                            <p className="text-sm text-red-600">{errors.name}</p>
                                         )}
                                     </div>
 
@@ -99,12 +105,12 @@ export default function CreateCompany() {
                                             id="description"
                                             value={data.description}
                                             onChange={(e) => setData('description', e.target.value)}
-                                            placeholder="Enter subsidiary company description"
+                                            placeholder="Enter company description"
                                             className={errors.description ? 'border-red-500' : ''}
                                             rows={3}
                                         />
                                         {errors.description && (
-                                            <p className="text-sm text-red-500">{errors.description}</p>
+                                            <p className="text-sm text-red-600">{errors.description}</p>
                                         )}
                                     </div>
 
@@ -120,7 +126,7 @@ export default function CreateCompany() {
                                                 className={errors.email ? 'border-red-500' : ''}
                                             />
                                             {errors.email && (
-                                                <p className="text-sm text-red-500">{errors.email}</p>
+                                                <p className="text-sm text-red-600">{errors.email}</p>
                                             )}
                                         </div>
 
@@ -134,7 +140,7 @@ export default function CreateCompany() {
                                                 className={errors.phone ? 'border-red-500' : ''}
                                             />
                                             {errors.phone && (
-                                                <p className="text-sm text-red-500">{errors.phone}</p>
+                                                <p className="text-sm text-red-600">{errors.phone}</p>
                                             )}
                                         </div>
                                     </div>
@@ -150,35 +156,25 @@ export default function CreateCompany() {
                                             rows={3}
                                         />
                                         {errors.address && (
-                                            <p className="text-sm text-red-500">{errors.address}</p>
+                                            <p className="text-sm text-red-600">{errors.address}</p>
                                         )}
                                     </div>
 
                                     <div className="flex justify-end items-center space-x-2 pt-6">
-                                        <Link href={route('companies.index')}>
-                                            <Button type="button" variant="outline">
+                                        <Link href={route('company-management.index')}>
+                                            <Button variant="outline" type="button">
                                                 Cancel
                                             </Button>
                                         </Link>
                                         <Button type="submit" disabled={processing}>
-                                            {processing ? (
-                                                <>
-                                                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-white"></div>
-                                                    Creating...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Plus className="mr-2 h-4 w-4" />
-                                                    Create Company
-                                                </>
-                                            )}
+                                            {processing ? 'Creating...' : 'Create Company'}
                                         </Button>
                                     </div>
                                 </form>
                             </CardContent>
                         </Card>
 
-                        {/* Parent Company Information Card - Pindah ke kanan */}
+                        {/* Parent Company Information Card */}
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center gap-2">
@@ -226,7 +222,7 @@ export default function CreateCompany() {
                                                 <a 
                                                     href={parentCompanyInfo.website} 
                                                     target="_blank" 
-                                                    rel="noopener noreferrer"
+                                                    rel="noopener noreferrer" 
                                                     className="text-sm text-blue-600 hover:underline"
                                                 >
                                                     {parentCompanyInfo.website}

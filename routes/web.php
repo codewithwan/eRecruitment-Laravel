@@ -48,6 +48,14 @@ Route::prefix('api')->group(function () {
     });
 });
 
+// Company Management Routes (hanya index dan destroy)
+Route::middleware(['auth'])->prefix('dashboard')->group(function () {
+    Route::get('company-management', [App\Http\Controllers\Admin\CompanyManagementController::class, 'index'])
+        ->name('company-management.index');
+    Route::delete('company-management/{company}', [App\Http\Controllers\Admin\CompanyManagementController::class, 'destroy'])
+        ->name('company-management.destroy');
+});
+
 Route::middleware(['auth'])->group(function () {
     // Company management routes
     Route::prefix('dashboard')->name('companies.')->group(function () {

@@ -30,8 +30,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
     {
-        title: 'Companies',
-        href: '/dashboard/companies',
+        title: 'Company Management',
+        href: '/dashboard/company-management',
     },
     {
         title: 'Edit Company',
@@ -72,7 +72,7 @@ export default function EditCompany({ company }: Props) {
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Link href={route('companies.index')}>
+                            <Link href={route('company-management.index')}>
                                 <Button variant="outline" size="sm">
                                     <ArrowLeft className="mr-2 h-4 w-4" />
                                 </Button>
@@ -169,7 +169,7 @@ export default function EditCompany({ company }: Props) {
                                     </div>
 
                                     <div className="flex justify-end items-center space-x-2 pt-6">
-                                        <Link href={route('companies.index')}>
+                                        <Link href={route('company-management.index')}>
                                             <Button type="button" variant="outline">
                                                 Cancel
                                             </Button>

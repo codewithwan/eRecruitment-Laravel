@@ -1,3 +1,4 @@
+import { CompanyWizard } from '@/components/company-wizard';
 import { SearchBar } from '@/components/searchbar';
 import {
     AlertDialog,
@@ -213,9 +214,15 @@ export default function ReportsDashboard() {
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
                     <div className="mb-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <h2 className="text-2xl font-semibold">Reports & Analytics</h2>
+                        <h2 className="text-2xl font-semibold">Reports & Analytics</h2>
+                        <div className="hidden md:block">
+                            <CompanyWizard currentStep="reports" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                         </div>
+                    </div>
+                    
+                    {/* Mobile wizard navigation */}
+                    <div className="mb-4 md:hidden">
+                        <CompanyWizard currentStep="reports" />
                     </div>
 
                     {/* Interview Statistics Cards */}

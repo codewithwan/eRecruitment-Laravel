@@ -13,8 +13,8 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { NavItem } from '@/types';
-import { Link, router, usePage } from '@inertiajs/react';
-import { ClipboardList, FileBarChart, Github, LayoutGrid, LucideFileQuestion, MessageSquare, Package, SearchIcon, User } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Building2, ClipboardList, Github, LayoutGrid, LucideFileQuestion, Package, SearchIcon, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
@@ -23,12 +23,9 @@ import '../../../resources/css/app.css';
 
 const dashboardNavItems: NavItem[] = [{ title: 'Dashboard', href: '/dashboard', icon: LayoutGrid }];
 
-// Remove periods from shared subitems
-const sharedSubItems: NavItem[] = [
-    { title: 'Administration', href: '/dashboard/company/administration', icon: LayoutGrid },
-    { title: 'Assessment', href: '/dashboard/assessment', icon: ClipboardList },
-    { title: 'Interview', href: '/dashboard/interview', icon: MessageSquare },
-    { title: 'Reports & Analytics', href: '/dashboard/reports', icon: FileBarChart },
+// Company navigation items
+const companyNavItems: NavItem[] = [
+    { title: 'Company Periods', href: '/dashboard/companies', icon: Building2 },
 ];
 
 // Test and assessment submenu items
@@ -37,7 +34,7 @@ const testAssessmentItems: NavItem[] = [
     { title: 'Question Packs', href: '/dashboard/questionpacks', icon: Package },
 ];
 
-// Updated main navigation items
+// Updated main navigation items (removed Company Periods from here)
 const mainNavItems: { name: string; icon: React.ElementType; href?: string; items?: NavItem[] }[] = [
     { name: 'User Management', href: '/dashboard/users', icon: User },
     { name: 'Job Management', href: '/dashboard/jobs', icon: SearchIcon },
@@ -45,25 +42,6 @@ const mainNavItems: { name: string; icon: React.ElementType; href?: string; item
 ];
 
 const footerNavItems: NavItem[] = [{ title: 'Github', href: 'https://github.com/codewithwan/eRecruitment-Laravel', icon: Github }];
-
-// Updated company items with IDs
-const companyNavItems: { id: number; name: string; icon: React.ElementType; items: NavItem[] }[] = [
-    {
-        id: 1,
-        name: 'Mitra Karya Analitika',
-        icon: LayoutGrid,
-        items: sharedSubItems,
-    },
-    {
-        id: 2,
-        name: 'Autentik Karya Analitika',
-        icon: ClipboardList,
-        items: sharedSubItems,
-    },
-];
-
-
-
 
 function SidebarNavGroup({ title, items }: { title: string; items: NavItem[] }) {
     const { url } = usePage();
@@ -94,40 +72,15 @@ function SidebarNavGroup({ title, items }: { title: string; items: NavItem[] }) 
 
 export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], sharedSubItems: NavItem[] }) {
     const { url } = usePage();
-    const [activeCompany, setActiveCompany] = useState<string | null>(null);
     const [activeManagementItem, setActiveManagementItem] = useState<string | null>(null);
 
     // Use useEffect to determine which sections should be active based on the current URL
     useEffect(() => {
-        // If URL contains certain paths, activate the correct company submenu
-        if (url.includes('/periods') || url.includes('/administration') || 
-            url.includes('/assessment') || url.includes('/interview') || 
-            url.includes('/reports')) {
-
-            // Extract companyId from URL if present
-            const urlParams = new URLSearchParams(window.location.search);
-            const companyId = urlParams.get('companyId');
-            
-            if (companyId === '1') {
-                setActiveCompany('Mitra Karya Analitika');
-            } else if (companyId === '2') {
-                setActiveCompany('Autentik Karya Analitika');
-            }
-        }
-
         // If URL contains questions or questionpacks, activate the Test & Assessment section
         if (url.includes('/questions') || url.includes('/questionpacks')) {
             setActiveManagementItem('Test & Assessment');
         }
     }, [url]);
-
-    const toggleCompany = (companyName: string, companyId: number) => {
-        // Update this to navigate with a full page load instead of just updating state
-        window.location.href = `/dashboard/periods?companyId=${companyId}`;
-        
-        // Keep this for UI toggling if needed
-        setActiveCompany((prev) => (prev === companyName ? null : companyName));
-    };
 
     const toggleManagementItem = (itemName: string) => {
         setActiveManagementItem((prev) => (prev === itemName ? null : itemName));
@@ -152,53 +105,10 @@ export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], 
             <SidebarContent>
                 <SidebarNavGroup title="Dashboard" items={dashboardNavItems} />
 
-                <SidebarGroup>
-                    <SidebarGroupLabel>Company</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        {companyNavItems.map((company) => (
-                            <SidebarMenuItem key={company.name}>
-                                {/* Company name now navigates to periods page AND toggles submenu */}
-                                <SidebarMenuButton
-                                    onClick={() => toggleCompany(company.name, company.id)}
-                                    className={
-                                        activeCompany === company.name
-                                            ? 'bg-blue-100 text-blue-600 hover:bg-blue-100'
-                                            : 'hover:bg-blue-50 hover:text-blue-500'
-                                    }
-                                >
-                                    {company.icon && <company.icon className="mr-2 h-4 w-4" />}
-                                    <span>{company.name}</span>
-                                </SidebarMenuButton>
+                {/* Company Section */}
+                <SidebarNavGroup title="Company" items={companyNavItems} />
 
-                                {activeCompany === company.name && (
-                                    <SidebarGroupContent>
-                                        <div className="pt-0 pl-1">
-                                            {company.items.map((item) => (
-                                                <SidebarMenuItem as="div" key={item.href}>
-                                                    <SidebarMenuButton
-                                                        asChild
-                                                        className={`ml-5 ${
-                                                            url.includes(item.href.split('?')[0]) 
-                                                                ? 'bg-blue-100 text-blue-600' 
-                                                                : 'hover:bg-blue-50 hover:text-blue-500'
-                                                        }`}
-                                                    >
-                                                        <Link href={`${item.href}?companyId=${company.id}`}>
-                                                            {item.icon && <item.icon className="mr-2 h-4 w-4" />}
-                                                            <span>{item.title}</span>
-                                                        </Link>
-                                                    </SidebarMenuButton>
-                                                </SidebarMenuItem>
-                                            ))}
-                                        </div>
-                                    </SidebarGroupContent>
-                                )}
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                {/* Management Section with nested Test & Assessment */}
+                {/* Management Section */}
                 <SidebarGroup>
                     <SidebarGroupLabel>Management</SidebarGroupLabel>
                     <SidebarGroupContent>

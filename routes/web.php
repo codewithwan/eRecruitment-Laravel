@@ -4,8 +4,11 @@ use App\Enums\UserRole;
 use App\Http\Controllers\VacanciesController;
 use App\Http\Controllers\PeriodController; // Add this import
 use App\Http\Controllers\CompanyController; // Add this import
+use App\Http\Controllers\AdministrationController; // Add this import
+use App\Http\Controllers\AssessmentController; // Add this import
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 
@@ -46,12 +49,50 @@ Route::prefix('api')->group(function () {
             });
     });
 });
+
 Route::middleware(['auth'])->group(function () {
     // Period routes moved to admin.php
     
-    // Company administration route
-    Route::get('/dashboard/company/administration', [CompanyController::class, 'administration'])
-        ->name('company.administration');
+    // Company routes for wizard navigation
+    Route::prefix('dashboard/company')->name('company.')->group(function () {
+        Route::get('/administration', [CompanyController::class, 'administration'])
+            ->name('administration');
+        
+        Route::get('/assessment', [CompanyController::class, 'assessment'])
+            ->name('assessment');
+        
+        Route::get('/interview', [CompanyController::class, 'interview'])
+            ->name('interview');
+        
+        Route::get('/reports', [CompanyController::class, 'reports'])
+            ->name('reports');
+    });
+
+    // Assessment routes
+    Route::prefix('dashboard')->name('assessment.')->group(function () {
+        Route::get('/assessment', [CompanyController::class, 'assessment'])
+            ->name('index');
+        
+        Route::get('/assessment/detail/{id}', [AssessmentController::class, 'show'])
+            ->name('detail');
+        
+        Route::post('/assessment/{id}/approve', [AssessmentController::class, 'approve'])
+            ->name('approve');
+        
+        Route::post('/assessment/{id}/reject', [AssessmentController::class, 'reject'])
+            ->name('reject');
+    });
+
+    // Administration routes
+    Route::get('/dashboard/administration/{id}', [AdministrationController::class, 'show'])->name('administration.show');
+    Route::post('/dashboard/administration/{id}/approve', [AdministrationController::class, 'approve'])->name('administration.approve');
+
+    // Interview detail route
+    Route::get('/dashboard/company/interview/{userId}', function ($userId) {
+        return Inertia::render('admin/company/interview-detail', [
+            'userId' => $userId
+        ]);
+    })->name('company.interview.detail');
 });
 
 require __DIR__ . '/settings.php';

@@ -58,7 +58,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/companies/{company}/edit', [CompanyController::class, 'edit'])->name('edit');
         Route::put('/companies/{company}', [CompanyController::class, 'update'])->name('update');
         Route::delete('/companies/{company}', [CompanyController::class, 'destroy'])->name('destroy');
-        Route::get('/companies/{company}/periods', [PeriodController::class, 'index'])->name('periods');
+        Route::get('/companies/{company}/periods', [CompanyController::class, 'periods'])->name('periods');
     });
     
     // Company routes for wizard navigation (keep existing ones if still needed)

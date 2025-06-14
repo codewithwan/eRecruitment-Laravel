@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Period extends Model
 {
@@ -14,14 +14,24 @@ class Period extends Model
     protected $fillable = [
         'name',
         'description',
-        'start_time',
-        'end_time',
+        'start_date',
+        'end_date',
+        'status',
+        'company_id',
     ];
+
+    /**
+     * Get the company that owns the period.
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     /**
      * Get the vacancies that belong to this period.
      */
-    public function vacancies()
+    public function vacancies(): BelongsToMany
     {
         return $this->belongsToMany(Vacancies::class, 'vacancy_period', 'period_id', 'vacancy_id');
     }

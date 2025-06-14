@@ -84,67 +84,6 @@ interface PaginationData {
     last_page: number;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-    },
-    {
-        title: 'Periods List',
-        href: '/dashboard/periods',
-    },
-];
-
-// Improved helper function to format dates to simple DD/MM/YYYY format
-const formatSimpleDate = (dateString: string) => {
-    if (!dateString) return '';
-    
-    try {
-        // If already in DD/MM/YYYY format, return as is
-        if (dateString.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-            return dateString;
-        }
-        
-        // Handle ISO date strings
-        if (dateString.includes('T') || dateString.includes('-')) {
-            const parts = dateString.split(/[-T]/);
-            if (parts.length >= 3) {
-                // Extract year, month, day
-                const year = parts[0];
-                const month = parts[1];
-                const day = parts[2].split(':')[0].split(' ')[0];
-                
-                return `${day}/${month}/${year}`;
-            }
-        }
-        
-        return dateString;
-    } catch (error) {
-        console.error('Error formatting date:', error);
-        return dateString;
-    }
-};
-
-// Format dates for HTML date input (YYYY-MM-DD format)
-const formatDateForInput = (dateString: string | null | undefined): string => {
-    if (!dateString) return '';
-    try {
-        const date = new Date(dateString);
-        return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
-    } catch (e) {
-        return dateString || '';
-    }
-};
-
-// Function to update URL parameters without page refresh
-const updateUrlParams = (page: number, perPage: number) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('page', page.toString());
-    url.searchParams.set('per_page', perPage.toString());
-    window.history.pushState({}, '', url.toString());
-};
-
-// Fix props by adding proper types
 export default function PeriodsDashboard({ 
     periods: propPeriods = [], 
     pagination: propPagination = null,
@@ -158,7 +97,85 @@ export default function PeriodsDashboard({
     company?: Company | null; 
     vacancies?: VacancyData[] 
 }) {
-    // Convert prop periods to internal format if provided with proper type check
+    // Debug: Log company data
+    console.log('Company data received:', company);
+    console.log('Periods data received:', propPeriods);
+
+    // Dynamic breadcrumbs based on company
+    const breadcrumbs: BreadcrumbItem[] = company ? [
+        {
+            title: 'Dashboard',
+            href: '/dashboard',
+        },
+        {
+            title: 'Companies',
+            href: '/dashboard/companies',
+        },
+        {
+            title: company.name,
+            href: `/dashboard/companies/${company.id}/periods`,
+        },
+    ] : [
+        {
+            title: 'Dashboard',
+            href: '/dashboard',
+        },
+        {
+            title: 'Periods List',
+            href: '/dashboard/periods',
+        },
+    ];
+
+    // Improved helper function to format dates to simple DD/MM/YYYY format
+    const formatSimpleDate = (dateString: string) => {
+        if (!dateString) return '';
+        
+        try {
+            // If already in DD/MM/YYYY format, return as is
+            if (dateString.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                return dateString;
+            }
+            
+            // Handle ISO date strings
+            if (dateString.includes('T') || dateString.includes('-')) {
+                const parts = dateString.split(/[-T]/);
+                if (parts.length >= 3) {
+                    // Extract year, month, day
+                    const year = parts[0];
+                    const month = parts[1];
+                    const day = parts[2].split(':')[0].split(' ')[0];
+                    
+                    return `${day}/${month}/${year}`;
+                }
+            }
+            
+            return dateString;
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return dateString;
+        }
+    };
+
+    // Format dates for HTML date input (YYYY-MM-DD format)
+    const formatDateForInput = (dateString: string | null | undefined): string => {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+        } catch (e) {
+            return dateString || '';
+        }
+    };
+
+    // Function to update URL parameters without page refresh
+    const updateUrlParams = (page: number, perPage: number) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page.toString());
+        url.searchParams.set('per_page', perPage.toString());
+        window.history.pushState({}, '', url.toString());
+    };
+
+    // Fix props by adding proper types
     const initialPeriods = Array.isArray(propPeriods) ? propPeriods.map(p => {
         // Calculate status if not provided from backend
         let status = p.status || 'Not Set';
@@ -529,13 +546,13 @@ export default function PeriodsDashboard({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Periods Management" />
+            <Head title={company ? `${company.name} - Periods` : "Periods Management"} />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <div className="flex items-center gap-6">
                             <h2 className="text-2xl font-semibold">
-                                Mitra Karya Analitika - Periods
+                                {company ? `${company.name} - Periods` : 'Periods Management'}
                             </h2>
                         </div>
                         <Button
@@ -550,8 +567,15 @@ export default function PeriodsDashboard({
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
-                                <CardTitle>Periods List</CardTitle>
-                                <CardDescription>Manage all recruitment periods in the system. Click on any period to access its administration page.</CardDescription>
+                                <CardTitle>
+                                    {company ? `${company.name} Periods` : 'Periods List'}
+                                </CardTitle>
+                                <CardDescription>
+                                    {company 
+                                        ? `Manage recruitment periods for ${company.name}. Click on any period to access its administration page.`
+                                        : 'Manage all recruitment periods in the system. Click on any period to access its administration page.'
+                                    }
+                                </CardDescription>
                             </div>
 
                             <div className="flex items-center gap-4">

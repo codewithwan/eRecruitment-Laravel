@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Period;
+use App\Models\Vacancies;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class CompanyController extends Controller
 {
@@ -323,5 +326,61 @@ class CompanyController extends Controller
 
         return redirect()->route('companies.index')
             ->with('success', 'Company deleted successfully.');
+    }
+
+    public function periods(Company $company)
+    {
+        // Debug: Log the received company
+        Log::info('Company received: ' . $company->name . ' (ID: ' . $company->id . ')');
+        
+        // Ambil periods yang terkait dengan company ini
+        // Jika belum ada relasi periods dengan company, gunakan dummy data
+        $periods = collect([
+            [
+                'id' => 1,
+                'name' => 'Q1 2025 Recruitment',
+                'description' => 'First quarter recruitment for ' . $company->name,
+                'start_date' => '2025-01-01',
+                'end_date' => '2025-03-31',
+                'status' => 'Active',
+                'applicants_count' => 15,
+                'vacancies_list' => [
+                    ['id' => 1, 'title' => 'Frontend Developer', 'department' => 'Engineering'],
+                    ['id' => 2, 'title' => 'Backend Developer', 'department' => 'Engineering']
+                ]
+            ],
+            [
+                'id' => 2,
+                'name' => 'Q2 2025 Recruitment',
+                'description' => 'Second quarter recruitment for ' . $company->name,
+                'start_date' => '2025-04-01',
+                'end_date' => '2025-06-30',
+                'status' => 'Scheduled',
+                'applicants_count' => 8,
+                'vacancies_list' => [
+                    ['id' => 3, 'title' => 'UI/UX Designer', 'department' => 'Design'],
+                    ['id' => 4, 'title' => 'Product Manager', 'department' => 'Product']
+                ]
+            ]
+        ]);
+        
+        // Get available vacancies for this company
+        $vacancies = Vacancies::where('company_id', $company->id)->get();
+        
+        return Inertia::render('admin/periods/index', [
+            'periods' => $periods->toArray(),
+            'pagination' => [
+                'total' => $periods->count(),
+                'per_page' => 10,
+                'current_page' => 1,
+                'last_page' => 1,
+            ],
+            'company' => [
+                'id' => (int) $company->id,
+                'name' => $company->name,
+            ],
+            'vacancies' => $vacancies,
+            'filtering' => true,
+        ]);
     }
 }

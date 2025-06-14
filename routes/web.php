@@ -31,8 +31,6 @@ Route::get('/debug/questions', function () {
     return "Done";
 });
 
-// Periods routes moved to admin.php
-
 // API Routes
 Route::prefix('api')->group(function () {
     Route::get('/vacancies', function () {
@@ -51,9 +49,19 @@ Route::prefix('api')->group(function () {
 });
 
 Route::middleware(['auth'])->group(function () {
-    // Period routes moved to admin.php
+    // Company management routes
+    Route::prefix('dashboard')->name('companies.')->group(function () {
+        Route::get('/companies', [CompanyController::class, 'index'])->name('index');
+        Route::get('/companies/create', [CompanyController::class, 'create'])->name('create');
+        Route::post('/companies', [CompanyController::class, 'store'])->name('store');
+        Route::get('/companies/{company}', [CompanyController::class, 'show'])->name('show');
+        Route::get('/companies/{company}/edit', [CompanyController::class, 'edit'])->name('edit');
+        Route::put('/companies/{company}', [CompanyController::class, 'update'])->name('update');
+        Route::delete('/companies/{company}', [CompanyController::class, 'destroy'])->name('destroy');
+        Route::get('/companies/{company}/periods', [PeriodController::class, 'index'])->name('periods');
+    });
     
-    // Company routes for wizard navigation
+    // Company routes for wizard navigation (keep existing ones if still needed)
     Route::prefix('dashboard/company')->name('company.')->group(function () {
         Route::get('/administration', [CompanyController::class, 'administration'])
             ->name('administration');

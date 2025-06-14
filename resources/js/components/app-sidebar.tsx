@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardList, Github, LayoutGrid, LucideFileQuestion, Package, SearchIcon, User } from 'lucide-react';
+import { Building2, ClipboardList, Github, LayoutGrid, LucideFileQuestion, Package, SearchIcon, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
@@ -23,13 +23,18 @@ import '../../../resources/css/app.css';
 
 const dashboardNavItems: NavItem[] = [{ title: 'Dashboard', href: '/dashboard', icon: LayoutGrid }];
 
+// Company navigation items
+const companyNavItems: NavItem[] = [
+    { title: 'Company Periods', href: '/dashboard/companies', icon: Building2 },
+];
+
 // Test and assessment submenu items
 const testAssessmentItems: NavItem[] = [
     { title: 'Question Sets', href: '/dashboard/questions', icon: ClipboardList },
     { title: 'Question Packs', href: '/dashboard/questionpacks', icon: Package },
 ];
 
-// Updated main navigation items
+// Updated main navigation items (removed Company Periods from here)
 const mainNavItems: { name: string; icon: React.ElementType; href?: string; items?: NavItem[] }[] = [
     { name: 'User Management', href: '/dashboard/users', icon: User },
     { name: 'Job Management', href: '/dashboard/jobs', icon: SearchIcon },
@@ -37,22 +42,6 @@ const mainNavItems: { name: string; icon: React.ElementType; href?: string; item
 ];
 
 const footerNavItems: NavItem[] = [{ title: 'Github', href: 'https://github.com/codewithwan/eRecruitment-Laravel', icon: Github }];
-
-// Updated company items without sub-items
-const companyNavItems: { id: number; name: string; icon: React.ElementType; href: string }[] = [
-    {
-        id: 1,
-        name: 'Mitra Karya Analitika',
-        icon: LayoutGrid,
-        href: '/dashboard/periods',
-    },
-    {
-        id: 2,
-        name: 'Autentik Karya Analitika',
-        icon: ClipboardList,
-        href: '/dashboard/periods',
-    },
-];
 
 function SidebarNavGroup({ title, items }: { title: string; items: NavItem[] }) {
     const { url } = usePage();
@@ -116,30 +105,10 @@ export function AppSidebar({ navigation, sharedSubItems }: { navigation: any[], 
             <SidebarContent>
                 <SidebarNavGroup title="Dashboard" items={dashboardNavItems} />
 
-                <SidebarGroup>
-                    <SidebarGroupLabel>Company</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        {companyNavItems.map((company) => (
-                            <SidebarMenuItem key={company.name}>
-                                <SidebarMenuButton
-                                    asChild
-                                    className={
-                                        url.includes(company.href) && url.includes(`companyId=${company.id}`)
-                                            ? 'bg-blue-100 text-blue-600'
-                                            : 'hover:bg-blue-50 hover:text-blue-500'
-                                    }
-                                >
-                                    <Link href={`${company.href}?companyId=${company.id}`}>
-                                        {company.icon && <company.icon className="mr-2 h-4 w-4" />}
-                                        <span>{company.name}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                {/* Company Section */}
+                <SidebarNavGroup title="Company" items={companyNavItems} />
 
-                {/* Management Section with nested Test & Assessment */}
+                {/* Management Section */}
                 <SidebarGroup>
                     <SidebarGroupLabel>Management</SidebarGroupLabel>
                     <SidebarGroupContent>

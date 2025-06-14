@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Company;
 
 class CompanyController extends Controller
 {
@@ -255,5 +255,73 @@ class CompanyController extends Controller
             'reportsData' => $reportsData,
             'companyId' => $companyId
         ]);
+    }
+
+    public function index()
+    {
+        $companies = Company::all();
+        
+        return Inertia::render('admin/companies/index', [
+            'companies' => $companies
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('admin/companies/create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+        ]);
+
+        Company::create($request->all());
+
+        return redirect()->route('companies.index')
+            ->with('success', 'Company created successfully.');
+    }
+
+    public function show(Company $company)
+    {
+        return Inertia::render('admin/companies/show', [
+            'company' => $company
+        ]);
+    }
+
+    public function edit(Company $company)
+    {
+        return Inertia::render('admin/companies/edit', [
+            'company' => $company
+        ]);
+    }
+
+    public function update(Request $request, Company $company)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+        ]);
+
+        $company->update($request->all());
+
+        return redirect()->route('companies.index')
+            ->with('success', 'Company updated successfully.');
+    }
+
+    public function destroy(Company $company)
+    {
+        $company->delete();
+
+        return redirect()->route('companies.index')
+            ->with('success', 'Company deleted successfully.');
     }
 }

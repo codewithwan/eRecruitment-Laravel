@@ -234,11 +234,9 @@ export default function AssessmentManagement(props: AssessmentManagementProps) {
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
                     <div className="mb-4 flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            <h2 className="text-2xl font-semibold">Assessment Management</h2>
-                            <div className="hidden md:block">
-                                <CompanyWizard currentStep="assessment" className="!mb-0 !shadow-none !bg-transparent !border-0" />
-                            </div>
+                        <h2 className="text-2xl font-semibold">Assessment Management</h2>
+                        <div className="hidden md:block">
+                            <CompanyWizard currentStep="assessment" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                         </div>
                     </div>
                     

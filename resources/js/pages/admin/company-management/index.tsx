@@ -2,13 +2,14 @@ import { SearchBar } from '@/components/searchbar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@radix-ui/react-select';
-import { Building2, Eye, Filter, Mail, MapPin, Phone, Search } from 'lucide-react';
+import { AlertTriangle, Building2, Edit, Filter, Mail, MapPin, Phone, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 interface Company {
@@ -31,24 +32,41 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
     {
-        title: 'Companies',
-        href: '/dashboard/companies',
+        title: 'Company Management',
+        href: '/dashboard/company-management',
     },
 ];
 
-export default function CompaniesIndex({ companies }: Props) {
+export default function CompanyManagement({ companies }: Props) {
     // Filter and search state
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
+    const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const handleViewPeriods = (company: Company) => {
-        // Debug untuk melihat apakah route sudah benar
-        console.log('Navigating to periods for company:', company);
-        console.log('Route will be:', route('companies.periods', company.id));
+    const handleDeleteClick = (company: Company) => {
+        setCompanyToDelete(company);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!companyToDelete) return;
         
-        // Gunakan router.get untuk GET request
-        router.get(route('companies.periods', company.id));
+        setIsDeleting(true);
+        try {
+            router.delete(route('companies.destroy', companyToDelete.id), {
+                onFinish: () => {
+                    setIsDeleting(false);
+                    setCompanyToDelete(null);
+                }
+            });
+        } catch (error) {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleDeleteCancel = () => {
+        setCompanyToDelete(null);
     };
 
     // Filtered companies based on search
@@ -81,19 +99,62 @@ export default function CompaniesIndex({ companies }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Companies Management" />
+            <Head title="Company Management" />
 
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-2xl font-semibold">Companies</h2>
+                        <h2 className="text-2xl font-semibold">Company Management</h2>
                     </div>
+                    
+                    {/* Delete Confirmation Dialog */}
+                    <Dialog open={!!companyToDelete} onOpenChange={(open) => !open && handleDeleteCancel()}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                                    Confirm Deletion
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Are you sure you want to delete <strong>{companyToDelete?.name}</strong>? 
+                                    This action cannot be undone and will permanently remove all associated data.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <DialogFooter>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={handleDeleteCancel}
+                                    disabled={isDeleting}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    variant="destructive" 
+                                    onClick={handleDeleteConfirm}
+                                    disabled={isDeleting}
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-white"></div>
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete Company
+                                        </>
+                                    )}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                     
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
-                                <CardTitle>Companies Periods</CardTitle>
-                                <CardDescription>View companies and their recruitment periods</CardDescription>
+                                <CardTitle>Company Management</CardTitle>
+                                <CardDescription>Create, read, update, and delete companies</CardDescription>
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -122,24 +183,9 @@ export default function CompaniesIndex({ companies }: Props) {
                                                         <SelectValue placeholder="Filter by status" className="font-inter" />
                                                     </SelectTrigger>
                                                     <SelectContent className="font-inter">
-                                                        <SelectItem
-                                                            value="all"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            All Companies
-                                                        </SelectItem>
-                                                        <SelectItem
-                                                            value="active"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            Active
-                                                        </SelectItem>
-                                                        <SelectItem
-                                                            value="inactive"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            Inactive
-                                                        </SelectItem>
+                                                        <SelectItem value="all">All Companies</SelectItem>
+                                                        <SelectItem value="active">Active</SelectItem>
+                                                        <SelectItem value="inactive">Inactive</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -152,6 +198,13 @@ export default function CompaniesIndex({ companies }: Props) {
                                         </div>
                                     </PopoverContent>
                                 </Popover>
+
+                                <Link href={route('companies.create')}>
+                                    <Button>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add Company
+                                    </Button>
+                                </Link>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -166,6 +219,22 @@ export default function CompaniesIndex({ companies }: Props) {
                                                         <Badge variant="outline" className="mt-1">
                                                             Active
                                                         </Badge>
+                                                    </div>
+                                                    <div className="flex space-x-1">
+                                                        <Link href={route('companies.edit', company.id)}>
+                                                            <Button variant="outline" size="sm">
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                        
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleDeleteClick(company)}
+                                                            className="text-red-600 hover:text-red-700"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
                                                     </div>
                                                 </div>
                                                 {company.description && (
@@ -193,18 +262,6 @@ export default function CompaniesIndex({ companies }: Props) {
                                                         </div>
                                                     )}
                                                 </div>
-                                                
-                                                <div className="mt-4 pt-4 border-t">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleViewPeriods(company)}
-                                                        className="w-full"
-                                                    >
-                                                        <Eye className="mr-2 h-4 w-4" />
-                                                        View Periods
-                                                    </Button>
-                                                </div>
                                             </CardContent>
                                         </Card>
                                     ))}
@@ -218,9 +275,19 @@ export default function CompaniesIndex({ companies }: Props) {
                                     <p className="mt-1 text-sm text-gray-500">
                                         {searchQuery 
                                             ? 'Try adjusting your search terms or filters.'
-                                            : 'No companies available to display.'
+                                            : 'Get started by creating a new company.'
                                         }
                                     </p>
+                                    {!searchQuery && (
+                                        <div className="mt-6">
+                                            <Link href={route('companies.create')}>
+                                                <Button>
+                                                    <Plus className="mr-2 h-4 w-4" />
+                                                    Add First Company
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </CardContent>

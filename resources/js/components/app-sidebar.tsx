@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, ClipboardList, Github, LayoutGrid, LucideFileQuestion, Package, SearchIcon, User } from 'lucide-react';
+import { Building2, ClipboardList, Github, LayoutGrid, LucideFileQuestion, Package, SearchIcon, Settings, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
@@ -34,9 +34,10 @@ const testAssessmentItems: NavItem[] = [
     { title: 'Question Packs', href: '/dashboard/questionpacks', icon: Package },
 ];
 
-// Updated main navigation items (removed Company Periods from here)
+// Updated main navigation items - tambahkan Company Management
 const mainNavItems: { name: string; icon: React.ElementType; href?: string; items?: NavItem[] }[] = [
     { name: 'User Management', href: '/dashboard/users', icon: User },
+    { name: 'Company Management', href: '/dashboard/company-management', icon: Settings }, // Menggunakan icon Settings
     { name: 'Job Management', href: '/dashboard/jobs', icon: SearchIcon },
     { name: 'Test & Assessment', icon: LucideFileQuestion, items: testAssessmentItems },
 ];

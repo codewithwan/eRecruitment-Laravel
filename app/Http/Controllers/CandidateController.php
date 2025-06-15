@@ -42,7 +42,7 @@ class CandidateController extends Controller
     {
         $user = Auth::user();
         $education = CandidatesEducations::where('user_id', $user->id)->first(); // Tambahkan ini
-        
+
         // Ambil semua data gender dari master_genders
         $genders = MasterGender::all();
 
@@ -69,13 +69,13 @@ class CandidateController extends Controller
         $user = Auth::user();
         $profile = CandidatesProfiles::where('user_id', $user->id)->first();
         $education = CandidatesEducations::where('user_id', $user->id)->first();
-        
+
         // Format profile data jika ada
         $profileData = $profile ? $profile->toArray() : null;
-        
+
         // Log data untuk debugging
         \Log::info('Profile data being sent to frontend:', ['profile' => $profileData]);
-        
+
         return Inertia::render('PersonalData', [
             'profile' => $profileData,
             'education' => $education,
@@ -155,19 +155,19 @@ class CandidateController extends Controller
                     'errors' => $e->errors()
                 ], 422);
             }
-            
+
             return back()->withErrors($e->errors());
-            
+
         } catch (\Exception $e) {
             \Log::error('Error saving profile data: ' . $e->getMessage());
-            
+
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Terjadi kesalahan saat menyimpan data'
                 ], 500);
             }
-            
+
             return back()->with('flash', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menyimpan data'
@@ -227,7 +227,7 @@ class CandidateController extends Controller
                 'user_id' => Auth::id(),
                 ...$validated
             ]);
-            
+
             // Get fresh data with major
             $education->refresh();
             $major = \App\Models\MasterMajor::find($education->major_id);
@@ -265,9 +265,9 @@ class CandidateController extends Controller
     {
         try {
             \Log::info('Getting education data for user: ' . Auth::id());
-            
+
             $education = CandidatesEducations::where('user_id', Auth::id())->first();
-            
+
             if (!$education) {
                 \Log::info('No education data found');
                 return response()->json(null);
@@ -275,7 +275,7 @@ class CandidateController extends Controller
 
             // Get major data
             $major = \App\Models\MasterMajor::find($education->major_id);
-            
+
             $educationData = [
                 'id' => $education->id,
                 'education_level' => $education->education_level,
@@ -289,14 +289,14 @@ class CandidateController extends Controller
             ];
 
             \Log::info('Education data retrieved:', $educationData);
-            
+
             return response()->json($educationData);
 
         } catch (\Exception $e) {
             \Log::error('Error getting education data: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error getting education data',
-                'error' => $e->getMessage() 
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -820,7 +820,7 @@ class CandidateController extends Controller
 
             // Get all required data with error checking
             $profile = CandidatesProfiles::where('user_id', $userId)->firstOrFail();
-            
+
             $educations = CandidatesEducations::where('user_id', $userId)
                 ->orderBy('year_in', 'desc')
                 ->get();
@@ -859,7 +859,7 @@ class CandidateController extends Controller
             \Log::info('Generating PDF with data:', ['userId' => $userId]);
 
             $pdf = PDF::loadView('cv.template', $data);
-            
+
             // Set paper size and orientation
             $pdf->setPaper('a4', 'portrait');
 
@@ -1577,22 +1577,22 @@ public function getProfileImage()
     try {
         $userId = Auth::id();
         $profile = CandidatesProfiles::where('user_id', $userId)->first();
-        
+
         if ($profile && $profile->profile_image) {
                 // Generate public URL for the image
             $imageUrl = Storage::disk('public')->url($profile->profile_image);
-            
+
             return response()->json([
                 'success' => true,
                 'image' => $imageUrl
             ]);
         }
-        
+
         return response()->json([
             'success' => false,
             'message' => 'No profile image found'
         ]);
-        
+
     } catch (\Exception $e) {
         \Log::error('Error getting profile image: ' . $e->getMessage());
         return response()->json([
@@ -1611,7 +1611,7 @@ public function uploadProfileImage(Request $request)
 
         $userId = Auth::id();
         $profile = CandidatesProfiles::where('user_id', $userId)->first();
-        
+
         if (!$profile) {
             $profile = CandidatesProfiles::create(['user_id' => $userId]);
         }
@@ -1651,7 +1651,7 @@ public function getAllEducations()
         $educations = CandidatesEducations::where('user_id', Auth::id())
             ->orderBy('year_in', 'desc')
             ->get();
-            
+
         // Join dengan master_majors untuk mendapatkan nama jurusan
         $educations = $educations->map(function($education) {
             $major = \App\Models\MasterMajor::find($education->major_id);
@@ -1698,6 +1698,70 @@ public function deleteEducation($id)
         return response()->json([
             'success' => false,
             'message' => 'Gagal menghapus data pendidikan'
+        ], 500);
+    }
+}
+
+public function updateEducation(Request $request, $id)
+{
+    try {
+        \Log::info('Updating education data. Request:', $request->all());
+
+        $education = CandidatesEducations::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'education_level' => 'required|string',
+            'faculty' => 'required|string',
+            'major_id' => 'required|exists:master_majors,id',
+            'institution_name' => 'required|string',
+            'gpa' => 'required|numeric|between:0,4',
+            'year_in' => 'required|integer',
+            'year_out' => 'nullable|integer'
+        ]);
+
+        \Log::info('Validated data for education update:', $validated);
+
+        // Update education record
+        $education->update($validated);
+        $education->refresh();
+
+        // Get major data to include in the response
+        $major = \App\Models\MasterMajor::find($education->major_id);
+
+        $responseData = [
+            'id' => $education->id,
+            'education_level' => $education->education_level,
+            'faculty' => $education->faculty,
+            'major_id' => (string)$education->major_id,
+            'major' => $major ? $major->name : null,
+            'institution_name' => $education->institution_name,
+            'gpa' => $education->gpa,
+            'year_in' => $education->year_in,
+            'year_out' => $education->year_out
+        ];
+
+        \Log::info('Education updated successfully:', $responseData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data pendidikan berhasil diperbarui',
+            'data' => $responseData
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        \Log::error('Validation error updating education: ' . json_encode($e->errors()));
+        return response()->json([
+            'success' => false,
+            'message' => 'Validasi gagal',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        \Log::error('Error updating education data: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating education data: ' . $e->getMessage()
         ], 500);
     }
 }

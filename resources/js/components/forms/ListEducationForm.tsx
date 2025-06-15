@@ -1,6 +1,16 @@
-import React, { FormEvent, useEffect, useState } from 'react';
 import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import TambahPendidikanForm from './AddEducationForm';
+
+// Configure axios defaults for Laravel
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+axios.defaults.withCredentials = true;
+
+// Get CSRF token from meta tag
+const csrf_token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+if (csrf_token) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf_token;
+}
 
 interface Education {
     id: number;
@@ -46,8 +56,22 @@ const ListEducationForm: React.FC = () => {
 
     const fetchEducations = async () => {
         try {
-            const response = await axios.get('/api/candidate/educations'); // Update endpoint
-            setEducations(response.data.data);
+            // Make sure to include the CSRF token in the headers
+            const csrf_token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            const response = await axios.get('/api/candidate/educations', {
+                headers: {
+                    'X-CSRF-TOKEN': csrf_token,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.data.success && response.data.data) {
+                setEducations(response.data.data);
+            } else {
+                console.warn('Unexpected response format:', response.data);
+                setEducations([]);
+            }
         } catch (error) {
             console.error('Error fetching educations:', error);
             setMessage({
@@ -72,13 +96,32 @@ const ListEducationForm: React.FC = () => {
             const data = Object.fromEntries(formData);
 
             if (editingId) {
-                await axios.put(`/api/candidate/education/${editingId}`, data);
+                // Convert form data to a proper object
+                const formDataObject: Record<string, string | File> = {};
+                for (const [key, value] of formData.entries()) {
+                    formDataObject[key] = value;
+                }
+
+                // Make sure to include the CSRF token in the headers
+                await axios.put(`/api/candidate/education/${editingId}`, formDataObject, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
                 setMessage({
                     type: 'success',
                     text: 'Data pendidikan berhasil diperbarui!'
                 });
             } else {
-                await axios.post('/api/candidate/education', data);
+                await axios.post('/api/candidate/education', data, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
                 setMessage({
                     type: 'success',
                     text: 'Data pendidikan berhasil ditambahkan!'
@@ -109,7 +152,17 @@ const ListEducationForm: React.FC = () => {
         }
 
         try {
-            await axios.delete(`/api/candidate/education/${id}`);
+            // Make sure to include the CSRF token in the headers
+            const csrf_token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            await axios.delete(`/api/candidate/education/${id}`, {
+                headers: {
+                    'X-CSRF-TOKEN': csrf_token,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
             setMessage({
                 type: 'success',
                 text: 'Data pendidikan berhasil dihapus!'
@@ -136,7 +189,7 @@ const ListEducationForm: React.FC = () => {
     if (isAdding || editingId) {
         return (
             <TambahPendidikanForm
-                formData={editingId 
+                formData={editingId
                     ? educations.find(edu => edu.id === editingId) || {
                         education_level: '',
                         faculty: '',
@@ -157,7 +210,7 @@ const ListEducationForm: React.FC = () => {
                     }
                 }
                 onSubmit={handleSubmit}
-                onChange={(e) => {}}
+                onChange={() => {}}
                 onBack={() => {
                     setIsAdding(false);
                     setEditingId(null);
@@ -171,7 +224,7 @@ const ListEducationForm: React.FC = () => {
             {message && (
                 <Alert type={message.type} message={message.text} />
             )}
-            
+
             <div className="p-6 border-b">
                 <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">Pendidikan</h2>
@@ -229,7 +282,7 @@ const ListEducationForm: React.FC = () => {
 ))}
                     </div>
                 )}
-                
+
                 {/* Menambahkan margin top yang lebih besar */}
                 <div className="mt-12 flex justify-start">
                     <button

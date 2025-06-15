@@ -2,6 +2,16 @@ import SocialMediaList from "@/components/forms/SocialMediaList";
 import { router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import React, { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+
+// Configure axios defaults for Laravel
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+axios.defaults.withCredentials = true;
+
+// Get CSRF token from meta tag
+const csrf_token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+if (csrf_token) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf_token;
+}
 import Swal from 'sweetalert2';
 import InputField from "../components/InputField";
 import SelectField from "../components/SelectField";
@@ -95,11 +105,23 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
             const formData = new FormData();
             formData.append('profile_image', file);
 
+            // Make sure to include the CSRF token in the headers
+            const csrf_token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            console.log('CSRF Token:', csrf_token); // Debug CSRF token
+
+            // Add default headers from axios for Laravel
+            axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+            axios.defaults.withCredentials = true;
+
             const response = await axios.post('/api/candidate/profile-image', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
+                    'X-CSRF-TOKEN': csrf_token
                 },
             });
+
+            console.log('Response:', response.data); // Debug response
 
             if (response.data.success) {
                 setProfileImage(response.data.image_url);
@@ -108,16 +130,33 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
                 successMessage.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
                 successMessage.textContent = 'Foto profil berhasil diupload!';
                 document.body.appendChild(successMessage);
-                
+
                 setTimeout(() => {
                     if (document.body.contains(successMessage)) {
                         document.body.removeChild(successMessage);
                     }
                 }, 3000);
+            } else {
+                throw new Error(response.data.message || 'Failed to upload profile image');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error uploading image:', error);
-            alert('Gagal mengupload foto profil');
+
+            // Show detailed error message
+            const errorMsg = error.response?.data?.message ||
+                           error.message ||
+                           'Gagal mengupload foto profil';
+
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
+            errorDiv.textContent = errorMsg;
+            document.body.appendChild(errorDiv);
+
+            setTimeout(() => {
+                if (document.body.contains(errorDiv)) {
+                    document.body.removeChild(errorDiv);
+                }
+            }, 5000);
         } finally {
             setUploading(false);
         }
@@ -133,14 +172,14 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
                 <div className="flex items-center space-x-4">
                     {/* Profile Image Upload */}
                     <div className="relative">
-                        <div 
+                        <div
                             className="w-16 h-16 rounded-full overflow-hidden cursor-pointer group relative"
                             onClick={triggerFileInput}
                         >
                             {profileImage ? (
-                                <img 
-                                    src={profileImage} 
-                                    alt="Profile" 
+                                <img
+                                    src={profileImage}
+                                    alt="Profile"
                                     className="w-full h-full object-cover transition-opacity group-hover:opacity-75"
                                 />
                             ) : (
@@ -150,7 +189,7 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
                                     </svg>
                                 </div>
                             )}
-                            
+
                             {/* Overlay with plus icon */}
                             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
                                 {uploading ? (
@@ -162,8 +201,8 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
                                 )}
                             </div>
                         </div>
-                        
-                    
+
+
                         {/* Hidden file input */}
                         <input
                             ref={fileInputRef}
@@ -173,7 +212,7 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
                             className="hidden"
                         />
                     </div>
-                    
+
                     {/* Info User */}
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
@@ -183,7 +222,7 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
                         </p>
                     </div>
                 </div>
-                
+
                 {/* Dropdown Menu */}
                 <div className="relative" ref={dropdownRef}>
                     <button

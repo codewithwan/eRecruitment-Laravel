@@ -1,7 +1,17 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import axios from 'axios';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import InputField from '../InputField';
 import SelectField from '../SelectField';
-import axios from 'axios';
+
+// Configure axios defaults for Laravel
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+axios.defaults.withCredentials = true;
+
+// Get CSRF token from meta tag
+const csrf_token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+if (csrf_token) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf_token;
+}
 
 interface Major {
     id: number;

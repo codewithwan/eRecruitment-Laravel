@@ -118,7 +118,7 @@ const Header: React.FC = () => {
         </CenterMenu>
         <Actions>
           {auth?.user ? (
-            <ProfileIcon href={route('dashboard') as string}>
+            <ProfileIcon href={route('user.profile') as string}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                 <rect x="2" y="2" width="20" height="20" rx="6" fill="#fff" stroke="#2563eb" strokeWidth="2"/>
                 <circle cx="12" cy="10" r="4" fill="#2563eb"/>

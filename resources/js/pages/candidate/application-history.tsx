@@ -240,17 +240,9 @@ const ApplicationHistory: React.FC<ApplicationHistoryProps> = ({ applications = 
         setSelectedApplication(null);
     };
 
-    // Add this function to handle profile click
-    const handleProfileClick = () => {
-        window.location.href = '/profile'; // This routes to personal data
-    };
-
     return (
         <>
             <GlobalStyle />
-            <ProfileIconWrapper onClick={handleProfileClick}>
-                <div className="profile-icon"></div>
-            </ProfileIconWrapper>
             <Header />
             <PageWrapper>
                 <ContentContainer>
@@ -503,29 +495,6 @@ const Button = styled.button`
 
     &:hover {
         background-color: #1557b0;
-    }
-`;
-
-const ProfileIconWrapper = styled.div`
-    position: fixed;
-    top: 18px;
-    right: 32px;
-    z-index: 1001;
-    cursor: pointer;
-
-    // Ensure our custom button appears above the Header component
-    .profile-icon {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: transparent;
-        border: 2px solid #1a73e8;
-        position: absolute;
-        top: 0;
-        right: 0;
     }
 `;
 

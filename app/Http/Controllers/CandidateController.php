@@ -222,10 +222,11 @@ class CandidateController extends Controller
 
             \Log::info('Validated data:', $validated);
 
-            $education = CandidatesEducations::updateOrCreate(
-                ['user_id' => Auth::id()],
-                $validated
-            );
+            // Ubah dari updateOrCreate menjadi create
+            $education = CandidatesEducations::create([
+                'user_id' => Auth::id(),
+                ...$validated
+            ]);
             
             // Get fresh data with major
             $education->refresh();
@@ -812,139 +813,63 @@ class CandidateController extends Controller
 
             \Log::info('Starting CV generation for user: ' . $userId);
 
+            // Validate user authentication
             if (!$user) {
                 throw new \Exception('User not authenticated');
             }
 
-            // Validasi data terlebih dahulu
-            $this->validateUserDataForCV($userId);
+            // Get all required data with error checking
+            $profile = CandidatesProfiles::where('user_id', $userId)->firstOrFail();
+            
+            $educations = CandidatesEducations::where('user_id', $userId)
+                ->orderBy('year_in', 'desc')
+                ->get();
 
-            // Ambil semua data user dengan fallback empty collection
-            $profile = CandidatesProfiles::where('user_id', $userId)->first();
-            $education = CandidatesEducations::where('user_id', $userId)->first();
+            if ($educations->isEmpty()) {
+                throw new \Exception('No education data found');
+            }
+
+            // Map educations with majors
+            $educations = $educations->map(function($education) {
+                $major = \App\Models\MasterMajor::find($education->major_id);
+                $education->major = $major ? $major->name : null;
+                return $education;
+            });
+
             $workExperiences = CandidatesWorkExperiences::where('user_id', $userId)
                 ->orderBy('start_year', 'desc')
                 ->orderBy('start_month', 'desc')
                 ->get();
+
             $organizations = CandidatesOrganizations::where('user_id', $userId)
                 ->orderBy('start_year', 'desc')
                 ->get();
-            $achievements = CandidatesAchievements::where('user_id', $userId)
-                ->orderBy('year', 'desc')
-                ->get();
-            $skills = Skills::where('user_id', $userId)->get();
-            $courses = Courses::where('user_id', $userId)->get();
-            $certifications = Certifications::where('user_id', $userId)->get();
-            $languages = Languages::where('user_id', $userId)->get();
-            $englishCertifications = EnglishCertifications::where('user_id', $userId)->get();
-            $socialMedia = CandidatesSocialMedia::where('user_id', $userId)->get();
 
-            // Data untuk PDF
+            $achievements = CandidatesAchievements::where('user_id', $userId)->get();
+
             $data = [
                 'user' => $user,
                 'profile' => $profile,
-                'education' => $education,
+                'educations' => $educations,
                 'workExperiences' => $workExperiences,
                 'organizations' => $organizations,
                 'achievements' => $achievements,
-                'skills' => $skills,
-                'courses' => $courses,
-                'certifications' => $certifications,
-                'languages' => $languages,
-                'englishCertifications' => $englishCertifications,
-                'socialMedia' => $socialMedia,
             ];
 
-            \Log::info('Data collected for CV generation', [
-                'user_id' => $userId,
-                'profile_exists' => !!$profile,
-                'education_exists' => !!$education,
-                'skills_count' => $skills->count(),
-                'work_exp_count' => $workExperiences->count()
-            ]);
+            \Log::info('Generating PDF with data:', ['userId' => $userId]);
 
-            // Generate PDF
-            $pdf = Pdf::loadView('cv.template', $data);
-            $pdf->setPaper('A4', 'portrait');
+            $pdf = PDF::loadView('cv.template', $data);
+            
+            // Set paper size and orientation
+            $pdf->setPaper('a4', 'portrait');
 
-            // Generate PDF content
-            $pdfContent = $pdf->output();
-
-            \Log::info('PDF generated successfully', [
-                'user_id' => $userId,
-                'pdf_size' => strlen($pdfContent)
-            ]);
-
-            // Nama file yang aman
-            $userName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->name ?? 'User');
-            $fileName = 'CV_' . $userName . '_' . date('Y-m-d_H-i-s') . '.pdf';
-            $filePath = 'cvs/' . $fileName;
-
-            // Pastikan direktori ada
-            if (!Storage::disk('public')->exists('cvs')) {
-                Storage::disk('public')->makeDirectory('cvs');
-            }
-
-            // Simpan PDF ke storage
-            Storage::disk('public')->put($filePath, $pdfContent);
-
-            \Log::info('PDF saved to storage', [
-                'user_id' => $userId,
-                'file_path' => $filePath
-            ]);
-
-            // Nonaktifkan CV lama jika ada
-            CandidateCV::where('user_id', $userId)->update(['is_active' => false]);
-
-            // Simpan info CV baru ke database
-            $cvRecord = CandidateCV::create([
-                'user_id' => $userId,
-                'cv_filename' => $fileName,
-                'cv_path' => $filePath,
-                'download_count' => 0, // Set ke 0 karena belum di-download
-                'last_downloaded_at' => null, // Set ke null karena belum di-download
-                'cv_data_snapshot' => $data,
-                'is_active' => true
-            ]);
-
-            \Log::info('CV record saved successfully', [
-                'user_id' => $userId,
-                'cv_id' => $cvRecord->id
-            ]);
-
-            // Generate download URL
-            $downloadUrl = route('candidate.cv.download', $cvRecord->id);
-
-            // Return JSON response instead of PDF
-            return response()->json([
-                'success' => true,
-                'message' => 'CV berhasil digenerate!',
-                'data' => [
-                    'cv_id' => $cvRecord->id,
-                    'filename' => $fileName,
-                    'created_at' => $cvRecord->created_at->format('d/m/Y H:i'),
-                    'download_url' => $downloadUrl,
-                    'file_size' => $this->formatBytes(strlen($pdfContent))
-                ]
-            ]);
+            return $pdf->stream('cv.pdf');
 
         } catch (\Exception $e) {
-            \Log::error('Error generating CV', [
-                'user_id' => $userId ?? null,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            // Return JSON error response
+            \Log::error('Error generating CV: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal generate CV: ' . $e->getMessage(),
-                'error_details' => [
-                    'file' => basename($e->getFile()),
-                    'line' => $e->getLine()
-                ]
+                'message' => 'Error generating CV: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1062,9 +987,9 @@ class CandidateController extends Controller
             if (!$profile->date_of_birth) $errors[] = 'Tanggal lahir belum diisi';
         }
 
-        // Cek data pendidikan
-        $education = CandidatesEducations::where('user_id', $userId)->first();
-        if (!$education) {
+        // Update education validation to check for at least one education
+        $educationCount = CandidatesEducations::where('user_id', $userId)->count();
+        if ($educationCount === 0) {
             $errors[] = 'Data pendidikan belum dilengkapi';
         }
 
@@ -1434,6 +1359,35 @@ public function storeCourse(Request $request)
     }
 }
 
+// Tambahkan metode untuk menghapus kursus
+public function deleteCourse($id)
+{
+    try {
+        $course = Courses::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        // Delete file if exists
+        if ($course->certificate_file) {
+            Storage::disk('public')->delete($course->certificate_file);
+        }
+
+        $course->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kursus berhasil dihapus!'
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error deleting course: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menghapus kursus'
+        ], 500);
+    }
+}
+
 // Methods untuk Certifications
 public function indexCertifications()
 {
@@ -1498,6 +1452,35 @@ public function storeCertification(Request $request)
     }
 }
 
+// Tambahkan metode untuk menghapus sertifikasi
+public function deleteCertification($id)
+{
+    try {
+        $certification = Certifications::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        // Delete file if exists
+        if ($certification->certificate_file) {
+            Storage::disk('public')->delete($certification->certificate_file);
+        }
+
+        $certification->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sertifikasi berhasil dihapus!'
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error deleting certification: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menghapus sertifikasi'
+        ], 500);
+    }
+}
+
 // Methods untuk English Certifications
 public function indexEnglishCertifications()
 {
@@ -1518,6 +1501,36 @@ public function indexEnglishCertifications()
         ], 500);
     }
 }
+
+// Tambahkan metode untuk menghapus sertifikasi bahasa Inggris
+public function deleteEnglishCertification($id)
+{
+    try {
+        $englishCert = EnglishCertifications::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        // Delete file if exists
+        if ($englishCert->certificate_file) {
+            Storage::disk('public')->delete($englishCert->certificate_file);
+        }
+
+        $englishCert->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sertifikat bahasa Inggris berhasil dihapus!'
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error deleting English certification: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menghapus sertifikat bahasa Inggris'
+        ], 500);
+    }
+}
+
 public function jobRecommendations()
 {
     $user = Auth::user();
@@ -1557,5 +1570,135 @@ public function jobRecommendations()
     return response()->json([
         'recommendations' => $recommendations,
     ]);
+}
+
+public function getProfileImage()
+{
+    try {
+        $userId = Auth::id();
+        $profile = CandidatesProfiles::where('user_id', $userId)->first();
+        
+        if ($profile && $profile->profile_image) {
+                // Generate public URL for the image
+            $imageUrl = Storage::disk('public')->url($profile->profile_image);
+            
+            return response()->json([
+                'success' => true,
+                'image' => $imageUrl
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'No profile image found'
+        ]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Error getting profile image: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error getting profile image'
+        ], 500);
+    }
+}
+
+public function uploadProfileImage(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'profile_image' => 'required|image|mimes:jpeg,jpg,png|max:2048',
+        ]);
+
+        $userId = Auth::id();
+        $profile = CandidatesProfiles::where('user_id', $userId)->first();
+        
+        if (!$profile) {
+            $profile = CandidatesProfiles::create(['user_id' => $userId]);
+        }
+
+        // Delete old image if exists
+        if ($profile->profile_image) {
+            Storage::disk('public')->delete($profile->profile_image);
+        }
+
+        // Store new image
+        $file = $request->file('profile_image');
+        $filename = time() . '_' . $userId . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('profile-images', $filename, 'public');
+
+        $profile->update(['profile_image' => $path]);
+
+        // Generate public URL for the image - this is the key fix
+        $imageUrl = asset('storage/' . $path);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile image uploaded successfully',
+            'image_url' => $imageUrl
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error uploading profile image: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error uploading profile image'
+        ], 500);
+    }
+}
+public function getAllEducations()
+{
+    try {
+        $educations = CandidatesEducations::where('user_id', Auth::id())
+            ->orderBy('year_in', 'desc')
+            ->get();
+            
+        // Join dengan master_majors untuk mendapatkan nama jurusan
+        $educations = $educations->map(function($education) {
+            $major = \App\Models\MasterMajor::find($education->major_id);
+            return [
+                'id' => $education->id,
+                'education_level' => $education->education_level,
+                'faculty' => $education->faculty,
+                'major_id' => $education->major_id,
+                'major' => $major ? $major->name : null,
+                'institution_name' => $education->institution_name,
+                'gpa' => $education->gpa,
+                'year_in' => $education->year_in,
+                'year_out' => $education->year_out
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $educations
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error fetching educations: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal mengambil data pendidikan'
+        ], 500);
+    }
+}
+
+public function deleteEducation($id)
+{
+    try {
+        $education = CandidatesEducations::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $education->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data pendidikan berhasil dihapus'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menghapus data pendidikan'
+        ], 500);
+    }
 }
 }

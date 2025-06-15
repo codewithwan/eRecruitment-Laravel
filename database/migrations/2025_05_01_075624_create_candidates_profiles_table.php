@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('no_ektp', 16);
-            $table->string('gender', 10); // langsung gunakan string gender, bukan foreign key
+            $table->string('gender', 10); 
             $table->string('phone_number');
             $table->string('npwp')->nullable();
             $table->text('about_me');
@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('village');
             $table->string('rt');
             $table->string('rw');
+            $table->string('profile_image')->nullable(); 
             $table->timestamps();
         });
     }

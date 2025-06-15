@@ -13,7 +13,9 @@ class CreateCandidatesOrganizationsTable extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('organization_name');
             $table->string('position');
+            $table->string('start_month');  // Added start_month
             $table->year('start_year');
+            $table->string('end_month')->nullable();  // Added end_month
             $table->year('end_year')->nullable();
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(false);

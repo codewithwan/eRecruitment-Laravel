@@ -13,7 +13,9 @@ class CandidatesOrganizations extends Model
         'user_id',
         'organization_name',
         'position',
+        'start_month',
         'start_year',
+        'end_month',
         'end_year',
         'description',
         'is_active'

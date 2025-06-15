@@ -340,11 +340,12 @@ const TambahPengalamanForm: React.FC<TambahPengalamanFormProps> = ({
                     </div>
                 )}
 
-                <div className="flex justify-between">
+                 <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
                     <button
                         type="button"
                         onClick={onBack}
-                        className="bg-gray-600 text-white px-8 py-2 rounded hover:bg-gray-700"
+                        className="flex-1 sm:flex-none px-6 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-colors"
+                        
                     >
                         Kembali
                     </button>

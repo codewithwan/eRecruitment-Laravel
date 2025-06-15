@@ -39,10 +39,28 @@ const Alert = ({ type, message }: { type: 'success' | 'error'; message: string }
     </div>
 );
 
-// Custom ProfileHeader dengan icon profile biru + dropdown menu
+// Custom ProfileHeader dengan upload foto profil
 const CustomProfileHeader = ({ name, email }: { name: string; email: string }) => {
     const [open, setOpen] = useState(false);
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Load existing profile image
+    useEffect(() => {
+        const loadProfileImage = async () => {
+            try {
+                const response = await axios.get('/api/candidate/profile-image');
+                if (response.data.success && response.data.image) {
+                    setProfileImage(response.data.image); // Use the correct image URL
+                }
+            } catch (error) {
+                console.log('No existing profile image');
+            }
+        };
+        loadProfileImage();
+    }, []);
 
     // Tutup dropdown jika klik di luar
     useEffect(() => {
@@ -55,30 +73,124 @@ const CustomProfileHeader = ({ name, email }: { name: string; email: string }) =
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+            alert('Hanya file gambar (JPG, JPEG, PNG) yang diizinkan');
+            return;
+        }
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Ukuran file maksimal 2MB');
+            return;
+        }
+
+        setUploading(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('profile_image', file);
+
+            const response = await axios.post('/api/candidate/profile-image', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (response.data.success) {
+                setProfileImage(response.data.image_url);
+                // Show success message
+                const successMessage = document.createElement('div');
+                successMessage.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
+                successMessage.textContent = 'Foto profil berhasil diupload!';
+                document.body.appendChild(successMessage);
+                
+                setTimeout(() => {
+                    if (document.body.contains(successMessage)) {
+                        document.body.removeChild(successMessage);
+                    }
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Gagal mengupload foto profil');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const triggerFileInput = () => {
+        fileInputRef.current?.click();
+    };
+
     return (
         <div className="bg-white border-b border-gray-200">
             <div className="mx-6 py-6 flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                    {/* Icon Profile Biru */}
-                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                        </svg>
+                    {/* Profile Image Upload */}
+                    <div className="relative">
+                        <div 
+                            className="w-16 h-16 rounded-full overflow-hidden cursor-pointer group relative"
+                            onClick={triggerFileInput}
+                        >
+                            {profileImage ? (
+                                <img 
+                                    src={profileImage} 
+                                    alt="Profile" 
+                                    className="w-full h-full object-cover transition-opacity group-hover:opacity-75"
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-gray-200 flex items-center justify-center transition-colors group-hover:bg-gray-300">
+                                    <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                            )}
+                            
+                            {/* Overlay with plus icon */}
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                                {uploading ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                ) : (
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                )}
+                            </div>
+                        </div>
+                        
+                    
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                        />
                     </div>
+                    
                     {/* Info User */}
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
                         <p className="text-gray-600">{email}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {profileImage ? 'Klik foto untuk mengganti' : 'Klik untuk upload foto profil'}
+                        </p>
                     </div>
                 </div>
+                
                 {/* Dropdown Menu */}
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setOpen(!open)}
-                        className="w-12 h-12 flex items-center justify-center bg-white border-2 border-dashed border-gray-400 rounded-lg focus:outline-none"
+                        className="w-12 h-12 flex items-center justify-center bg-white border-2 border-dashed border-gray-400 rounded-lg focus:outline-none hover:border-blue-600 transition-colors"
                         aria-label="Menu"
                     >
-                        {/* Ikon tiga titik horizontal */}
                         <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24">
                             <circle cx="6" cy="12" r="2" fill="currentColor" />
                             <circle cx="12" cy="12" r="2" fill="currentColor" />
@@ -149,8 +261,8 @@ interface TambahPrestasiFormProps {
 }
 
 interface TambahOrganisasiFormProps {
-    onSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
-    onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+    organisasiData?: any;
+    onSuccess: () => void;
     onBack: () => void;
 }
 
@@ -641,14 +753,14 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
             if (showOrganisasiForm) {
                 return (
                     <TambahOrganisasiForm
-                        onSubmit={handleSubmit}
-                        onChange={handleChange}
+                        onSuccess={() => setShowOrganisasiForm(false)}
                         onBack={() => setShowOrganisasiForm(false)}
                     />
                 );
             }
             return (
                 <OrganisasiForm
+                    // @ts-ignore - Add proper interface for OrganisasiForm props in the actual component
                     onTambahOrganisasi={() => setShowOrganisasiForm(true)}
                 />
             );
@@ -664,19 +776,12 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                 );
             }
             return (
-                <PengalamanKerjaForm
-                    onTambahPengalaman={handleTambahPengalaman}
-                    onEditPengalaman={handleEditPengalaman}
-                />
+                <PengalamanKerjaForm />
             );
         }
         if (activeForm === FormType.PENDIDIKAN) {
             return (
-                <PendidikanForm
-                    onSubmit={handleSubmit}
-                    onChange={handleChange}
-                    onTambahPendidikan={() => { }}
-                />
+                <PendidikanForm />
             );
         }
         if (activeForm === FormType.DATA_TAMBAHAN) {
@@ -690,7 +795,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
                         <div className="grid grid-cols-2 gap-6 text-black">
                             <div>
-                                <InputField label="No. E-KTP" name="no_ektp" value={data.no_ektp} onChange={handleChange} />
+                                    <InputField label="No. E-KTP" name="no_ektp" value={data.no_ektp} onChange={handleChange} />
                                 <InputField label="Nama Lengkap" name="name" value={data.name} onChange={handleChange} />
                                 <InputField label="Email" name="email" type="email" value={data.email} onChange={handleChange} />
 

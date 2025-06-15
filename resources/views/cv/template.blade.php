@@ -21,29 +21,30 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px 20px; /* Reduced top padding */
         }
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Reduced margin */
             border-bottom: 2px solid #2563eb;
-            padding-bottom: 20px;
+            padding-bottom: 15px; /* Reduced padding */
         }
 
         .header h1 {
             font-size: 24px;
             color: #2563eb;
-            margin-bottom: 5px;
+            margin-bottom: 3px; /* Reduced margin */
         }
 
         .header .contact-info {
             font-size: 11px;
             color: #666;
+            line-height: 1.3; /* Added line height */
         }
 
         .section {
-            margin-bottom: 25px;
+            margin-bottom: 15px; /* Reduced margin */
         }
 
         .section-title {
@@ -51,33 +52,37 @@
             font-weight: bold;
             color: #2563eb;
             border-bottom: 1px solid #e5e7eb;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
+            padding-bottom: 3px; /* Reduced padding */
+            margin-bottom: 10px; /* Reduced margin */
         }
 
         .item {
-            margin-bottom: 15px;
+            margin-bottom: 10px; /* Reduced margin */
         }
 
         .item-title {
             font-weight: bold;
             font-size: 13px;
+            margin-bottom: 2px; /* Added margin */
         }
 
         .item-subtitle {
             font-style: italic;
             color: #666;
             font-size: 11px;
+            margin-bottom: 2px; /* Added margin */
         }
 
         .item-description {
-            margin-top: 5px;
+            margin-top: 3px; /* Reduced margin */
             text-align: justify;
+            font-size: 11px; /* Added font size */
         }
 
         .two-column {
             display: table;
             width: 100%;
+            margin-top: -5px; /* Added negative margin to pull content up */
         }
 
         .left-column {
@@ -95,22 +100,40 @@
 
         .skills-list {
             list-style: none;
+            margin-top: 5px; /* Added margin */
         }
 
         .skills-list li {
             background: #f3f4f6;
-            padding: 3px 8px;
-            margin: 3px 0;
+            padding: 2px 6px; /* Reduced padding */
+            margin: 2px 0; /* Reduced margin */
             border-radius: 3px;
             font-size: 11px;
         }
 
         .about-me {
             background: #f9fafb;
-            padding: 15px;
+            padding: 10px; /* Reduced padding */
             border-radius: 5px;
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Reduced margin */
             text-align: justify;
+            font-size: 11px; /* Added font size */
+        }
+
+        /* Added new style for profile image container */
+        .profile-image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px; /* Reduced margin */
+        }
+
+        .profile-image-container img {
+            width: 70px; /* Reduced size */
+            height: 70px; /* Reduced size */
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
         }
     </style>
 </head>
@@ -118,17 +141,24 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>{{ $user->name ?? 'Nama Lengkap' }}</h1>
-            <div class="contact-info">
-                {{ $user->email ?? '' }}
-                @if($profile && $profile->phone_number)
-                    | {{ $profile->phone_number }}
+            <div class="profile-image-container">
+                @if($profile && $profile->profile_image && Storage::disk('public')->exists($profile->profile_image))
+                    <img src="{{ Storage::disk('public')->path($profile->profile_image) }}" />
                 @endif
-                @if($profile && $profile->address)
-                    <br>{{ $profile->address }}
-                    @if($profile->city), {{ $profile->city }}@endif
-                    @if($profile->province), {{ $profile->province }}@endif
-                @endif
+                <div>
+                    <h1>{{ $user->name ?? 'Nama Lengkap' }}</h1>
+                    <div class="contact-info">
+                        {{ $user->email ?? '' }}
+                        @if($profile && $profile->phone_number)
+                            | {{ $profile->phone_number }}
+                        @endif
+                        @if($profile && $profile->address)
+                            <br>{{ $profile->address }}
+                            @if($profile->city), {{ $profile->city }}@endif
+                            @if($profile->province), {{ $profile->province }}@endif
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -191,24 +221,22 @@
                 @endif
 
                 <!-- Pendidikan -->
-                @if($education)
+                @if(isset($educations) && $educations->count() > 0)
                 <div class="section">
                     <div class="section-title">PENDIDIKAN</div>
+                    @foreach($educations->sortByDesc('year_in') as $education)
                     <div class="item">
                         <div class="item-title">{{ $education->education_level }}</div>
                         <div class="item-subtitle">
                             {{ $education->institution_name }} | {{ $education->year_in ?? '' }} - 
-                            @if($education->is_current)
-                                Sekarang
-                            @else
-                                {{ $education->year_out ?? '' }}
-                            @endif
+                            {{ $education->year_out ?? 'Sekarang' }}
                         </div>
                         <div class="item-description">
-                            Fakultas {{ $education->faculty }} - {{ optional($education->major)->name ?? '' }}<br>
+                            Fakultas {{ $education->faculty }} - {{ $education->major ?? '' }}<br>
                             IPK: {{ $education->gpa }}
                         </div>
                     </div>
+                    @endforeach
                 </div>
                 @endif
 

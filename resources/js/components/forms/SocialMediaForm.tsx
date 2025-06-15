@@ -2,9 +2,34 @@ import React from 'react';
 
 interface SocialMediaFormProps {
     onTambahSocialMedia: () => void;
+    onSuccess?: (message: string) => void;
 }
 
-const SocialMediaForm: React.FC<SocialMediaFormProps> = ({ onTambahSocialMedia }) => {
+const SocialMediaForm: React.FC<SocialMediaFormProps> = ({ onTambahSocialMedia, onSuccess }) => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            // Your submit logic here
+            if (onSuccess) {
+                onSuccess('Social media berhasil ditambahkan!');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            // Your update logic here
+            if (onSuccess) {
+                onSuccess('Social media berhasil diperbarui!');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-sm">
             <div className="p-6 border-b">

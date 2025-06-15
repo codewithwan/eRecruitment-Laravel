@@ -781,11 +781,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
         }
         if (activeForm === FormType.PENDIDIKAN) {
             return (
-                <PendidikanForm
-                    onSubmit={handleSubmit}
-                    onChange={handleChange}
-                    onTambahPendidikan={() => { }}
-                />
+                <PendidikanForm />
             );
         }
         if (activeForm === FormType.DATA_TAMBAHAN) {
@@ -799,7 +795,7 @@ const PersonalData: React.FC<Props> = ({ profile, user }) => {
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
                         <div className="grid grid-cols-2 gap-6 text-black">
                             <div>
-                                <InputField label="No. E-KTP" name="no_ektp" value={data.no_ektp} onChange={handleChange} />
+                                    <InputField label="No. E-KTP" name="no_ektp" value={data.no_ektp} onChange={handleChange} />
                                 <InputField label="Nama Lengkap" name="name" value={data.name} onChange={handleChange} />
                                 <InputField label="Email" name="email" type="email" value={data.email} onChange={handleChange} />
 

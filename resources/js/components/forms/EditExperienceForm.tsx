@@ -106,13 +106,21 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
             )}
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                <InputField
-                    label="Nama Pekerjaan"
-                    name="job_title"
-                    value={formData.job_title}
-                    onChange={handleChange}
-                    placeholder="Masukkan nama pekerjaan"
-                />
+                <div className="mb-6">
+                    <label htmlFor="job_title" className="text-sm font-medium text-gray-900 mb-2 block">
+                        Nama Pekerjaan
+                    </label>
+                    <input
+                        type="text"
+                        id="job_title"
+                        name="job_title"
+                        value={formData.job_title}
+                        onChange={handleChange}
+                        placeholder="Masukkan nama pekerjaan"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                    />
+                </div>
                 <SelectField
                     label="Status Pekerjaan"
                     name="employment_status"
@@ -124,15 +132,20 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
                         { value: 'Freelance', label: 'Freelance' },
                         { value: 'Kontrak', label: 'Kontrak' },
                     ]}
-                    placeholder="Pilih status pekerjaan"
                 />
-                <textarea
-                    name="job_description"
-                    value={formData.job_description}
-                    onChange={handleChange}
-                    placeholder="Masukkan deskripsi pekerjaan"
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-black h-32"
-                />
+                <div className="mb-6">
+                    <label htmlFor="job_description" className="text-sm font-medium text-gray-900 mb-2 block">
+                        Deskripsi Pekerjaan
+                    </label>
+                    <textarea
+                        id="job_description"
+                        name="job_description"
+                        value={formData.job_description}
+                        onChange={handleChange}
+                        placeholder="Masukkan deskripsi pekerjaan"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32"
+                    />
+                </div>
                 <div className="grid grid-cols-2 gap-6">
                     <SelectField
                         label="Bulan Masuk"
@@ -143,7 +156,6 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
                             value: i + 1,
                             label: new Date(0, i).toLocaleString('id-ID', { month: 'long' }),
                         }))}
-                        placeholder="Pilih Bulan Masuk"
                     />
                     <InputField
                         label="Tahun Masuk"
@@ -165,7 +177,6 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
                                 value: i + 1,
                                 label: new Date(0, i).toLocaleString('id-ID', { month: 'long' }),
                             }))}
-                            placeholder="Pilih Bulan Keluar"
                         />
                         <InputField
                             label="Tahun Keluar"
@@ -177,18 +188,19 @@ const EditPengalamanKerjaForm: React.FC<EditPengalamanKerjaFormProps> = ({
                     </div>
                 )}
 
-                <div className="flex justify-between">
+                <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
                     <button
                         type="button"
                         onClick={onBack}
-                        className="bg-gray-600 text-white px-8 py-2 rounded hover:bg-gray-700"
+                        className="flex-1 sm:flex-none px-6 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-colors"
+                        disabled={loading}
                     >
                         Kembali
                     </button>
                     <button
                         type="submit"
+                        className="flex-1 sm:flex-none px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                         disabled={loading}
-                        className="bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700"
                     >
                         {loading ? 'Menyimpan...' : 'Simpan'}
                     </button>

@@ -130,9 +130,9 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                 position: formData.position.trim(),
                 description: formData.description.trim(),
                 is_active: formData.is_active,
-                start_month: formData.start_month,
+                start_month: formData.start_month,  // This should be the month name
                 start_year: parseInt(formData.start_year.toString()),
-                end_month: !formData.is_active ? formData.end_month : null,
+                end_month: !formData.is_active ? formData.end_month : null,  // This should be the month name
                 end_year: !formData.is_active ? (formData.end_year ? parseInt(formData.end_year.toString()) : null) : null,
             };
 
@@ -218,7 +218,7 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                         onChange={handleChange}
                         placeholder="Masukkan deskripsi organisasi min. 10 karakter"
                         className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-32 
-                            focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-gray-50"
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                     />
                 </div>
 
@@ -259,7 +259,7 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                         value={formData.start_month}
                         onChange={handleChange}
                         options={[
-                            { value: "", label: "MMMM" },
+                            { value: "", label: "Pilih Bulan Masuk" },
                             { value: "Januari", label: "Januari" },
                             { value: "Februari", label: "Februari" },
                             { value: "Maret", label: "Maret" },
@@ -297,7 +297,7 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                             value={formData.end_month || ''}
                             onChange={handleChange}
                             options={[
-                                { value: "", label: "MMMM" },
+                                { value: "", label: "Pilih Bulan Keluar" },
                                 { value: "Januari", label: "Januari" },
                                 { value: "Februari", label: "Februari" },
                                 { value: "Maret", label: "Maret" },
@@ -328,13 +328,22 @@ const TambahOrganisasiForm: React.FC<TambahOrganisasiFormProps> = ({
                     </div>
                 )}
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                >
-                    {loading ? 'Menyimpan...' : (existingData ? 'Update' : 'Simpan')}
-                </button>
+              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="flex-1 sm:flex-none px-6 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-colors"
+                    >
+                        Kembali
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700"
+                    >
+                        {loading ? 'Menyimpan...' : (existingData ? 'Update' : 'Simpan')}
+                    </button>
+                </div>
             </form>
         </div>
     );

@@ -32,7 +32,8 @@ class VacanciesController extends Controller
                         'description' => $vacancy->job_description ?? $vacancy->description,
                         'location' => $vacancy->location,
                         'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
-                        'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
+                        'deadline' => $vacancy->deadline ? \Carbon\Carbon::parse($vacancy->deadline)->format('d F Y') : 'Open',
+
                         'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
                     ];
                 });
@@ -145,7 +146,7 @@ class VacanciesController extends Controller
                 'description' => $vacancy->job_description ?? $vacancy->description,
                 'location' => $vacancy->location,
                 'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
-                'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
+                'deadline' => $vacancy->deadline ? \Carbon\Carbon::parse($vacancy->deadline)->format('d F Y') : 'Open',
                 'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
                 'requirements' => $vacancy->requirements,
             ];
@@ -169,7 +170,8 @@ class VacanciesController extends Controller
                         'description' => $vacancy->job_description ?? $vacancy->description,
                         'location' => $vacancy->location,
                         'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
-                        'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
+                        'deadline' => $vacancy->deadline ? \Carbon\Carbon::parse($vacancy->deadline)->format('d F Y') : 'Open',
+
                         'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
                     ],
                     'score' => 100, // Atau logika penilaian lain jika ingin
@@ -215,7 +217,8 @@ class VacanciesController extends Controller
                     'description' => $vacancy->job_description ?? $vacancy->description,
                     'location' => $vacancy->location,
                     'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
-                    'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
+                    'deadline' => $vacancy->deadline ? \Carbon\Carbon::parse($vacancy->deadline)->format('d F Y') : 'Open',
+
                     'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
                 ];
             });

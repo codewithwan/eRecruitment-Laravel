@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CandidatesStage;
 use App\Enums\UserRole;
-use App\Models\Candidate;
+use App\Models\Applications;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,14 +21,18 @@ class UserController extends Controller
             return $users->count();
         });
 
-        $job_applications = Candidate::where('status', CandidatesStage::ADMINISTRATIVE_SELECTION->value)->get();
+        $job_applications = Applications::where('status_id', 1)->get(); // Using status_id 1 which is typically 'Pending'
         $job_applied = $job_applications->groupBy(function ($job_applications) {
-            return $job_applications->applied_at->format('Y-m-d');
+            return $job_applications->created_at->format('Y-m-d');
         })->map(function ($job_applications) {
             return $job_applications->count();
         });
 
-        return Inertia::render('admin/dashboard', ['users' => $users, 'traffic' => $traffic, 'job_applied' => $job_applied]);
+       return Inertia::render('candidate/profile', [
+        'users' => $users,
+        'traffic' => $traffic,
+        'job_applied' => $job_applied
+    ]);
     }
 
     public function store(Request $request)

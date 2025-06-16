@@ -1,8 +1,8 @@
-import { SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
 import React from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 
+import { SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -188,7 +188,7 @@ const JobHiringLandingPage: React.FC<Props> = ({ jobs }) => {
   const [activeFilter, setActiveFilter] = React.useState<string>('all');
   const [filteredJobs, setFilteredJobs] = React.useState(jobs);
   const { auth } = usePage<SharedData>().props;
-  
+
 
   const filterJobs = React.useCallback((company: string) => {
     setActiveFilter(company);
@@ -223,17 +223,24 @@ const JobHiringLandingPage: React.FC<Props> = ({ jobs }) => {
   return (
     <>
       <GlobalStyle />
-      {/* Navbar */}
-      <header className="fixed top-0 right-0 left-0 z-50 h-[80px] border-b border-gray-200 bg-white px-[20px] shadow">
+        {/* Navbar */}
+                <header className="fixed top-0 right-0 left-0 z-50 h-[80px] border-b border-gray-200 bg-white px-[20px] shadow">
                     <div className="container mx-auto flex items-center justify-between px-6 py-4">
                         <div className="text-[20px] font-bold text-gray-800">MITRA KARYA GROUP</div>
-                        
 
-                        <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex text-gray-800">
-                          <Link href="/" className="hover:text-blue-600">Beranda</Link>
-                          <Link href="/job-hiring-landing-page" className="hover:text-blue-600">Lowongan Pekerjaan</Link>
-                          <Link href="/about-us" className="hover:text-blue-600">Tentang Kami</Link>
-                          <Link href="/contact" className="hover:text-blue-600">Kontak</Link>
+                        <nav className="hidden space-x-[24px] text-[14px] font-medium md:flex">
+                            <Link href="/" className="hover:text-blue-600 text-gray-800">
+                                Beranda
+                            </Link>
+                            <Link href="/job-hiring-landing-page" className="hover:text-blue-600  text-gray-800">
+                                Lowongan Pekerjaan
+                            </Link>
+                            <Link href="/about-us" className="hover:text-blue-600  text-gray-800">
+                                Tentang Kami
+                            </Link>
+                            <Link href="/contact" className="hover:text-blue-600  text-gray-800">
+                                Kontak
+                            </Link>
                         </nav>
                         <div className="flex items-center gap-4">
                             {auth?.user ? (
@@ -245,7 +252,9 @@ const JobHiringLandingPage: React.FC<Props> = ({ jobs }) => {
                                 </Link>
                             ) : (
                                 <>
-                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">Masuk</Link>
+                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">
+                                        Masuk
+                                    </Link>
                                     <Link
                                         href={route('register')}
                                         className="rounded-md bg-blue-600 px-[16px] py-[10px] text-[14px] text-white hover:bg-blue-700"
@@ -309,12 +318,12 @@ const JobHiringLandingPage: React.FC<Props> = ({ jobs }) => {
           </ContentContainer>
         </JobHiringContainer>
       </PageWrapper>
-      {/* Footer */}
-      <footer className="bg-[#f6fafe] py-16">
+       {/* Footer */}
+                <footer className="bg-[#f6fafe] py-16">
                     <div className="container mx-auto grid grid-cols-1 gap-10 px-6 md:grid-cols-3">
                         {/* Kolom 1 */}
                         <div>
-                            <h4 className="mb-2 text-[16px] font-bold text-gray-800">MITRA KARYA GROUP</h4>
+                            <h4 className="mb-2 text-[16px] font-bold  text-gray-800">MITRA KARYA GROUP</h4>
                             <p className="mb-6 text-sm text-gray-700">
                                 Kami adalah perusahaan teknologi pintar yang senantiasa berkomitmen untuk memberikan dan meningkatkan kepuasan
                                 pelanggan
@@ -340,7 +349,7 @@ const JobHiringLandingPage: React.FC<Props> = ({ jobs }) => {
 
                         {/* Kolom 2 */}
                         <div>
-                            <h4 className="mb-2 text-[16px] font-bold text-gray-800">Perusahaan Kami</h4>
+                            <h4 className="mb-2 text-[16px] font-bold  text-gray-800">Perusahaan Kami</h4>
                             <ul className="space-y-1 text-sm text-gray-700">
                                 <li>PT MITRA KARYA ANALITIKA</li>
                                 <li>PT AUTENTIK KARYA ANALITIKA</li>
@@ -349,7 +358,7 @@ const JobHiringLandingPage: React.FC<Props> = ({ jobs }) => {
 
                         {/* Kolom 3 */}
                         <div>
-                            <h4 className="mb-4 text-[16px] font-bold text-gray-800">Contact</h4>
+                            <h4 className="mb-4 text-[16px] font-bold  text-gray-800">Contact</h4>
                             <ul className="space-y-2 text-sm text-gray-700">
                                 <li className="flex items-start gap-2">
                                     <i className="fas fa-phone mt-1 text-blue-600" />

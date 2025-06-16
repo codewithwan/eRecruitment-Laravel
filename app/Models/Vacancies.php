@@ -12,40 +12,56 @@ class Vacancies extends Model
 
     protected $fillable = [
         'title',
-        'department_id',
-        'company_id',
-        'type_id',
         'location',
+        'type_id',
+        'company_id',
+        'department_id',
+        'major_id',
         'requirements',
-        'benefits',
         'job_description',
-        'deadline',
+        'benefits',
         'user_id',
     ];
-
+    
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'requirements' => 'array',
         'benefits' => 'array',
-        'deadline' => 'datetime',
     ];
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class, 'department_id');
-    }
-
-    public function company(): BelongsTo
+    /**
+     * Relasi ke perusahaan
+     */
+    public function company()
     {
         return $this->belongsTo(Companies::class, 'company_id');
     }
 
-    public function jobType(): BelongsTo
+    /**
+     * Relasi ke tipe pekerjaan
+     */
+    public function jobType()
     {
         return $this->belongsTo(JobTypes::class, 'type_id');
     }
 
-    public function user(): BelongsTo
+    /**
+     * Relasi ke departemen
+     */
+    public function department()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    /**
+     * Relasi ke jurusan
+     */
+    public function major()
+    {
+        return $this->belongsTo(MasterMajor::class, 'major_id');
     }
 }

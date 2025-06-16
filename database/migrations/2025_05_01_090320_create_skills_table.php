@@ -10,8 +10,9 @@ class CreateSkillsTable extends Migration
     {
         Schema::create('skills', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('data_tambahan_id')->constrained('data_tambahan')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Tambahkan user_id
             $table->string('skill_name');
+            $table->string('certificate_file')->nullable(); // kolom untuk upload file sertifikat
             $table->timestamps();
         });
     }

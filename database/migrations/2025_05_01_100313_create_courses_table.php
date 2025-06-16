@@ -10,9 +10,10 @@ class CreateCoursesTable extends Migration
     {
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('data_tambahan_id')->constrained('data_tambahan')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('course_name');
-            $table->year('year');
+            $table->string('certificate_file')->nullable(); // kolom untuk upload file sertifikat
+            $table->timestamps();
         });
     }
 

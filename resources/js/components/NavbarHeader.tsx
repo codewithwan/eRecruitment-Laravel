@@ -1,82 +1,86 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useState } from 'react';
 
-const HeaderWrapper = styled.header`
-  width: 100%;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-`;
+const NavbarHeader: React.FC = () => {
+  const [showDropdown, setShowDropdown] = useState(false);
 
-const HeaderContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
+  const toggleDropdown = () => setShowDropdown((prev) => !prev);
 
-const Logo = styled.div`
-  font-weight: 700;
-  font-size: 16px;
-  letter-spacing: 0.5px;
-  margin-left: 8px;
-  color: #111; // warna hitam
-`;
+  return (
+    <header className="w-full bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="container mx-auto px-8">
+        <div className="flex justify-between items-center">
+          {/* Kiri: Logo */}
+          <div className="font-bold text-xl text-blue-600">MITRA KARYA GROUP</div>
+          {/* Tengah: Menu Navigasi */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex space-x-6">
+            <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Dasbor</a>
+            <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Profil</a>
+            <a href="/candidate/jobs" className="font-medium text-gray-600 hover:text-gray-900">Lowongan Pekerjaan</a>
+            <a href="#" className="font-medium text-gray-600 hover:text-gray-900">Lamaran</a>
+          </div>
+          {/* Kanan: Profil Dropdown */}
+          <div className="relative">
+            <button
+              onClick={toggleDropdown}
+              className="w-10 h-10 border-2 border-[#0047FF] rounded-full flex items-center justify-center text-[#0047FF]"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </button>
+            {showDropdown && (
+              <div
+                className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded border border-gray-200 z-10 focus:outline focus:outline-2 focus:outline-[#0047FF]"
+                tabIndex={0}
+              >
+                <div className="p-4 border-b flex items-center space-x-3">
+                  <div className="w-10 h-10 border-2 border-[#0047FF] rounded-full flex items-center justify-center text-[#0047FF]">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-[#0047FF] font-bold">PUTRI ANGRAENI</div>
+                    <div className="text-gray-600 text-sm font-medium">
+                      putriangraeni@gmail.com
+                    </div>
+                  </div>
+                </div>
+                <div className="p-2">
+                  <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-black">
+                    Profil Saya
+                  </button>
+                  <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-black">
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
 
-const Nav = styled.nav`
-  display: flex;
-  gap: 24px;
-  align-items: center;
-`;
-
-const NavLink = styled.a`
-  color: #222;
-  font-size: 13px;
-  font-weight: 400;
-  text-decoration: none;
-  transition: color 0.2s;
-  padding: 0 4px;
-  &:hover {
-    color: #1DA1F2;
-  }
-`;
-
-const ProfileIcon = styled.div`
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #e5f1fb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1DA1F2;
-  font-size: 22px;
-  margin-right: 8px;
-  border: 1.5px solid #e5e7eb;
-`;
-
-const Header: React.FC = () => (
-  <HeaderWrapper>
-    <HeaderContent>
-      <Logo>MITRA KARYA GROUP</Logo>
-      <Nav>
-        <NavLink href="#">Dasbor</NavLink>
-        <NavLink href="#">Profil</NavLink>
-        <NavLink href="/job-hiring">Lowongan Pekerjaan</NavLink>
-        <NavLink href="#">Lamaran</NavLink>
-      </Nav>
-      <ProfileIcon>
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-          <circle cx="12" cy="8" r="4" fill="#1DA1F2"/>
-          <rect x="4" y="16" width="16" height="6" rx="3" fill="#1DA1F2"/>
-        </svg>
-      </ProfileIcon>
-    </HeaderContent>
-  </HeaderWrapper>
-);
-
-export default Header;
+export default NavbarHeader;

@@ -26,32 +26,37 @@ const scrollToSection = (id: string) => {
 
 export default function Welcome(props: WelcomeProps) {
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { vacancies } = props;
     const { auth } = usePage<SharedData>().props;
 
-    const backgroundImages = ['/images/slider1.png', '/images/slider2.png', '/images/slider3.png', '/images/slider4.png'];
+    const backgroundImages = [
+        "/images/slider1.png",
+        "/images/slider2.png",
+        "/images/slider3.png",
+        "/images/slider4.png",
+    ];
 
-    
     const benefitCards = [
         {
-            title: 'Lingkungan Kerja Profesional',
-            description: 'Kami menciptakan budaya kerja yang kolaboratif dan mendukung perkembangan karier setiap karyawan.',
-            icon: '/images/benefit1.png',
+            title: "Lingkungan Kerja Profesional",
+            description: "Kami menciptakan budaya kerja yang kolaboratif dan mendukung perkembangan karier setiap karyawan.",
+            icon: "/images/benefit1.png"
         },
         {
-            title: 'Inovasi dan Teknologi',
-            description: 'Bergabunglah dengan tim yang selalu beradaptasi dengan teknologi terbaru dan menghadirkan solusi terbaik bagi pelanggan.',
-            icon: '/images/benefit2.png',
+            title: "Inovasi dan Teknologi",
+            description: "Bergabunglah dengan tim yang selalu beradaptasi dengan teknologi terbaru dan menghadirkan solusi terbaik bagi pelanggan.",
+            icon: "/images/benefit2.png"
         },
         {
-            title: 'Benefit Kompetitif',
-            description: 'Kami menawarkan kompensasi dan tunjangan yang menarik sesuai dengan kinerja dan kontribusi Anda.',
-            icon: '/images/benefit3.png',
+            title: "Benefit Kompetitif",
+            description: "Kami menawarkan kompensasi dan tunjangan yang menarik sesuai dengan kinerja dan kontribusi Anda.",
+            icon: "/images/benefit3.png"
         },
         {
-            title: 'Kesempatan Berkembang',
-            description: 'Kami menyediakan pelatihan dan pengembangan berkelanjutan untuk meningkatkan keterampilan dan kompetensi Anda.',
-            icon: '/images/benefit4.png',
+            title: "Kesempatan Berkembang",
+            description: "Kami menyediakan pelatihan dan pengembangan berkelanjutan untuk meningkatkan keterampilan dan kompetensi Anda.",
+            icon: "/images/benefit4.png"
         },
     ];
 
@@ -101,9 +106,7 @@ export default function Welcome(props: WelcomeProps) {
                                 </Link>
                             ) : (
                                 <>
-                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">
-                                        Masuk
-                                    </Link>
+                                    <Link href={route('login')} className="text-sm font-medium text-blue-600 hover:underline">Masuk</Link>
                                     <Link
                                         href={route('register')}
                                         className="rounded-md bg-blue-600 px-[16px] py-[10px] text-[14px] text-white hover:bg-blue-700"

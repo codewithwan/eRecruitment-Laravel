@@ -1,10 +1,9 @@
-import React from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
 import { type SharedData } from '@/types';
+import { Head, Link, usePage } from '@inertiajs/react';
 import styled from 'styled-components';
 
 export default function JobHiringPage() {
-  const { auth } = usePage<SharedData>().props;
+  const { auth, contacts = [] } = usePage<SharedData>().props as SharedData;
 
   const PageWrapper = styled.div`
     background: #fff;
@@ -81,12 +80,6 @@ export default function JobHiringPage() {
     margin: 0 0 4px 0;
   `;
 
-  const LinkText = styled.a`
-    font-size: 14px;
-    color: #1DA1F2;
-    text-decoration: underline;
-    cursor: pointer;
-  `;
 
   const IconImage = styled.img`
   width:40px;
@@ -134,30 +127,19 @@ export default function JobHiringPage() {
             <Title>Hubungi Kami</Title>
             <Subtitle>Let us know how we can help.</Subtitle>
             <CardContainer>
-              <Card>
-                <CardIconWrapper>
-                  <IconImage src="/images/chat-to-support.png" alt="Chat Icon" />
-                </CardIconWrapper>
-                <CardTitle>Chat to support</CardTitle>
-                <CardText>we’re here to help</CardText>
-                <LinkText href="mailto:autentik.info@gmail.com">autentik.info@gmail.com</LinkText>
-              </Card>
-              <Card>
-                <CardIconWrapper>
-                  <IconImage src="/images/visit-us.png" alt="Location Icon" />
-                </CardIconWrapper>
-                <CardTitle>Visit us</CardTitle>
-                <CardText>Visit our office</CardText>
-                <LinkText href="https://maps.google.com" target="_blank">View on Google Maps</LinkText>
-              </Card>
-              <Card>
-                <CardIconWrapper>
-                  <IconImage src="/images/call-us.png" alt="Phone Icon" />
-                </CardIconWrapper>
-                <CardTitle>Call us</CardTitle>
-                <CardText>Mon-Fri from 8am to 5pm</CardText>
-                <LinkText href="tel:+6281807700111">+62 81-807-700-111</LinkText>
-              </Card>
+              {(contacts as Array<{ id: number; email: string; phone: string; address: string }>).map((contact) => (
+                <Card key={contact.id}>
+                  <CardIconWrapper>
+                    <IconImage src="/images/chat-to-support.png" alt="Chat Icon" />
+                  </CardIconWrapper>
+                  <CardTitle>Email</CardTitle>
+                  <CardText>{contact.email}</CardText>
+                  <CardTitle>Phone</CardTitle>
+                  <CardText>{contact.phone}</CardText>
+                  <CardTitle>Address</CardTitle>
+                  <CardText>{contact.address}</CardText>
+                </Card>
+              ))}
             </CardContainer>
           </ContactContainer>
         </PageWrapper>

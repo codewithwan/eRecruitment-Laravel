@@ -20,11 +20,15 @@ return new class extends Migration
             $table->string('location');
             $table->json('requirements');
             $table->json('benefits')->nullable();
-            $table->json('applicants')->nullable();
             $table->text('job_description')->nullable();
-            $table->date('deadline')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
+        });
+
+        // Tambahkan kolom major_id pada tabel vacancies
+        Schema::table('vacancies', function (Blueprint $table) {
+            $table->unsignedBigInteger('major_id')->nullable()->after('type_id');
+            $table->foreign('major_id')->references('id')->on('master_majors')->onDelete('set null');
         });
     }
 

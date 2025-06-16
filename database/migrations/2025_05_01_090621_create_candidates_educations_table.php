@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCandidatesEducationsTable extends Migration
+return new class extends Migration
 {
     public function up()
     {
@@ -13,8 +13,8 @@ class CreateCandidatesEducationsTable extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('education_level');
             $table->string('faculty');
-            $table->string('major');
-            $table->string('institution_name');
+            $table->foreignId('major_id')->constrained('master_majors');
+            $table->string('institution_name'); // Langsung gunakan string institution_name, bukan foreign key
             $table->decimal('gpa', 3, 2);
             $table->year('year_in');
             $table->year('year_out')->nullable();
@@ -26,4 +26,4 @@ class CreateCandidatesEducationsTable extends Migration
     {
         Schema::dropIfExists('candidates_educations');
     }
-}
+};

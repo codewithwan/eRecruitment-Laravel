@@ -10,9 +10,10 @@ class CreateLanguagesTable extends Migration
     {
         Schema::create('languages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('data_tambahan_id')->constrained('data_tambahan')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('language_name');
-            $table->enum('proficiency', ['beginner', 'intermediate', 'advanced', 'fluent'])->default('beginner');
+            $table->string('certificate_file')->nullable(); // kolom untuk upload file sertifikat
+            $table->timestamps();
         });
     }
 

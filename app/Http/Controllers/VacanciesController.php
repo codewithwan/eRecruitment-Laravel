@@ -17,7 +17,7 @@ class VacanciesController extends Controller
     public function index()
     {
         try {
-            // Query vacancies with relationships
+            // Ambil data lowongan
             $vacancies = Vacancies::with(['company', 'jobType', 'department'])
                 ->orderBy('created_at', 'desc')
                 ->take(6) // Limit to 6 jobs for the welcome page
@@ -37,8 +37,12 @@ class VacanciesController extends Controller
                     ];
                 });
 
+            // Ambil data perusahaan
+            $companies = Companies::all();
+
             return Inertia::render('welcome', [
                 'vacancies' => $vacancies,
+                'companies' => $companies
             ]);
         } catch (\Exception $e) {
             Log::error('Error in VacanciesController@index: ' . $e->getMessage());
@@ -186,54 +190,6 @@ class VacanciesController extends Controller
         ]);
     }
 
-    public function getVacanciesLandingPage(Request $request)
-    {
-        try {
-            // Query vacancies with relationships
-            $query = Vacancies::with(['company', 'jobType', 'department'])
-                ->orderBy('created_at', 'desc');
-
-            // Filter by company if provided
-            if ($request->has('company') && $request->company !== 'all') {
-                $query->whereHas('company', function ($q) use ($request) {
-                    $q->where('name', $request->company);
-                });
-            }
-
-            // Map vacancies data
-            $vacancies = $query->get()->map(function ($vacancy) {
-                return [
-                    'id' => $vacancy->id,
-                    'title' => $vacancy->title,
-                    'company' => [
-                        'name' => $vacancy->company ? $vacancy->company->name : 'N/A',
-                    ],
-                    'description' => $vacancy->job_description ?? $vacancy->description,
-                    'location' => $vacancy->location,
-                    'type' => $vacancy->jobType ? $vacancy->jobType->name : 'N/A',
-                    'deadline' => $vacancy->deadline ? $vacancy->deadline->format('d F Y') : 'Open',
-                    'department' => $vacancy->department ? $vacancy->department->name : 'N/A',
-                ];
-            });
-
-            // Get list of companies for filtering
-            $companies = Companies::pluck('name');
-
-            // Render the view with data
-            return Inertia::render('candidate/jobs/job-hiring', [
-                'jobs' => $vacancies,
-                'companies' => $companies,
-            ]);
-        } catch (\Exception $e) {
-            // Log error and return empty data with error message
-            Log::error('Error in VacanciesController@getVacancies: ' . $e->getMessage());
-            return Inertia::render('candidate/jobs/job-hiring', [
-                'jobs' => [],
-                'companies' => [],
-                'error' => 'Failed to load job vacancies',
-            ]);
-        }
-    }
     public function getVacanciesLandingPage(Request $request)
     {
         try {

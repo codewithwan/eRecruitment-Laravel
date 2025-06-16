@@ -184,7 +184,7 @@ const DetailButton = styled.button`
   }
 `;
 
-const JobHiring: React.FC<Props> = ({ jobs }) => {
+const JobHiringLandingPage: React.FC<Props> = ({ jobs }) => {
   const [activeFilter, setActiveFilter] = React.useState<string>('all');
   const [filteredJobs, setFilteredJobs] = React.useState(jobs);
   const { auth } = usePage<SharedData>().props;
@@ -379,4 +379,4 @@ const JobHiring: React.FC<Props> = ({ jobs }) => {
   );
 };
 
-export default JobHiring;
+export default JobHiringLandingPage;

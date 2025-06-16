@@ -10,7 +10,7 @@ use App\Http\Controllers\ResetPasswordController;
 
 Route::get('/', [VacanciesController::class, 'index'])->name('home');
 Route::get('/job-hiring', [VacanciesController::class, 'getVacancies'])->name('job-hiring');
-Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacancies'])->name('job-hiring-landing-page');
+Route::get('/job-hiring-landing-page', [VacanciesController::class, 'getVacanciesLandingPage'])->name('job-hiring-landing-page');
 Route::get('/application-history', function () {
     return Inertia::render('candidate/jobs/application-history');
 })->name('application-history');
@@ -22,7 +22,7 @@ Route::get('/data-pribadi', function () {
 
 Route::get('/contact', function () {
         return Inertia::render('landing-page/contact');
-    })->name('job-hiring');
+    })->name('contact');
 
 Route::get('/about-us', function () {
     return Inertia::render('landing-page/about-us');

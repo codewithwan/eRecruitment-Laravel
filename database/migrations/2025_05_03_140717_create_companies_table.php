@@ -12,6 +12,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('logo')->nullable();
+            $table->string('email')->nullable()->after('description');
+            $table->string('phone')->nullable()->after('email');
+            $table->text('address')->nullable()->after('phone');
             $table->text('description')->nullable();
             $table->timestamps();
         });

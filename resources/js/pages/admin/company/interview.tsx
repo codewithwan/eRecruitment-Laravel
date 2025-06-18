@@ -87,6 +87,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             email: 'Rizalfarhannanda@gmail.com',
             position: 'UI / UX',
             registration_date: '2025-03-20',
+            status: 'scheduled'
         },
         {
             id: '2',
@@ -94,6 +95,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             email: 'hassannaufal@gmail.com',
             position: 'Back End',
             registration_date: '2025-03-18',
+            status: 'completed'
         },
         {
             id: '3',
@@ -101,6 +103,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             email: 'ardanferdiansah@gmail.com',
             position: 'Front End',
             registration_date: '2025-03-18',
+            status: 'pending'
         },
         {
             id: '4',
@@ -108,6 +111,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             email: 'muhammadridwan@gmail.com',
             position: 'UX Writer',
             registration_date: '2025-03-20',
+            status: 'rejected'
         },
         {
             id: '5',
@@ -115,6 +119,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             email: 'untaraeka@gmail.com',
             position: 'IT Spesialis',
             registration_date: '2025-03-22',
+            status: 'scheduled'
         },
         {
             id: '6',
@@ -122,6 +127,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             email: 'deaderika@gmail.com',
             position: 'UX Writer',
             registration_date: '2025-03-20',
+            status: 'pending'
         },
         {
             id: '7',
@@ -129,6 +135,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             email: 'kartikayuliana@gmail.com',
             position: 'IT Spesialis',
             registration_date: '2025-03-22',
+            status: 'completed'
         },
         {
             id: '8',
@@ -136,6 +143,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             email: 'ayeshadear@gmail.com',
             position: 'UX Writer',
             registration_date: '2025-03-20',
+            status: 'scheduled'
         },
     ];
 

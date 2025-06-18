@@ -577,9 +577,13 @@ export default function AdministrationDashboard({
     // Get period ID from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const periodId = urlParams.get('period');
+    const companyIdFromUrl = urlParams.get('company');
+    
+    // Use company ID from URL if available, otherwise use the one from props
+    const effectiveCompanyId = companyIdFromUrl || (companyId ? String(companyId) : null);
     
     // Fetch period and company info from the API
-    const { loading, error, periodInfo: fetchedPeriodInfo } = usePeriodCompanyInfo(periodId);
+    const { loading, error, periodInfo: fetchedPeriodInfo } = usePeriodCompanyInfo(periodId, effectiveCompanyId);
     
     // State for company and period names (either from API or fallback)
     const [companyName, setCompanyName] = useState<string>("Loading...");

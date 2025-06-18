@@ -138,9 +138,10 @@ export default function AssessmentManagement({
     // Get period ID from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const periodId = urlParams.get('period');
+    const companyIdFromUrl = urlParams.get('company');
     
     // Fetch period and company info from the API
-    const { loading, error, periodInfo } = usePeriodCompanyInfo(periodId);
+    const { loading, error, periodInfo } = usePeriodCompanyInfo(periodId, companyIdFromUrl);
     
     // State for company and period names (either from API or fallback)
     const [companyName, setCompanyName] = useState<string>("Loading...");

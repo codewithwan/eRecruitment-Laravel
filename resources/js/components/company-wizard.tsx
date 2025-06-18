@@ -42,14 +42,25 @@ export function CompanyWizard({ currentStep, className }: CompanyWizardProps) {
     ];
 
     const handleStepClick = (step: WizardStep) => {
-        // Preserve URL parameters (especially period) when navigating between pages
+        // Preserve URL parameters (period and company) when navigating between pages
         const urlParams = new URLSearchParams(window.location.search);
         const periodId = urlParams.get('period');
+        const companyId = urlParams.get('company');
         
-        // Add period parameter to the href if it exists
+        // Add parameters to the href if they exist
         let href = step.href;
+        const params = [];
+        
         if (periodId) {
-            href = `${href}?period=${periodId}`;
+            params.push(`period=${periodId}`);
+        }
+        
+        if (companyId) {
+            params.push(`company=${companyId}`);
+        }
+        
+        if (params.length > 0) {
+            href = `${href}?${params.join('&')}`;
         }
         
         router.visit(href);

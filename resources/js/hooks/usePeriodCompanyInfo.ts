@@ -14,13 +14,13 @@ interface PeriodInfo {
   };
 }
 
-export function usePeriodCompanyInfo(periodId: string | null) {
+export function usePeriodCompanyInfo(periodId: string | null, companyId: string | null = null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [periodInfo, setPeriodInfo] = useState<PeriodInfo | null>(null);
 
   useEffect(() => {
-    // Reset states when periodId changes
+    // Reset states when periodId or companyId changes
     setLoading(true);
     setError(null);
     
@@ -32,8 +32,13 @@ export function usePeriodCompanyInfo(periodId: string | null) {
 
     const fetchPeriodInfo = async () => {
       try {
+        // Include companyId in the request if available
+        const url = companyId 
+          ? `/api/periods/${periodId}/with-company?company=${companyId}`
+          : `/api/periods/${periodId}/with-company`;
+
         // Use the direct API route
-        const response = await axios.get(`/api/periods/${periodId}/with-company`);
+        const response = await axios.get(url);
         if (response.data.success) {
           setPeriodInfo(response.data.data);
         } else {
@@ -48,7 +53,7 @@ export function usePeriodCompanyInfo(periodId: string | null) {
     };
 
     fetchPeriodInfo();
-  }, [periodId]);
+  }, [periodId, companyId]); // Added companyId to dependency array
 
   return { loading, error, periodInfo };
 }

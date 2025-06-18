@@ -12,14 +12,42 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,
+            // 1. Basic User Management (No Dependencies)
             SuperAdminSeeder::class,
+            UserSeeder::class,
+            
+            // 2. Master Data (No Dependencies)
             CompanySeeder::class,
+            MasterMajorSeeder::class,
+            VacancyTypeSeeder::class,
+            DepartementSeeder::class,
+            
+            // 3. Question System (QuestionPack depends on Question)
             QuestionSeeder::class,
             QuestionPackSeeder::class,
+            
+            // 4. Vacancy System (Depends on: Company, Departement, MasterMajor, VacancyType, User, QuestionPack)
             VacanciesSeeder::class,
+            
+            // 5. Period System (Depends on: Vacancies)
             PeriodSeeder::class,
-            ApplicantSeeder::class, // Add applicant seeder at the end
+            
+            // 6. Candidate Data (Depends on: User with role CANDIDATE)
+            CandidatesProfileSeeder::class,
+            CandidatesEducationSeeder::class,
+            CandidatesWorkExperienceSeeder::class,
+            CandidatesSkillSeeder::class,
+            CandidatesLanguageSeeder::class,
+            CandidatesCourseSeeder::class,
+            CandidatesEnglishCertificationSeeder::class,
+            CandidatesCertificationSeeder::class,
+            CandidatesSocialMediaSeeder::class,
+            CandidatesOrganizationSeeder::class,
+            CandidatesAchievementSeeder::class,
+            CandidatesCVSeeder::class,
+            
+            // 7. Application System (Depends on: User, VacancyPeriods which is created by Vacancies+Periods)
+            ApplicantSeeder::class,
         ]);
     }
 }

@@ -8,20 +8,15 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('companies', function (Blueprint $table) {
+        Schema::create('departements', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('logo')->nullable();
-            $table->text('description')->nullable();
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
-            $table->text('address')->nullable();
             $table->timestamps();
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('companies');
+        Schema::dropIfExists('departements');
     }
 };

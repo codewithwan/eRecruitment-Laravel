@@ -14,14 +14,16 @@ class Vacancies extends Model
     
     protected $fillable = [
         'user_id',
+        'company_id',
         'title',
-        'department',
+        'department_id',
+        'major_id',
+        'vacancy_type_id',
         'location',
         'salary',
         'requirements',
         'benefits',
-        'question_pack_id',
-        'company_id'
+        'question_pack_id'
     ];
     
     protected $casts = [
@@ -66,5 +68,37 @@ class Vacancies extends Model
             'id', // Local key on vacancies table
             'id' // Local key on vacancy_periods table
         );
+    }
+
+    /**
+     * Get the user who created this vacancy.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    
+    /**
+     * Get the department associated with this vacancy.
+     */
+    public function departement()
+    {
+        return $this->belongsTo(Departement::class, 'department_id');
+    }
+    
+    /**
+     * Get the major associated with this vacancy.
+     */
+    public function major()
+    {
+        return $this->belongsTo(MasterMajor::class, 'major_id');
+    }
+    
+    /**
+     * Get the vacancy type associated with this vacancy.
+     */
+    public function vacancyType()
+    {
+        return $this->belongsTo(VacancyType::class, 'vacancy_type_id');
     }
 }

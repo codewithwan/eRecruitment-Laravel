@@ -12,7 +12,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -22,7 +22,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Filter, Search } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface PaginationData {
     total: number;
@@ -172,6 +172,12 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
     const [positionFilter, setPositionFilter] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
 
+    // Get unique positions dynamically from the user data
+    const uniquePositions = useMemo(() => {
+        const positions = new Set(users.map(user => user.position));
+        return Array.from(positions).sort();
+    }, [users]);
+
     // Apply filters whenever filter states change
     useEffect(() => {
         let result = users;
@@ -307,9 +313,19 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             <Head title="Interview" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
-                    <h2 className="text-2xl font-semibold text-center mb-4">Interview</h2>
+                    {/* Header with company name and period dates */}
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-semibold mb-2">
+                            {companyName !== "Loading..." ? companyName : "Interview"}
+                        </h2>
+                        {periodInfo?.period?.start_date && periodInfo?.period?.end_date && (
+                            <p className="text-sm text-gray-600">
+                                {new Date(periodInfo.period.start_date).toLocaleDateString()} - {new Date(periodInfo.period.end_date).toLocaleDateString()}
+                            </p>
+                        )}
+                    </div>
                     
-                    {/* Centered wizard navigation for all screen sizes */}
+                    {/* Centered wizard navigation for all screen sizes with highlight */}
                     <div className="mb-6">
                         <CompanyWizard currentStep="interview" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                     </div>
@@ -317,19 +333,11 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
-                                <CardTitle>
-                                    {companyName}
-                                </CardTitle>
                                 <CardDescription>
-                                    {periodName ? (
+                                    {periodName && periodName !== "Loading..." && periodName !== "No period selected" ? (
                                         `Manage interviews for ${periodName} recruitment period`
                                     ) : (
-                                        'Manage all interview in the system'
-                                    )}
-                                    {periodInfo?.period.start_date && periodInfo?.period.end_date && (
-                                        <div className="mt-1 text-sm text-muted-foreground">
-                                            {new Date(periodInfo.period.start_date).toLocaleDateString()} - {new Date(periodInfo.period.end_date).toLocaleDateString()}
-                                        </div>
+                                        'Manage all interviews in the system'
                                     )}
                                 </CardDescription>
                             </div>
@@ -337,7 +345,7 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
                             <div className="flex items-center gap-4">
                                 <SearchBar
                                     icon={<Search className="h-4 w-4" />}
-                                    placeholder="Search candidates..."
+                                    placeholder="Cari kandidat..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -367,36 +375,15 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
                                                         >
                                                             All Positions
                                                         </SelectItem>
-                                                        <SelectItem
-                                                            value="ui / ux"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            UI / UX
-                                                        </SelectItem>
-                                                        <SelectItem
-                                                            value="back end"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            Back End
-                                                        </SelectItem>
-                                                        <SelectItem
-                                                            value="front end"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            Front End
-                                                        </SelectItem>
-                                                        <SelectItem
-                                                            value="ux writer"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            UX Writer
-                                                        </SelectItem>
-                                                        <SelectItem
-                                                            value="it spesialis"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            IT Spesialis
-                                                        </SelectItem>
+                                                        {uniquePositions.map((position) => (
+                                                            <SelectItem
+                                                                key={position}
+                                                                value={position.toLowerCase()}
+                                                                className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
+                                                            >
+                                                                {position}
+                                                            </SelectItem>
+                                                        ))}
                                                     </SelectContent>
                                                 </Select>
                                             </div>

@@ -2,7 +2,7 @@ import { AssessmentTable, type AssessmentUser } from '@/components/company-table
 import { CompanyWizard } from '@/components/company-wizard';
 import { SearchBar } from '@/components/searchbar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,7 +11,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Filter, Search } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface PaginationData {
     total: number;
@@ -217,6 +217,12 @@ export default function AssessmentManagement({
         }
     }, [fetchUsers, pagination.current_page, pagination.per_page]);
 
+    // Get unique positions dynamically from the user data
+    const uniquePositions = useMemo(() => {
+        const positions = new Set(users.map(user => user.position));
+        return Array.from(positions).sort();
+    }, [users]);
+
     // Apply filters whenever filter states change
     useEffect(() => {
         let result = users;
@@ -273,9 +279,19 @@ export default function AssessmentManagement({
             <Head title="Assessment Management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
-                    <h2 className="text-2xl font-semibold text-center mb-4">Assessment Management</h2>
+                    {/* Header with company name and period dates */}
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-semibold mb-2">
+                            {companyName !== "Loading..." ? companyName : "Assessment Management"}
+                        </h2>
+                        {periodInfo?.period?.start_date && periodInfo?.period?.end_date && (
+                            <p className="text-sm text-gray-600">
+                                {new Date(periodInfo.period.start_date).toLocaleDateString()} - {new Date(periodInfo.period.end_date).toLocaleDateString()}
+                            </p>
+                        )}
+                    </div>
                     
-                    {/* Centered wizard navigation for all screen sizes */}
+                    {/* Centered wizard navigation for all screen sizes with highlight */}
                     <div className="mb-6">
                         <CompanyWizard currentStep="assessment" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                     </div>
@@ -283,21 +299,12 @@ export default function AssessmentManagement({
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
-                                <CardTitle>
-                                    {loading ? "Loading..." : error ? "Error loading data" : companyName}
-                                </CardTitle>
                                 <CardDescription>
-                                    {loading ? "Loading period information..." : 
-                                     error ? "Could not load period information" : (
-                                        <>
-                                            Manage candidate assessments for {periodName} recruitment period
-                                            {periodInfo?.period.start_date && periodInfo?.period.end_date && (
-                                                <div className="text-sm text-gray-500 mt-1">
-                                                    {new Date(periodInfo.period.start_date).toLocaleDateString()} - {new Date(periodInfo.period.end_date).toLocaleDateString()}
-                                                </div>
-                                            )}
-                                        </>
-                                     )}
+                                    {periodName && periodName !== "Loading..." && periodName !== "No period selected" ? (
+                                        `Manage assessments for ${periodName} recruitment period`
+                                    ) : (
+                                        'Manage all assessments in the system'
+                                    )}
                                 </CardDescription>
                             </div>
 
@@ -334,13 +341,13 @@ export default function AssessmentManagement({
                                                         >
                                                             All Positions
                                                         </SelectItem>
-                                                        {positions.map((position) => (
+                                                        {uniquePositions.map((position) => (
                                                             <SelectItem
-                                                                key={position.value}
-                                                                value={position.label}
+                                                                key={position}
+                                                                value={position.toLowerCase()}
                                                                 className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
                                                             >
-                                                                {position.label}
+                                                                {position}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>

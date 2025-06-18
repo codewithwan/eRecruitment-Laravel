@@ -2,7 +2,7 @@ import { AssessmentTable, type AssessmentUser } from '@/components/company-table
 import { CompanyWizard } from '@/components/company-wizard';
 import { SearchBar } from '@/components/searchbar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -609,9 +609,19 @@ export default function AdministrationDashboard({
             <Head title="Administration" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
-                    <h2 className="text-2xl font-semibold text-center mb-4">Administration</h2>
+                    {/* Header with company name and period dates */}
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-semibold mb-2">
+                            {companyName !== "Loading..." ? companyName : "Administration"}
+                        </h2>
+                        {fetchedPeriodInfo?.period?.start_date && fetchedPeriodInfo?.period?.end_date && (
+                            <p className="text-sm text-gray-600">
+                                {new Date(fetchedPeriodInfo.period.start_date).toLocaleDateString()} - {new Date(fetchedPeriodInfo.period.end_date).toLocaleDateString()}
+                            </p>
+                        )}
+                    </div>
                     
-                    {/* Centered wizard navigation for all screen sizes */}
+                    {/* Centered wizard navigation for all screen sizes with highlight */}
                     <div className="mb-6">
                         <CompanyWizard currentStep="administration" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                     </div>
@@ -619,19 +629,9 @@ export default function AdministrationDashboard({
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
-                                <CardTitle>
-                                    {companyName}
-                                </CardTitle>
                                 <CardDescription>
-                                    {periodName ? (
-                                        <>
-                                            Manage candidates for {periodName} recruitment period
-                                            {fetchedPeriodInfo?.period?.start_date && fetchedPeriodInfo?.period?.end_date && (
-                                                <div className="text-sm text-gray-500 mt-1">
-                                                    {new Date(fetchedPeriodInfo.period.start_date).toLocaleDateString()} - {new Date(fetchedPeriodInfo.period.end_date).toLocaleDateString()}
-                                                </div>
-                                            )}
-                                        </>
+                                    {periodName && periodName !== "Loading..." && periodName !== "No period selected" ? (
+                                        `Manage candidates for ${periodName} recruitment period`
                                     ) : (
                                         'Manage all administration in the system'
                                     )}

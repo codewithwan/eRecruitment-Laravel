@@ -18,7 +18,7 @@ class SuperAdminSeeder extends Seeder
             'name' => env('SUPER_ADMIN_NAME', 'Super Admin'),
             'email' => env('SUPER_ADMIN_EMAIL', 'superadmin@gmail.com'),
             'password' => Hash::make(env('SUPER_ADMIN_PASSWORD', 'password')),
-            'role' => UserRole::HR,
+            'role' => UserRole::SUPER_ADMIN,
         ]);
         $this->command->info('Super Admin created successfully');
     }

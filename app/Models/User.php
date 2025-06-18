@@ -60,4 +60,64 @@ class User extends Authenticatable
     {
         return $this->hasMany(Applicant::class, 'user_id');
     }
+
+    public function candidatesProfile()
+    {
+        return $this->hasOne(CandidatesProfile::class);
+    }
+
+    public function candidatesEducations()
+    {
+        return $this->hasMany(CandidatesEducation::class);
+    }
+
+    public function candidatesWorkExperiences()
+    {
+        return $this->hasMany(CandidatesWorkExperience::class);
+    }
+
+    public function candidatesSkills()
+    {
+        return $this->hasMany(CandidatesSkill::class);
+    }
+
+    public function candidatesLanguages()
+    {
+        return $this->hasMany(CandidatesLanguage::class);
+    }
+
+    public function candidatesCourses()
+    {
+        return $this->hasMany(CandidatesCourse::class);
+    }
+
+    public function candidatesCertifications()
+    {
+        return $this->hasMany(CandidatesCertification::class);
+    }
+
+    public function candidatesEnglishCertifications()
+    {
+        return $this->hasMany(CandidatesEnglishCertification::class);
+    }
+
+    public function candidatesOrganizations()
+    {
+        return $this->hasMany(CandidatesOrganization::class);
+    }
+
+    public function candidatesAchievements()
+    {
+        return $this->hasMany(CandidatesAchivement::class);
+    }
+
+    public function candidatesSocialMedia()
+    {
+        return $this->hasMany(CandidatesSocialMedia::class);
+    }
+
+    public function candidatesCV()
+    {
+        return $this->hasOne(CandidatesCV::class);
+    }
 }

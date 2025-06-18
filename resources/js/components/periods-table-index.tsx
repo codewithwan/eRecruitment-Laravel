@@ -35,15 +35,18 @@ interface PaginationData {
 interface PeriodsTableProps {
     periods: Period[];
     pagination: PaginationData;
-    onView?: (id: string) => void;
-    onEdit?: (id: string) => void;
-    onDelete?: (id: string) => void;
-    onSelect?: (id: string) => void;
-    selectedPeriodId?: string | null;
+    onView: (periodId: string) => void;
+    onEdit: (periodId: string) => void;
+    onDelete: (periodId: string) => void;
+    onSelect: (periodId: string) => void;
+    selectedPeriodId: string | null;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
-    itemsPerPageOptions?: number[];
-    isLoading?: boolean;
+    isLoading: boolean;
+    // Add new navigation handlers
+    onNavigateToAssessment?: (periodId: string) => void;
+    onNavigateToInterview?: (periodId: string) => void;
+    onNavigateToReports?: (periodId: string) => void;
 }
 
 // Helper function to format dates
@@ -74,18 +77,23 @@ const formatSimpleDate = (dateString: string) => {
     }
 };
 
+// Options for items per page in pagination
+const itemsPerPageOptions = [5, 10, 20, 50, 100];
+
 export function PeriodsTable({
     periods,
     pagination,
-    onView = (id) => console.log('View period:', id),
-    onEdit = (id) => console.log('Edit period:', id),
-    onDelete = (id) => console.log('Delete period:', id),
-    onSelect = (id) => console.log('Select period:', id),
-    selectedPeriodId = null,
+    onView,
+    onEdit,
+    onDelete,
+    onSelect,
+    selectedPeriodId,
     onPageChange,
     onPerPageChange,
-    itemsPerPageOptions = [10, 25, 50, 100],
-    isLoading = false,
+    isLoading,
+    onNavigateToAssessment,
+    onNavigateToInterview,
+    onNavigateToReports,
 }: PeriodsTableProps) {
     const handleNextPage = () => {
         if (pagination.current_page < pagination.last_page) {

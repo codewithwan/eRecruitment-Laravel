@@ -17,6 +17,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePeriodCompanyInfo } from '@/hooks/usePeriodCompanyInfo';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -33,6 +34,11 @@ interface PaginationData {
 interface InterviewManagementProps {
     users?: InterviewUser[];
     pagination?: PaginationData;
+    selectedPeriod?: {
+        id: string;
+        name: string;
+        company?: string;
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -47,6 +53,32 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function InterviewDashboard(props: InterviewManagementProps) {
+    // Get period ID from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const periodId = urlParams.get('period');
+    
+    // Fetch period and company info from the API
+    const { loading, error, periodInfo } = usePeriodCompanyInfo(periodId);
+    
+    // State for company and period names (either from API or fallback)
+    const [companyName, setCompanyName] = useState<string>("Loading...");
+    const [periodName, setPeriodName] = useState<string>("Loading...");
+    
+    // Update company and period names when periodInfo changes
+    useEffect(() => {
+        if (periodInfo) {
+            setCompanyName(periodInfo.company.name);
+            setPeriodName(periodInfo.period.name);
+        } else if (!loading && !error && !periodInfo) {
+            // Fallback if no period is selected
+            setCompanyName("Select a period");
+            setPeriodName("No period selected");
+        } else if (error) {
+            setCompanyName("Error loading data");
+            setPeriodName("Error loading data");
+        }
+    }, [periodInfo, loading, error]);
+
     // Mock data for the administration table with proper date format
     const mockUsers: InterviewUser[] = [
         {
@@ -266,22 +298,31 @@ export default function InterviewDashboard(props: InterviewManagementProps) {
             <Head title="Interview" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-2xl font-semibold">Interview</h2>
-                        <div className="hidden md:block">
-                            <CompanyWizard currentStep="interview" className="!mb-0 !shadow-none !bg-transparent !border-0" />
-                        </div>
+                    <h2 className="text-2xl font-semibold text-center mb-4">Interview</h2>
+                    
+                    {/* Centered wizard navigation for all screen sizes */}
+                    <div className="mb-6">
+                        <CompanyWizard currentStep="interview" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                     </div>
                     
-                    {/* Mobile wizard navigation */}
-                    <div className="mb-4 md:hidden">
-                        <CompanyWizard currentStep="interview" />
-                    </div>
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
-                                <CardTitle>Interview</CardTitle>
-                                <CardDescription>Manage all interview in the system</CardDescription>
+                                <CardTitle>
+                                    {companyName}
+                                </CardTitle>
+                                <CardDescription>
+                                    {periodName ? (
+                                        `Manage interviews for ${periodName} recruitment period`
+                                    ) : (
+                                        'Manage all interview in the system'
+                                    )}
+                                    {periodInfo?.period.start_date && periodInfo?.period.end_date && (
+                                        <div className="mt-1 text-sm text-muted-foreground">
+                                            {new Date(periodInfo.period.start_date).toLocaleDateString()} - {new Date(periodInfo.period.end_date).toLocaleDateString()}
+                                        </div>
+                                    )}
+                                </CardDescription>
                             </div>
 
                             <div className="flex items-center gap-4">

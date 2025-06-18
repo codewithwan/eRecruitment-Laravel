@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePeriodCompanyInfo } from '@/hooks/usePeriodCompanyInfo';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -22,6 +23,11 @@ interface PaginationData {
 interface AssessmentManagementProps {
     users?: AssessmentUser[];
     pagination?: PaginationData;
+    selectedPeriod?: {
+        id: string;
+        name: string;
+        company?: string;
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -119,26 +125,60 @@ const dummyAssessmentUsers: AssessmentUser[] = [
     }
 ];
 
-export default function AssessmentManagement(props: AssessmentManagementProps) {
-    // Use dummy data if no props provided
-    const initialUsers = props.users || dummyAssessmentUsers;
-    const initialPagination = props.pagination || {
-        total: 42,
-        per_page: 10,
-        current_page: 2,
-        last_page: 5,
-    };
+export default function AssessmentManagement({ 
+    users: initialUsers = [], 
+    pagination: initialPagination,
+    selectedPeriod
+}: AssessmentManagementProps) {
+    // State for filtering
+    const [filteredUsers, setFilteredUsers] = useState<AssessmentUser[]>([]);
+    const [searchValue, setSearchValue] = useState('');
+    const [positionFilter, setPositionFilter] = useState<string>('');
 
-    const [users, setUsers] = useState(initialUsers);
-    const [filteredUsers, setFilteredUsers] = useState(initialUsers);
-    const [pagination, setPagination] = useState(initialPagination);
+    // Get period ID from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const periodId = urlParams.get('period');
+    
+    // Fetch period and company info from the API
+    const { loading, error, periodInfo } = usePeriodCompanyInfo(periodId);
+    
+    // State for company and period names (either from API or fallback)
+    const [companyName, setCompanyName] = useState<string>("Loading...");
+    const [periodName, setPeriodName] = useState<string>("Loading...");
+    
+    // Update company and period names when periodInfo changes
+    useEffect(() => {
+        if (periodInfo) {
+            setCompanyName(periodInfo.company.name);
+            setPeriodName(periodInfo.period.name);
+        } else if (!loading && !error && !periodInfo) {
+            // Fallback if no period is selected
+            setCompanyName("Select a period");
+            setPeriodName("No period selected");
+        } else if (error) {
+            setCompanyName("Error loading data");
+            setPeriodName("Error loading data");
+        }
+    }, [periodInfo, loading, error]);
+
+    // Use dummy data if no props provided
+    const users = initialUsers.length > 0 ? initialUsers : dummyAssessmentUsers;
+    const [pagination, setPagination] = useState<PaginationData>(
+        initialPagination || {
+            total: 42,
+            per_page: 10,
+            current_page: 2,
+            last_page: 5,
+        }
+    );
+
     const [isLoading, setIsLoading] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<AssessmentUser | null>(null);
 
     // Filter states
     const [searchQuery, setSearchQuery] = useState('');
-    const [positionFilter, setPositionFilter] = useState('all');
+    const [positionFilterState, setPositionFilterState] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
 
     const fetchUsers = useCallback(
@@ -149,7 +189,6 @@ export default function AssessmentManagement(props: AssessmentManagementProps) {
 
                 // Simulate API call with dummy data
                 setTimeout(() => {
-                    setUsers(dummyAssessmentUsers);
                     setFilteredUsers(dummyAssessmentUsers);
                     setPagination({
                         total: 42,
@@ -192,15 +231,15 @@ export default function AssessmentManagement(props: AssessmentManagementProps) {
         }
 
         // Apply position filter
-        if (positionFilter && positionFilter !== 'all') {
-            result = result.filter((user) => user.position === positionFilter);
+        if (positionFilterState && positionFilterState !== 'all') {
+            result = result.filter((user) => user.position === positionFilterState);
         }
 
         setFilteredUsers(result);
 
         // Set filter active state
-        setIsFilterActive(searchQuery !== '' || positionFilter !== 'all');
-    }, [searchQuery, positionFilter, users]);
+        setIsFilterActive(searchQuery !== '' || positionFilterState !== 'all');
+    }, [searchQuery, positionFilterState, users]);
 
     // Function to update URL parameters without page refresh
     const updateUrlParams = (page: number, perPage: number) => {
@@ -225,7 +264,7 @@ export default function AssessmentManagement(props: AssessmentManagementProps) {
 
     const resetFilters = () => {
         setSearchQuery('');
-        setPositionFilter('all');
+        setPositionFilterState('all');
     };
 
     return (
@@ -233,22 +272,32 @@ export default function AssessmentManagement(props: AssessmentManagementProps) {
             <Head title="Assessment Management" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-2xl font-semibold">Assessment Management</h2>
-                        <div className="hidden md:block">
-                            <CompanyWizard currentStep="assessment" className="!mb-0 !shadow-none !bg-transparent !border-0" />
-                        </div>
+                    <h2 className="text-2xl font-semibold text-center mb-4">Assessment Management</h2>
+                    
+                    {/* Centered wizard navigation for all screen sizes */}
+                    <div className="mb-6">
+                        <CompanyWizard currentStep="assessment" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                     </div>
                     
-                    {/* Mobile wizard navigation */}
-                    <div className="mb-4 md:hidden">
-                        <CompanyWizard currentStep="assessment" />
-                    </div>
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
-                                <CardTitle>Assessment List</CardTitle>
-                                <CardDescription>Manage all candidate Assessment in the system</CardDescription>
+                                <CardTitle>
+                                    {loading ? "Loading..." : error ? "Error loading data" : companyName}
+                                </CardTitle>
+                                <CardDescription>
+                                    {loading ? "Loading period information..." : 
+                                     error ? "Could not load period information" : (
+                                        <>
+                                            Manage candidate assessments for {periodName} recruitment period
+                                            {periodInfo?.period.start_date && periodInfo?.period.end_date && (
+                                                <div className="text-sm text-gray-500 mt-1">
+                                                    {new Date(periodInfo.period.start_date).toLocaleDateString()} - {new Date(periodInfo.period.end_date).toLocaleDateString()}
+                                                </div>
+                                            )}
+                                        </>
+                                     )}
+                                </CardDescription>
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -273,7 +322,7 @@ export default function AssessmentManagement(props: AssessmentManagementProps) {
                                                 <Label htmlFor="position-filter" className="font-inter text-sm text-gray-700">
                                                     Position
                                                 </Label>
-                                                <Select value={positionFilter} onValueChange={setPositionFilter}>
+                                                <Select value={positionFilterState} onValueChange={setPositionFilterState}>
                                                     <SelectTrigger id="position-filter" className="font-inter">
                                                         <SelectValue placeholder="Filter by position" className="font-inter" />
                                                     </SelectTrigger>

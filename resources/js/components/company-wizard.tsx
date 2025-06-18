@@ -1,4 +1,3 @@
-import { Card } from '@/components/ui/card';
 import { router } from '@inertiajs/react';
 
 interface WizardStep {
@@ -43,18 +42,28 @@ export function CompanyWizard({ currentStep, className }: CompanyWizardProps) {
     ];
 
     const handleStepClick = (step: WizardStep) => {
-        router.visit(step.href);
+        // Preserve URL parameters (especially period) when navigating between pages
+        const urlParams = new URLSearchParams(window.location.search);
+        const periodId = urlParams.get('period');
+        
+        // Add period parameter to the href if it exists
+        let href = step.href;
+        if (periodId) {
+            href = `${href}?period=${periodId}`;
+        }
+        
+        router.visit(href);
     };
 
     // Check if this is the inline compact version (no border, transparent background)
     const isInline = className?.includes('!border-0') && className?.includes('!bg-transparent');
 
     if (isInline) {
-        // Compact inline version for display in top-right corner
+        // Compact inline version for centered top display
         return (
-            <div className={`${className || ''}`}>
-                <div className="bg-white rounded-lg shadow-sm border p-3">
-                    <div className="flex items-center space-x-2">
+            <div className={`flex justify-center ${className || ''}`}>
+                <div className="p-6">
+                    <div className="flex items-center space-x-4">
                         {steps.map((step, index) => {
                             const isLast = index === steps.length - 1;
 
@@ -63,17 +72,17 @@ export function CompanyWizard({ currentStep, className }: CompanyWizardProps) {
                                     <button
                                         onClick={() => handleStepClick(step)}
                                         className={`
-                                            px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer
+                                            px-6 py-3 text-base font-semibold transition-all duration-200 cursor-pointer
                                             ${step.status === 'current' 
-                                                ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-200' 
-                                                : 'text-gray-600 hover:bg-gray-100'
+                                                ? 'text-blue-700 border-b-2 border-blue-700' 
+                                                : 'text-gray-600 hover:text-blue-600'
                                             }
                                         `}
                                     >
                                         {step.title}
                                     </button>
                                     {!isLast && (
-                                        <div className="w-4 h-px mx-1 bg-gray-200" />
+                                        <div className="w-6 h-0.5 mx-3 bg-gray-300" />
                                     )}
                                 </div>
                             );
@@ -86,42 +95,34 @@ export function CompanyWizard({ currentStep, className }: CompanyWizardProps) {
 
     // Original full card version for mobile/standalone display
     return (
-        <Card className={`mb-6 border-0 shadow-sm bg-white ${className || ''}`}>
-            <div className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1">
-                        {steps.map((step, index) => {
-                            const isLast = index === steps.length - 1;
+        <div className="flex justify-center mb-8">
+            <div className={`px-8 py-6 ${className || ''}`}>
+                <div className="flex items-center space-x-2">
+                    {steps.map((step, index) => {
+                        const isLast = index === steps.length - 1;
 
-                            return (
-                                <div key={step.id} className="flex items-center">
-                                    <button
-                                        onClick={() => handleStepClick(step)}
-                                        className={`
-                                            px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer
-                                            ${step.status === 'current' 
-                                                ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-200' 
-                                                : 'text-gray-600 hover:bg-gray-100'
-                                            }
-                                        `}
-                                    >
-                                        {step.title}
-                                    </button>
-                                    {!isLast && (
-                                        <div className="w-8 h-px mx-2 bg-gray-200" />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                    
-                    <div className="text-right">
-                        <div className="text-sm font-medium text-gray-700">
-                            {currentStep === 'periods' ? 'Periods Management' : steps.find(s => s.id === currentStep)?.title}
-                        </div>
-                    </div>
+                        return (
+                            <div key={step.id} className="flex items-center">
+                                <button
+                                    onClick={() => handleStepClick(step)}
+                                    className={`
+                                        px-6 py-4 text-lg font-semibold transition-all duration-200 cursor-pointer
+                                        ${step.status === 'current' 
+                                            ? 'text-blue-700 border-b-2 border-blue-700' 
+                                            : 'text-gray-600 hover:text-blue-600'
+                                        }
+                                    `}
+                                >
+                                    {step.title}
+                                </button>
+                                {!isLast && (
+                                    <div className="w-10 h-0.5 mx-4 bg-gray-300" />
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
-        </Card>
+        </div>
     );
 }

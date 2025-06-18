@@ -158,7 +158,16 @@ class PeriodController extends Controller
         
         // Attach vacancies to this period
         $period->vacancies()->attach($validated['vacancies_ids']);
-
+        
+        // Get the first vacancy to get its company
+        if (count($validated['vacancies_ids']) > 0) {
+            $vacancy = Vacancies::find($validated['vacancies_ids'][0]);
+            if ($vacancy && $vacancy->company_id) {
+                $period->company_id = $vacancy->company_id;
+                $period->save();
+            }
+        }
+        
         // Get the period with its associated vacancies for the response
         $period->load('vacancies.company', 'vacancies.questionPack');
         
@@ -455,5 +464,59 @@ class PeriodController extends Controller
             'selectedPeriodId' => $selectedPeriodId,
             'periodName' => $period ? $period->name : null,
         ]);
+    }
+
+    /**
+     * Get period details with company information by period ID.
+     * This is used by the company pages to display the correct company and period info.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPeriodWithCompany($id)
+    {
+        try {
+            // Find the period with its company and vacancies
+            $period = Period::with(['company', 'vacancies.company'])->findOrFail($id);
+            
+            // If period has a direct company relationship, use that
+            if ($period->company) {
+                $company = $period->company;
+            } 
+            // Otherwise, try to get a company from the first vacancy
+            else if ($period->vacancies->isNotEmpty() && $period->vacancies->first()->company) {
+                $company = $period->vacancies->first()->company;
+            } 
+            // Fallback if no company is found
+            else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No company found for this period',
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'period' => [
+                        'id' => $period->id,
+                        'name' => $period->name,
+                        'start_date' => $period->start_time ? date('Y-m-d', strtotime($period->start_time)) : null,
+                        'end_date' => $period->end_time ? date('Y-m-d', strtotime($period->end_time)) : null,
+                    ],
+                    'company' => [
+                        'id' => $company->id,
+                        'name' => $company->name,
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Period not found or error fetching data',
+                'error' => $e->getMessage()
+            ], 404);
+        }
     }
 }

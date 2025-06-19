@@ -46,6 +46,9 @@ Route::prefix('api')->group(function () {
                 ];
             });
     });
+
+    // Add a direct route for period with company API
+    Route::get('/periods/{id}/with-company', [PeriodController::class, 'getPeriodWithCompany'])->name('api.periods.with-company');
 });
 
 // Company Management Routes (hanya index dan destroy)

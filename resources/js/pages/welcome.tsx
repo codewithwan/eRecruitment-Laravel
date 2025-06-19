@@ -247,10 +247,12 @@ export default function Welcome(props: WelcomeProps) {
                                             <span className="text-sm">{job.location}</span>
                                         </div>
                                         <ul className="mb-4 list-inside list-disc text-gray-600">
-                                            {job.requirements.map((requirement, reqIndex) => (
-                                                <li key={reqIndex}>{requirement}</li>
-                                            ))}
-                                            {job.benefits && job.benefits.length > 0 && <li className="">Benefit: {job.benefits.join(', ')}</li>}
+                                            {Array.isArray(job.requirements)
+                                                ? job.requirements.map((requirement, reqIndex) => <li key={reqIndex}>{requirement}</li>)
+                                                : job.requirements && <li>{job.requirements}</li>}
+                                            {job.benefits && Array.isArray(job.benefits) && job.benefits.length > 0 && (
+                                                <li className="">Benefit: {job.benefits.join(', ')}</li>
+                                            )}
                                         </ul>
                                     </div>
                                     <Button className="mt-4 w-full rounded-xl bg-blue-600 px-6 py-3 text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-200">

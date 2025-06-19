@@ -2,10 +2,11 @@ import { AssessmentTable, type AssessmentUser } from '@/components/company-table
 import { CompanyWizard } from '@/components/company-wizard';
 import { SearchBar } from '@/components/searchbar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePeriodCompanyInfo } from '@/hooks/usePeriodCompanyInfo';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -28,6 +29,11 @@ interface AdministrationProps {
     users?: AssessmentUser[];
     pagination?: PaginationData;
     companyId?: number;
+    selectedPeriod?: {
+        id: string;
+        name: string;
+        company?: string;
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -44,7 +50,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function AdministrationDashboard({ 
     users: initialUsers = [],
     pagination: initialPagination,
-    companyId = 1 
+    companyId = 1,
+    selectedPeriod
 }: AdministrationProps) {
     // Extended dummy data for testing all features
     const [allUsers] = useState<AssessmentUser[]>(initialUsers.length > 0 ? initialUsers : [
@@ -561,27 +568,74 @@ export default function AdministrationDashboard({
     // Get unique positions for filter
     const uniquePositions = Array.from(new Set(allUsers.map(user => user.position)));
 
+    // Get period info from URL parameters or props
+    const [periodInfo, setPeriodInfo] = useState<{
+        name: string;
+        company: string;
+    } | null>(null);
+
+    // Get period ID from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const periodId = urlParams.get('period');
+    const companyIdFromUrl = urlParams.get('company');
+    
+    // Use company ID from URL if available, otherwise use the one from props
+    const effectiveCompanyId = companyIdFromUrl || (companyId ? String(companyId) : null);
+    
+    // Fetch period and company info from the API
+    const { loading, error, periodInfo: fetchedPeriodInfo } = usePeriodCompanyInfo(periodId, effectiveCompanyId);
+    
+    // State for company and period names (either from API or fallback)
+    const [companyName, setCompanyName] = useState<string>("Loading...");
+    const [periodName, setPeriodName] = useState<string>("Loading...");
+    
+    // Update company and period names when periodInfo changes
+    useEffect(() => {
+        if (fetchedPeriodInfo) {
+            setCompanyName(fetchedPeriodInfo.company.name);
+            setPeriodName(fetchedPeriodInfo.period.name);
+        } else if (!loading && !error && !fetchedPeriodInfo) {
+            // Fallback if no period is selected
+            setCompanyName("Select a period");
+            setPeriodName("No period selected");
+        } else if (error) {
+            setCompanyName("Error loading data");
+            setPeriodName("Error loading data");
+        }
+    }, [fetchedPeriodInfo, loading, error]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Administration" />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 <div>
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-2xl font-semibold">Administration</h2>
-                        <div className="hidden md:block">
-                            <CompanyWizard currentStep="administration" className="!mb-0 !shadow-none !bg-transparent !border-0" />
-                        </div>
+                    {/* Header with company name and period dates */}
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-semibold mb-2">
+                            {companyName !== "Loading..." ? companyName : "Administration"}
+                        </h2>
+                        {fetchedPeriodInfo?.period?.start_date && fetchedPeriodInfo?.period?.end_date && (
+                            <p className="text-sm text-gray-600">
+                                {new Date(fetchedPeriodInfo.period.start_date).toLocaleDateString()} - {new Date(fetchedPeriodInfo.period.end_date).toLocaleDateString()}
+                            </p>
+                        )}
                     </div>
                     
-                    {/* Mobile wizard navigation */}
-                    <div className="mb-4 md:hidden">
-                        <CompanyWizard currentStep="administration" />
+                    {/* Centered wizard navigation for all screen sizes with highlight */}
+                    <div className="mb-6">
+                        <CompanyWizard currentStep="administration" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                     </div>
+                    
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
-                                <CardTitle>Administration</CardTitle>
-                                <CardDescription>Manage all administration in the system</CardDescription>
+                                <CardDescription>
+                                    {periodName && periodName !== "Loading..." && periodName !== "No period selected" ? (
+                                        `Manage candidates for ${periodName} recruitment period`
+                                    ) : (
+                                        'Manage all administration in the system'
+                                    )}
+                                </CardDescription>
                             </div>
 
                             <div className="flex items-center gap-4">

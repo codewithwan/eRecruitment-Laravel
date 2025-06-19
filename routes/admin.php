@@ -105,4 +105,6 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
         Route::get('/company/{companyId}/administration', [PeriodController::class, 'administration'])
             ->name('company.administration');
             
+        // Add route to get period with company information
+        Route::get('/periods/{id}/with-company', [PeriodController::class, 'getPeriodWithCompany'])->name('periods.with-company');
     });

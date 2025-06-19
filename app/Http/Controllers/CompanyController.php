@@ -17,6 +17,16 @@ class CompanyController extends Controller
     public function administration(Request $request)
     {
         $companyId = $request->query('companyId', 1);
+        $periodId = $request->query('period');
+        
+        // If periodId is provided, use it to get the correct company
+        if ($periodId) {
+            $period = Period::with('company')->find($periodId);
+            if ($period && $period->company) {
+                $companyId = $period->company->id;
+            }
+        }
+        
         $company = Company::findOrFail($companyId);
         
         // Dummy data based on both screenshots - with period information from Periods page
@@ -99,6 +109,15 @@ class CompanyController extends Controller
     public function assessment(Request $request)
     {
         $companyId = $request->query('companyId', 1);
+        $periodId = $request->query('period');
+        
+        // If periodId is provided, use it to get the correct company
+        if ($periodId) {
+            $period = Period::with('company')->find($periodId);
+            if ($period && $period->company) {
+                $companyId = $period->company->id;
+            }
+        }
         
         // Assessment dummy data
         $assessments = [
@@ -152,6 +171,15 @@ class CompanyController extends Controller
     public function interview(Request $request)
     {
         $companyId = $request->query('companyId', 1);
+        $periodId = $request->query('period');
+        
+        // If periodId is provided, use it to get the correct company
+        if ($periodId) {
+            $period = Period::with('company')->find($periodId);
+            if ($period && $period->company) {
+                $companyId = $period->company->id;
+            }
+        }
         
         // Interview dummy data
         $interviews = [
@@ -211,6 +239,15 @@ class CompanyController extends Controller
     public function reports(Request $request)
     {
         $companyId = $request->query('companyId', 1);
+        $periodId = $request->query('period');
+        
+        // If periodId is provided, use it to get the correct company
+        if ($periodId) {
+            $period = Period::with('company')->find($periodId);
+            if ($period && $period->company) {
+                $companyId = $period->company->id;
+            }
+        }
         
         // Reports dummy data
         $reportsData = [

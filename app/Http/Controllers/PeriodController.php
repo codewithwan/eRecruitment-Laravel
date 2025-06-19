@@ -70,14 +70,26 @@ class PeriodController extends Controller
                 $data['department'] = $firstVacancy->department ?? null;
                 $data['question_pack'] = $firstVacancy->questionPack ? $firstVacancy->questionPack->pack_name : null;
                 
-                // Add all vacancies as a separate array
+                // Add all vacancies as a separate array with company information
                 $data['vacancies_list'] = $period->vacancies->map(function ($vacancy) {
                     return [
                         'id' => $vacancy->id,
                         'title' => $vacancy->title,
-                        'department' => $vacancy->department
+                        'department' => $vacancy->department,
+                        'company' => $vacancy->company ? [
+                            'id' => $vacancy->company->id,
+                            'name' => $vacancy->company->name
+                        ] : null
                     ];
                 })->toArray();
+                
+                // Add unique companies for this period
+                $data['companies'] = $period->vacancies->pluck('company')->filter()->unique('id')->map(function ($company) {
+                    return [
+                        'id' => $company->id,
+                        'name' => $company->name
+                    ];
+                })->values()->toArray();
                 
                 // Count applicants for this period
                 $data['applicants_count'] = $period->applicants()->count();
@@ -86,6 +98,7 @@ class PeriodController extends Controller
                 $data['department'] = null;
                 $data['question_pack'] = null;
                 $data['vacancies_list'] = [];
+                $data['companies'] = [];
                 $data['applicants_count'] = 0;
             }
             
@@ -158,7 +171,16 @@ class PeriodController extends Controller
         
         // Attach vacancies to this period
         $period->vacancies()->attach($validated['vacancies_ids']);
-
+        
+        // Get the first vacancy to get its company
+        if (count($validated['vacancies_ids']) > 0) {
+            $vacancy = Vacancies::find($validated['vacancies_ids'][0]);
+            if ($vacancy && $vacancy->company_id) {
+                $period->company_id = $vacancy->company_id;
+                $period->save();
+            }
+        }
+        
         // Get the period with its associated vacancies for the response
         $period->load('vacancies.company', 'vacancies.questionPack');
         
@@ -455,5 +477,102 @@ class PeriodController extends Controller
             'selectedPeriodId' => $selectedPeriodId,
             'periodName' => $period ? $period->name : null,
         ]);
+    }
+
+    /**
+     * Get period details with company information by period ID.
+     * This is used by the company pages to display the correct company and period info.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPeriodWithCompany(Request $request, $id)
+    {
+        try {
+            // Find the period with its company and vacancies
+            $period = Period::with(['company', 'vacancies.company'])->findOrFail($id);
+            
+            // Get company ID from query parameter if provided
+            $requestedCompanyId = $request->query('company');
+            
+            // Log for debugging
+            Log::info('getPeriodWithCompany called', [
+                'period_id' => $id,
+                'requested_company_id' => $requestedCompanyId,
+                'period_name' => $period->name,
+                'period_has_direct_company' => $period->company ? true : false,
+                'vacancies_companies' => $period->vacancies->map(function($vacancy) {
+                    return [
+                        'vacancy_id' => $vacancy->id,
+                        'vacancy_title' => $vacancy->title,
+                        'company_id' => $vacancy->company ? $vacancy->company->id : null,
+                        'company_name' => $vacancy->company ? $vacancy->company->name : null,
+                    ];
+                })->toArray()
+            ]);
+            
+            $company = null;
+            
+            // If a specific company ID is requested, find that company
+            if ($requestedCompanyId) {
+                // Find the requested company among the period's vacancies
+                $requestedCompany = $period->vacancies
+                    ->pluck('company')
+                    ->where('id', $requestedCompanyId)
+                    ->first();
+                
+                if ($requestedCompany) {
+                    $company = $requestedCompany;
+                    Log::info('Found requested company', ['company_id' => $company->id, 'company_name' => $company->name]);
+                } else {
+                    Log::warning('Requested company not found in period vacancies', ['requested_company_id' => $requestedCompanyId]);
+                }
+            }
+            
+            // If no specific company requested or company not found, use fallback logic
+            if (!$company) {
+                // If period has a direct company relationship, use that
+                if ($period->company) {
+                    $company = $period->company;
+                    Log::info('Using period direct company', ['company_id' => $company->id, 'company_name' => $company->name]);
+                } 
+                // Otherwise, try to get a company from the first vacancy
+                else if ($period->vacancies->isNotEmpty() && $period->vacancies->first()->company) {
+                    $company = $period->vacancies->first()->company;
+                    Log::info('Using first vacancy company as fallback', ['company_id' => $company->id, 'company_name' => $company->name]);
+                }
+            }
+            
+            // Fallback if no company is found
+            if (!$company) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No company found for this period',
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'period' => [
+                        'id' => $period->id,
+                        'name' => $period->name,
+                        'start_date' => $period->start_time ? date('Y-m-d', strtotime($period->start_time)) : null,
+                        'end_date' => $period->end_time ? date('Y-m-d', strtotime($period->end_time)) : null,
+                    ],
+                    'company' => [
+                        'id' => $company->id,
+                        'name' => $company->name,
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Period not found or error fetching data',
+                'error' => $e->getMessage()
+            ], 404);
+        }
     }
 }

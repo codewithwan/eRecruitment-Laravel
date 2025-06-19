@@ -34,6 +34,16 @@ type VacancyItem = {
   id: number;
   title: string;
   department: string;
+  company?: {
+    id: number;
+    name: string;
+  };
+};
+
+// Type for company data in period
+type CompanyItem = {
+  id: number;
+  name: string;
 };
 
 // Add proper types for the period prop
@@ -49,6 +59,7 @@ type PeriodData = {
   question_pack?: string;
   applicants_count?: number;
   vacancies_list?: VacancyItem[];
+  companies?: CompanyItem[];
 };
 
 // Update the Period type to include id as number for consistency
@@ -64,6 +75,7 @@ type Period = {
     questionPack: string;
     applicantsCount: number;
     vacanciesList: VacancyItem[];
+    companies: CompanyItem[];
 };
 
 // Add a type for vacancy data
@@ -207,6 +219,8 @@ export default function PeriodsDashboard({
             applicantsCount: p.applicants_count || 0,
             // Include the full list of vacancies
             vacanciesList: p.vacancies_list || [],
+            // Include companies information
+            companies: p.companies || [],
         };
     }) : [];
 
@@ -365,13 +379,16 @@ export default function PeriodsDashboard({
         setSearchQuery(query);
     };
 
-    // Period selection handler - Navigate to administration page with selected period
+    // Period selection handler - Navigate to administration page with selected period and company
     const handleSelectPeriod = (periodId: string) => {
         // Store the selected period ID in localStorage
         setSelectedPeriodId(periodId);
         
-        // Navigate to administration page with the period ID as parameter
-        router.visit(`/dashboard/company/administration?period=${periodId}`);
+        // Get company ID from props if available, otherwise use a default value
+        const companyIdParam = company ? `&company=${company.id}` : '';
+        
+        // Navigate to administration page with the period ID and company ID as parameters
+        router.visit(`/dashboard/company/administration?period=${periodId}${companyIdParam}`);
     };
 
     // View period details handler
@@ -540,8 +557,28 @@ export default function PeriodsDashboard({
         // Store the selected period ID
         setSelectedPeriodId(periodId);
         
-        // Navigate to administration page with period parameter
-        router.visit(`/dashboard/company/administration?period=${periodId}`);
+        // Find the period to get company information
+        const selectedPeriod = periods.find(p => p.id === periodId);
+        let companyIdParam = '';
+        
+        if (company) {
+            // If we're on a company-specific page, use that company
+            companyIdParam = `&company=${company.id}`;
+        } else if (selectedPeriod && selectedPeriod.companies && selectedPeriod.companies.length > 0) {
+            // If we're on global periods page, use the first company from the period
+            const firstCompany = selectedPeriod.companies[0];
+            companyIdParam = `&company=${firstCompany.id}`;
+            
+            // Log a warning if there are multiple companies
+            if (selectedPeriod.companies.length > 1) {
+                console.warn(`Period "${selectedPeriod.name}" has ${selectedPeriod.companies.length} companies. Using "${firstCompany.name}" as default.`);
+            }
+        } else {
+            console.warn('No company information found for the selected period');
+        }
+        
+        // Navigate to administration page with period parameter and company ID
+        router.visit(`/dashboard/company/administration?period=${periodId}${companyIdParam}`);
     };
 
     return (

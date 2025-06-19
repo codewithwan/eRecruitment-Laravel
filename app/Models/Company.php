@@ -26,4 +26,12 @@ class Company extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the periods for the company.
+     */
+    public function periods()
+    {
+        return $this->hasMany(Period::class);
+    }
 }

@@ -93,51 +93,61 @@ class Application extends Model
     }
     
     /**
-     * Get the application evaluation data.
+     * Get the application administration data.
      */
-    public function evaluation(): HasOne
+    public function administration(): HasOne
     {
-        return $this->hasOne(ApplicationEvaluation::class);
+        return $this->hasOne(ApplicationAdministration::class);
     }
     
     /**
-     * Get the application schedule data.
+     * Get the application assessment data.
      */
-    public function schedule(): HasOne
+    public function assessment(): HasOne
     {
-        return $this->hasOne(ApplicationSchedule::class);
+        return $this->hasOne(ApplicationAssessment::class);
     }
+    
+    /**
+     * Get the application interview data.
+     */
+    public function interview(): HasOne
+    {
+        return $this->hasOne(ApplicationInterview::class);
+    }
+    
+    /**
+     * Get the application report data.
+     */
+    public function report(): HasOne
+    {
+        return $this->hasOne(ApplicationReport::class);
+    }
+    
+
     
     /**
      * Get the admin who reviewed the application.
      */
-    public function adminReviewer(): BelongsTo
+    public function adminReviewer(): ?User
     {
-        return $this->evaluation ? $this->evaluation->adminReviewer() : null;
+        return $this->administration?->reviewer;
     }
     
     /**
      * Get the interviewer.
      */
-    public function interviewer(): BelongsTo
+    public function interviewer(): ?User
     {
-        return $this->evaluation ? $this->evaluation->interviewer() : null;
+        return $this->interview?->interviewer;
     }
     
     /**
      * Get the user who made the final decision.
      */
-    public function decisionMaker(): BelongsTo
+    public function decisionMaker(): ?User
     {
-        return $this->evaluation ? $this->evaluation->decisionMaker() : null;
-    }
-    
-    /**
-     * Get all stage history records for this application.
-     */
-    public function stageHistories(): HasMany
-    {
-        return $this->hasMany(ApplicationStageHistory::class)->orderBy('changed_at');
+        return $this->report?->decisionMaker;
     }
     
     /**
@@ -149,31 +159,27 @@ class Application extends Model
     }
     
     /**
-     * Add a stage progression entry
+     * Update application stage and status
      */
-    public function addStageProgression(ApplicationStatus $fromStage, ApplicationStatus $toStage, ?string $notes = null, ?int $userId = null): void
+    public function updateStage(ApplicationStatus $stage, ?int $statusId = null): void
     {
-        ApplicationStageHistory::create([
-            'application_id' => $this->id,
-            'from_stage' => $fromStage,
-            'to_stage' => $toStage,
-            'notes' => $notes,
-            'changed_by' => $userId,
-            'changed_at' => now(),
-        ]);
-        
         // Update the enum stage
-        $this->update(['current_stage' => $toStage]);
+        $this->update(['current_stage' => $stage]);
         
-        // Update current_stage_id based on matching stage/status in statuses table
-        $statusRecord = Status::where('code', $toStage->value)->first();
+        // Update current_stage_id and status_id based on matching stage/status in statuses table
+        $statusRecord = Status::where('code', $stage->value)->first();
         if ($statusRecord) {
             if ($statusRecord->isStage()) {
                 $this->update(['current_stage_id' => $statusRecord->id]);
-            }
+        }
             if ($statusRecord->isStatus()) {
                 $this->update(['status_id' => $statusRecord->id]);
             }
+        }
+        
+        // If a specific status is provided, update it
+        if ($statusId) {
+            $this->update(['status_id' => $statusId]);
         }
     }
     
@@ -194,33 +200,15 @@ class Application extends Model
     }
     
     /**
-     * Check if application has completed a specific stage
-     */
-    public function hasCompletedStage(ApplicationStatus $stage): bool
-    {
-        return $this->stageHistories()
-            ->where('from_stage', $stage)
-            ->exists();
-    }
-    
-    /**
-     * Get the latest stage progression
-     */
-    public function getLatestStageHistory()
-    {
-        return $this->stageHistories()->latest('changed_at')->first();
-    }
-    
-    /**
      * Get overall score based on current stage
      */
     public function getOverallScore(): ?float
     {
-        if (!$this->evaluation) {
+        if (!$this->report) {
             return null;
         }
         
-        return $this->evaluation->getOverallScore();
+        return $this->report->overall_score ?? $this->report->calculateOverallScore();
     }
     
     /**
@@ -228,7 +216,37 @@ class Application extends Model
      */
     public function getNextSchedule(): ?array
     {
-        return $this->schedule ? $this->schedule->getUpcomingSchedule() : null;
+        $upcomingEvents = [];
+        
+        // Check assessment schedule
+        if ($this->assessment && $this->assessment->scheduled_at && $this->assessment->scheduled_at->isFuture()) {
+            $upcomingEvents[] = [
+                'type' => 'assessment',
+                'scheduled_at' => $this->assessment->scheduled_at,
+                'location' => $this->assessment->test_location,
+            ];
+        }
+        
+        // Check interview schedule
+        if ($this->interview && $this->interview->scheduled_at && $this->interview->scheduled_at->isFuture()) {
+            $upcomingEvents[] = [
+                'type' => 'interview',
+                'scheduled_at' => $this->interview->scheduled_at,
+                'location' => $this->interview->location,
+                'is_online' => $this->interview->is_online,
+            ];
+        }
+        
+        if (empty($upcomingEvents)) {
+            return null;
+        }
+        
+        // Return the earliest upcoming event
+        usort($upcomingEvents, function($a, $b) {
+            return $a['scheduled_at']->timestamp <=> $b['scheduled_at']->timestamp;
+        });
+        
+        return $upcomingEvents[0];
     }
     
     /**

@@ -47,8 +47,8 @@ class VacancyPeriods extends Model
     /**
      * Get the applicants for this vacancy-period combination.
      */
-    public function applicants(): HasMany
+    public function applications(): HasMany
     {
-        return $this->hasMany(Applicant::class, 'vacancy_period_id');
+        return $this->hasMany(Application::class, 'vacancy_period_id');
     }
 }

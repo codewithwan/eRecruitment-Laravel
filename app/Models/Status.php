@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\CandidatesStage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,7 +19,8 @@ class Status extends Model
         'name',
         'code',
         'description',
-        'stage',
+        'type',
+        'order',
         'is_active',
     ];
 
@@ -30,15 +30,55 @@ class Status extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'stage' => CandidatesStage::class,
         'is_active' => 'boolean',
+        'order' => 'integer',
     ];
 
     /**
-     * Get the applicants with this status.
+     * Get the applications with this status.
      */
-    public function applicants(): HasMany
+    public function applications(): HasMany
     {
-        return $this->hasMany(Applicant::class, 'status_id');
+        return $this->hasMany(Application::class, 'status_id');
+    }
+
+    /**
+     * Get the applications in this stage (for current_stage_id).
+     */
+    public function currentStageApplications(): HasMany
+    {
+        return $this->hasMany(Application::class, 'current_stage_id');
+    }
+
+    /**
+     * Scope to get only stages.
+     */
+    public function scopeStages($query)
+    {
+        return $query->where('type', 'stage')->orderBy('order');
+    }
+
+    /**
+     * Scope to get only statuses.
+     */
+    public function scopeStatuses($query)
+    {
+        return $query->where('type', 'status');
+    }
+
+    /**
+     * Check if this is a stage.
+     */
+    public function isStage(): bool
+    {
+        return $this->type === 'stage';
+    }
+
+    /**
+     * Check if this is a status.
+     */
+    public function isStatus(): bool
+    {
+        return $this->type === 'status';
     }
 }

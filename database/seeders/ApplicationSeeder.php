@@ -2,15 +2,19 @@
 
 namespace Database\Seeders;
 
-use App\Enums\CandidatesStage;
-use App\Models\Applicant;
-use App\Models\ApplicantStageHistory;
+use App\Enums\ApplicationStatus;
+use App\Models\Application;
+use App\Models\ApplicationEvaluation;
+use App\Models\ApplicationSchedule;
+use App\Models\ApplicationStageHistory;
+
 use App\Models\Status;
 use App\Models\User;
 use App\Models\VacancyPeriods;
+use App\Models\QuestionPack;
 use Illuminate\Database\Seeder;
 
-class ApplicantSeeder extends Seeder
+class ApplicationSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -20,6 +24,8 @@ class ApplicantSeeder extends Seeder
         $users = User::where('role', 'candidate')->get();
         $vacancyPeriods = VacancyPeriods::all();
         $statuses = Status::all();
+        $stageRecords = Status::stages()->get();
+        $questionPacks = QuestionPack::all();
         $admins = User::whereIn('role', ['super_admin', 'hr', 'head_hr'])->get();
 
         // Check if we have required data
@@ -37,11 +43,31 @@ class ApplicantSeeder extends Seeder
             $this->command->error('No statuses found. Please create some status records first.');
             return;
         }
+        
+        if ($stageRecords->isEmpty()) {
+            $this->command->error('No stage records found. Please create some stage records first.');
+            return;
+        }
+        
+        if ($questionPacks->isEmpty()) {
+            $this->command->error('No question packs found. Please run QuestionPackSeeder first.');
+            return;
+        }
 
         if ($admins->isEmpty()) {
             $this->command->error('No admin users found. Please run SuperAdminSeeder first.');
             return;
         }
+
+        // Get status IDs for common statuses
+        $pendingStatus = $statuses->where('code', 'pending')->first()->id;
+        $acceptedStatus = $statuses->where('code', 'accepted')->first()->id; 
+        $rejectedStatus = $statuses->where('code', 'rejected')->first()->id;
+        
+        // Get stage IDs
+        $adminStageId = $stageRecords->where('code', 'administrative_selection')->first()->id;
+        $psychotestStageId = $stageRecords->where('code', 'psychological_test')->first()->id;
+        $interviewStageId = $stageRecords->where('code', 'interview')->first()->id;
 
         // Create realistic applications
         foreach ($users as $user) {
@@ -54,52 +80,70 @@ class ApplicantSeeder extends Seeder
                 
                 // Distribute stages realistically
                 $stageDistribution = rand(1, 100);
+                $status_id = $pendingStatus;
                 
                 if ($stageDistribution <= 35) {
                     // 35% - Still in administrative review
-                    $currentStage = CandidatesStage::ADMINISTRATIVE_SELECTION;
+                    $currentStage = ApplicationStatus::ADMINISTRATIVE_SELECTION;
+                    $currentStageId = $adminStageId;
                     $adminScore = rand(60, 85);
                 } elseif ($stageDistribution <= 55) {
                     // 20% - Moved to psychotest
-                    $currentStage = CandidatesStage::PSYCHOTEST;
+                    $currentStage = ApplicationStatus::PSYCHOLOGICAL_TEST;
+                    $currentStageId = $psychotestStageId;
                     $adminScore = rand(75, 95);
                     $testScore = rand(65, 90);
                 } elseif ($stageDistribution <= 70) {
                     // 15% - Moved to interview
-                    $currentStage = CandidatesStage::INTERVIEW;
+                    $currentStage = ApplicationStatus::INTERVIEW;
+                    $currentStageId = $interviewStageId;
                     $adminScore = rand(80, 95);
                     $testScore = rand(70, 95);
                     $interviewScore = rand(70, 90);
                 } elseif ($stageDistribution <= 80) {
                     // 10% - Accepted
-                    $currentStage = CandidatesStage::ACCEPTED;
+                    $currentStage = ApplicationStatus::ACCEPTED;
+                    $currentStageId = $interviewStageId; // Last stage is interview
+                    $status_id = $acceptedStatus;
                     $adminScore = rand(85, 100);
                     $testScore = rand(80, 100);
                     $interviewScore = rand(85, 100);
                 } else {
                     // 20% - Rejected at various stages
                     $rejectionStage = rand(1, 3);
+                    $status_id = $rejectedStatus;
+                    
                     if ($rejectionStage == 1) {
-                        $currentStage = CandidatesStage::REJECTED;
+                        $currentStage = ApplicationStatus::REJECTED;
+                        $currentStageId = $adminStageId;
                         $adminScore = rand(30, 65);
                     } elseif ($rejectionStage == 2) {
-                        $currentStage = CandidatesStage::REJECTED;
+                        $currentStage = ApplicationStatus::REJECTED;
+                        $currentStageId = $psychotestStageId;
                         $adminScore = rand(70, 80);
                         $testScore = rand(30, 60);
                     } else {
-                        $currentStage = CandidatesStage::REJECTED;
+                        $currentStage = ApplicationStatus::REJECTED;
+                        $currentStageId = $interviewStageId;
                         $adminScore = rand(75, 85);
                         $testScore = rand(70, 85);
                         $interviewScore = rand(30, 65);
                     }
                 }
 
-                $applicant = Applicant::create([
+                // First create the application record
+                $application = Application::create([
                     'user_id' => $user->id,
                     'vacancy_period_id' => $vacancyPeriod->id,
-                    'status_id' => $statuses->random()->id,
                     'current_stage' => $currentStage,
+                    'current_stage_id' => $currentStageId,
+                    'status_id' => $status_id,
                     'applied_at' => $appliedAt,
+                ]);
+
+                // Create evaluation records
+                ApplicationEvaluation::create([
+                    'application_id' => $application->id,
                     
                     // Admin stage
                     'admin_score' => $adminScore ?? null,
@@ -110,62 +154,90 @@ class ApplicantSeeder extends Seeder
                     // Test stage
                     'test_score' => $testScore ?? null,
                     'test_notes' => isset($testScore) ? $this->getTestNotes($testScore) : null,
-                    'test_scheduled_at' => isset($testScore) ? fake()->dateTimeBetween($appliedAt, 'now') : null,
                     'test_completed_at' => isset($testScore) ? fake()->dateTimeBetween($appliedAt, 'now') : null,
                     
                     // Interview stage
                     'interview_score' => $interviewScore ?? null,
                     'interview_notes' => isset($interviewScore) ? $this->getInterviewNotes($interviewScore) : null,
-                    'interview_scheduled_at' => isset($interviewScore) ? fake()->dateTimeBetween($appliedAt, 'now') : null,
                     'interview_completed_at' => isset($interviewScore) ? fake()->dateTimeBetween($appliedAt, 'now') : null,
                     'interviewer_id' => isset($interviewScore) ? $admins->random()->id : null,
                     
                     // Final decision
-                    'rejection_reason' => $currentStage === CandidatesStage::REJECTED ? 
+                    'rejection_reason' => $status_id === $rejectedStatus ? 
                         fake()->randomElement([
                             'Tidak memenuhi kualifikasi minimum',
                             'Skor psikotes di bawah standar',
                             'Kurang pengalaman yang relevan',
                             'Tidak cocok dengan budaya perusahaan'
                         ]) : null,
-                    'decision_made_at' => in_array($currentStage, [CandidatesStage::ACCEPTED, CandidatesStage::REJECTED]) ?
+                    'decision_made_at' => in_array($status_id, [$acceptedStatus, $rejectedStatus]) ?
                         fake()->dateTimeBetween($appliedAt, 'now') : null,
-                    'decision_made_by' => in_array($currentStage, [CandidatesStage::ACCEPTED, CandidatesStage::REJECTED]) ?
+                    'decision_made_by' => in_array($status_id, [$acceptedStatus, $rejectedStatus]) ?
                         $admins->random()->id : null,
+                ]);
+                
+                // Create schedule records
+                ApplicationSchedule::create([
+                    'application_id' => $application->id,
+                    
+                    // Test scheduling
+                    'test_scheduled_at' => isset($testScore) ? fake()->dateTimeBetween($appliedAt, '+2 weeks') : null,
+                    'test_type' => isset($testScore) ? 
+                        // Gunakan test_type dari question pack jika tersedia
+                        ($questionPacks->isNotEmpty() ? $questionPacks->random()->test_type : 
+                        fake()->randomElement(['general', 'technical', 'leadership'])) : null,
+                    'test_scheduled_by' => isset($testScore) ? $admins->random()->id : null,
+                    
+                    // Interview scheduling
+                    'interview_scheduled_at' => isset($interviewScore) ? fake()->dateTimeBetween($appliedAt, '+3 weeks') : null,
+                    'is_interview_online' => isset($interviewScore) ? fake()->boolean(80) : true, // Default to true if no interview
+                    'interview_location' => isset($interviewScore) ? 
+                        fake()->randomElement(['Zoom Meeting', 'Google Meet', 'Microsoft Teams', 'Skype']) : null,
+                    'company_id' => isset($interviewScore) && !fake()->boolean(80) ? $vacancyPeriod->vacancy->company_id : null,
+                    'interview_scheduled_by' => isset($interviewScore) ? $admins->random()->id : null,
+                    
+                    // Status tracking
+                    'test_attendance_confirmed' => isset($testScore),
+                    'interview_attendance_confirmed' => isset($interviewScore),
                 ]);
 
                 // Create stage progression history
-                $this->createStageHistory($applicant, $admins);
+                $this->createStageHistory($application, $admins);
             }
         }
 
-        $this->command->info('Created ' . Applicant::count() . ' realistic applications');
+        $this->command->info('Created ' . Application::count() . ' realistic applications');
     }
 
-    private function createStageHistory(Applicant $applicant, $admins)
+    private function createStageHistory(Application $application, $admins)
     {
         if ($admins->isEmpty()) {
             return; // Skip if no admins available
         }
 
         $stages = [
-            CandidatesStage::ADMINISTRATIVE_SELECTION,
-            CandidatesStage::PSYCHOTEST,
-            CandidatesStage::INTERVIEW,
-            $applicant->current_stage === CandidatesStage::ACCEPTED ? CandidatesStage::ACCEPTED : null,
-            $applicant->current_stage === CandidatesStage::REJECTED ? CandidatesStage::REJECTED : null,
+            ApplicationStatus::ADMINISTRATIVE_SELECTION,
+            ApplicationStatus::PSYCHOLOGICAL_TEST,
+            ApplicationStatus::INTERVIEW,
         ];
 
-        $previousStage = CandidatesStage::ADMINISTRATIVE_SELECTION;
-        $changeDate = $applicant->applied_at;
+        // Add final stage based on status
+        if ($application->isAccepted()) {
+            $stages[] = ApplicationStatus::ACCEPTED;
+        } elseif ($application->isRejected()) {
+            $stages[] = ApplicationStatus::REJECTED;
+        }
+
+        $previousStage = ApplicationStatus::ADMINISTRATIVE_SELECTION;
+        $changeDate = $application->applied_at;
 
         foreach ($stages as $stage) {
-            if (!$stage || $stage === CandidatesStage::ADMINISTRATIVE_SELECTION) continue;
+            if (!$stage || $stage === ApplicationStatus::ADMINISTRATIVE_SELECTION) continue;
             
-            // Only create history if applicant has reached this stage
-            if ($this->hasReachedStage($applicant, $stage)) {
-                ApplicantStageHistory::create([
-                    'applicant_id' => $applicant->id,
+            // Only create history if application has reached this stage
+            if ($this->hasReachedStage($application, $stage)) {
+                ApplicationStageHistory::create([
+                    'application_id' => $application->id,
                     'from_stage' => $previousStage,
                     'to_stage' => $stage,
                     'notes' => fake()->optional(0.3)->randomElement([
@@ -182,22 +254,22 @@ class ApplicantSeeder extends Seeder
                 $previousStage = $stage;
                 
                 // If this is the current stage, break
-                if ($stage === $applicant->current_stage) break;
+                if ($stage === $application->current_stage) break;
             }
         }
     }
 
-    private function hasReachedStage(Applicant $applicant, CandidatesStage $stage): bool
+    private function hasReachedStage(Application $application, ApplicationStatus $stage): bool
     {
         $stageOrder = [
-            CandidatesStage::ADMINISTRATIVE_SELECTION->value => 1,
-            CandidatesStage::PSYCHOTEST->value => 2,
-            CandidatesStage::INTERVIEW->value => 3,
-            CandidatesStage::ACCEPTED->value => 4,
-            CandidatesStage::REJECTED->value => 4, // Can happen at any stage
+            ApplicationStatus::ADMINISTRATIVE_SELECTION->value => 1,
+            ApplicationStatus::PSYCHOLOGICAL_TEST->value => 2,
+            ApplicationStatus::INTERVIEW->value => 3,
+            ApplicationStatus::ACCEPTED->value => 4,
+            ApplicationStatus::REJECTED->value => 4, // Can happen at any stage
         ];
 
-        $currentOrder = $stageOrder[$applicant->current_stage->value] ?? 0;
+        $currentOrder = $stageOrder[$application->current_stage->value] ?? 0;
         $targetOrder = $stageOrder[$stage->value] ?? 0;
 
         return $currentOrder >= $targetOrder;
@@ -248,31 +320,31 @@ class ApplicantSeeder extends Seeder
                 'Kemampuan logika dan analisis excellent. Personality type cocok dengan team.',
                 'Test results menunjukkan kandidat memiliki potensi leadership yang baik.',
                 'Skor verbal dan numerical di atas rata-rata. Critical thinking skills bagus.',
-                'Overall test performance sangat memuaskan. Recommended untuk interview.'
+                'Hasil psikotes menunjukkan self-motivation dan adaptabilitas yang tinggi.'
             ]);
         } elseif ($score >= 75) {
             return fake()->randomElement([
-                'Hasil psikotes cukup baik. Beberapa area masih perlu improvement.',
-                'Skor IQ dalam range normal. Personality assessment menunjukkan hasil positif.',
-                'Kemampuan problem solving cukup baik namun masih bisa ditingkatkan.',
-                'Test results acceptable. Cocok untuk posisi entry to mid level.',
-                'Performance test rata-rata namun masih dalam batas minimum.'
+                'Skor psikotes di atas rata-rata untuk beberapa aspek penting.',
+                'Kemampuan analisis cukup baik. Personality traits sesuai harapan.',
+                'Cognitive abilities memenuhi standard. Emotional intelligence baik.',
+                'Hasil test menunjukkan potensi yang baik untuk dikembangkan.',
+                'Skor verbal dan numerical cukup baik. Teamwork skills baik.'
             ]);
-        } elseif ($score >= 65) {
+        } elseif ($score >= 60) {
             return fake()->randomElement([
-                'Hasil psikotes di bawah ekspektasi. Beberapa area concern.',
-                'Skor IQ marginal. Personality type kurang cocok dengan budaya kerja.',
-                'Kemampuan analisis masih lemah. Perlu training intensive jika diterima.',
-                'Test results menunjukkan potential namun masih perlu banyak development.',
-                'Borderline performance. Perlu pertimbangan lebih lanjut.'
+                'Skor psikotes average. Beberapa area perlu improvement.',
+                'Cognitive abilities memenuhi minimum requirement.',
+                'Basic problem-solving skills ada, namun perlu dikembangkan.',
+                'Personality traits cukup sesuai, namun ada beberapa concerns.',
+                'Kemampuan komunikasi dan teamwork masih perlu ditingkatkan.'
             ]);
         } else {
             return fake()->randomElement([
-                'Hasil psikotes tidak memenuhi standar minimum perusahaan.',
-                'Skor IQ dan personality assessment di bawah cut-off point.',
-                'Kemampuan kognitif dan analisis sangat lemah.',
-                'Test performance sangat mengecewakan. Tidak cocok untuk posisi ini.',
-                'Overall test results tidak memuaskan. Not recommended.'
+                'Skor psikotes di bawah standar minimum untuk posisi ini.',
+                'Cognitive abilities dan personality traits kurang sesuai dengan requirement.',
+                'Problem-solving skills dan analytical thinking perlu perbaikan signifikan.',
+                'Hasil test menunjukkan gap yang cukup besar dengan expectation.',
+                'Tidak recommended untuk melanjutkan ke tahap selanjutnya.'
             ]);
         }
     }
@@ -281,36 +353,36 @@ class ApplicantSeeder extends Seeder
     {
         if ($score >= 85) {
             return fake()->randomElement([
-                'Interview sangat baik. Komunikasi excellent dan jawaban sangat memuaskan.',
-                'Kandidat menunjukkan technical competency yang sangat baik. Cultural fit excellent.',
-                'Sangat confident dan artikulatif. Problem solving skills sangat impresif.',
-                'Personality sangat cocok dengan team. Leadership potential terlihat jelas.',
-                'Overall interview performance outstanding. Strongly recommended untuk hire.'
+                'Interview sangat memuaskan. Kandidat menunjukkan knowledge dan experience yang sangat relevan.',
+                'Komunikasi excellent. Technical skills sesuai requirement. Attitude sangat positif.',
+                'Respons terhadap situasional questions sangat baik. Problem-solving skills terlihat jelas.',
+                'Memiliki clarity dalam career goals. Nilai-nilai pribadi align dengan perusahaan.',
+                'Sangat recommended untuk posisi ini. Cultural fit sangat baik.'
             ]);
         } elseif ($score >= 75) {
             return fake()->randomElement([
-                'Interview cukup baik. Komunikasi lancar namun beberapa jawaban masih shallow.',
-                'Technical knowledge adequate. Personality fit dengan team kultur.',
-                'Cukup confident dalam menjawab pertanyaan. Problem solving skills OK.',
-                'Menunjukkan enthusiasm yang baik. Beberapa area masih perlu improvement.',
-                'Good interview performance. Recommended dengan beberapa catatan.'
+                'Interview berjalan baik. Knowledge dan experience relevan dengan posisi.',
+                'Komunikasi baik. Technical skills memenuhi requirement dasar.',
+                'Menunjukkan kemampuan adaptasi dan problem-solving yang baik.',
+                'Career goals cukup jelas. Ada potensi untuk growth dan development.',
+                'Recommended untuk posisi ini dengan beberapa notes untuk improvement.'
             ]);
-        } elseif ($score >= 65) {
+        } elseif ($score >= 60) {
             return fake()->randomElement([
-                'Interview performance di bawah ekspektasi. Komunikasi kurang smooth.',
-                'Technical knowledge terbatas. Beberapa jawaban tidak memuaskan.',
-                'Kurang confident dan nervous. Problem solving approach masih lemah.',
-                'Cultural fit questionable. Perlu adaptasi yang cukup signifikan.',
-                'Marginal interview performance. Perlu pertimbangan lebih lanjut.'
+                'Interview cukup. Ada beberapa area yang masih perlu dikonfirmasi lebih lanjut.',
+                'Komunikasi cukup. Technical skills memenuhi minimum requirement.',
+                'Respons terhadap situasional questions menunjukkan area untuk improvement.',
+                'Career path masih perlu diklarifikasi. Alignment dengan perusahaan perlu dieksplorasi.',
+                'Dapat dipertimbangkan dengan catatan perlu onboarding dan training yang intensif.'
             ]);
         } else {
             return fake()->randomElement([
-                'Interview performance sangat mengecewakan. Komunikasi sangat lemah.',
-                'Technical competency sangat kurang. Tidak bisa menjawab pertanyaan dasar.',
-                'Sangat nervous dan tidak confident. Personality tidak cocok dengan posisi.',
-                'Problem solving skills sangat lemah. Cultural fit sangat buruk.',
-                'Overall interview sangat tidak memuaskan. Not recommended untuk hire.'
+                'Interview kurang memuaskan. Knowledge dan experience tidak sesuai requirement.',
+                'Komunikasi kurang efektif. Technical skills di bawah standar minimum.',
+                'Respons terhadap situasional questions tidak menunjukkan problem-solving skills yang diharapkan.',
+                'Tidak ada clarity dalam career goals. Nilai-nilai tidak align dengan perusahaan.',
+                'Tidak recommended untuk posisi ini.'
             ]);
         }
     }
-}
+} 

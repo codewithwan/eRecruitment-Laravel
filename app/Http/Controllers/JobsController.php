@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\CandidatesStage;
+use App\Enums\ApplicationStatus;
 use App\Models\Candidate;
 use App\Models\Vacancies;
 use Illuminate\Http\Request;
@@ -50,7 +50,7 @@ class JobsController extends Controller
                 'user_id' => $user_id,
                 'vacancies_id' => $id,
                 'applied_at' => now(),
-                'status' => CandidatesStage::ADMINISTRATIVE_SELECTION,
+                'status' => ApplicationStatus::ADMINISTRATIVE_SELECTION,
             ]);
 
             DB::commit();

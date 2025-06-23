@@ -39,7 +39,6 @@ class DatabaseSeeder extends Seeder
             CandidatesSkillSeeder::class,
             CandidatesLanguageSeeder::class,
             CandidatesCourseSeeder::class,
-            CandidatesEnglishCertificationSeeder::class,
             CandidatesCertificationSeeder::class,
             CandidatesSocialMediaSeeder::class,
             CandidatesOrganizationSeeder::class,
@@ -47,7 +46,7 @@ class DatabaseSeeder extends Seeder
             CandidatesCVSeeder::class,
             
             // 7. Application System (Depends on: User, VacancyPeriods which is created by Vacancies+Periods)
-            ApplicantSeeder::class,
+            ApplicationSeeder::class,
         ]);
     }
 }

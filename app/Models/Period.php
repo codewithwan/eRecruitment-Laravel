@@ -39,10 +39,10 @@ class Period extends Model
     /**
      * Get the applicants that belong to this period through the vacancy_period table.
      */
-    public function applicants()
+    public function applications()
     {
         return $this->hasManyThrough(
-            Applicant::class,
+            Application::class,
             VacancyPeriods::class,
             'period_id', // Foreign key on vacancy_periods table
             'vacancy_period_id', // Foreign key on applicants table

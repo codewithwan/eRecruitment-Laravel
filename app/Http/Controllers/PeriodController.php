@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Period;
 use App\Models\Company;
 use App\Models\Vacancies;
-use App\Models\Applicant;
+use App\Models\Application;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -80,7 +80,7 @@ class PeriodController extends Controller
                 })->toArray();
                 
                 // Count applicants for this period
-                $data['applicants_count'] = $period->applicants()->count();
+                $data['applicants_count'] = $period->applications()->count();
             } else {
                 $data['title'] = null;
                 $data['department'] = null;
@@ -202,7 +202,7 @@ class PeriodController extends Controller
 
     public function show(Period $period)
     {
-        $period->load('vacancies.company', 'applicants.user', 'applicants.vacancy', 'applicants.status');
+        $period->load('vacancies.company', 'applications.user', 'applications.vacancy', 'applications.status');
         
         // Get current date for status checking
         $now = Carbon::now();
@@ -221,7 +221,7 @@ class PeriodController extends Controller
             }
         }
         
-        $applicantsData = $period->applicants->map(function ($applicant) {
+        $applicantsData = $period->applications->map(function ($applicant) {
             return [
                 'id' => $applicant->id,
                 'name' => $applicant->user->name,
@@ -248,7 +248,7 @@ class PeriodController extends Controller
                         'company' => $vacancy->company ? $vacancy->company->name : null,
                     ];
                 }),
-                'applicants_count' => $period->applicants->count(),
+                'applicants_count' => $period->applications->count(),
             ],
             'applicants' => $applicantsData
         ]);
@@ -343,7 +343,7 @@ class PeriodController extends Controller
     {
         // Delete all applicants related to this period first
         $vacancyPeriodIds = \App\Models\VacancyPeriods::where('period_id', $period->id)->pluck('id');
-        Applicant::whereIn('vacancy_period_id', $vacancyPeriodIds)->delete();
+                        Application::whereIn('vacancy_period_id', $vacancyPeriodIds)->delete();
         
         // Detach all vacancies from this period
         $period->vacancies()->detach();
@@ -379,7 +379,7 @@ class PeriodController extends Controller
                 'id' => $company->id,
                 'name' => $company->name,
                 // Count applicants for this company in this period
-                'applicants_count' => Applicant::whereHas('vacancyPeriod', function($query) use ($period) {
+                'applicants_count' => Application::whereHas('vacancyPeriod', function($query) use ($period) {
                         $query->where('period_id', $period->id);
                     })
                     ->whereHas('vacancyPeriod.vacancy', function ($query) use ($company) {
@@ -410,7 +410,7 @@ class PeriodController extends Controller
         }
         
         // Get applicants for this company and period
-        $applicantsQuery = Applicant::with(['user', 'vacancyPeriod.vacancy', 'vacancyPeriod.period', 'status'])
+        $applicantsQuery = Application::with(['user', 'vacancyPeriod.vacancy', 'vacancyPeriod.period', 'status'])
             ->whereHas('vacancyPeriod.vacancy', function ($query) use ($companyId) {
                 $query->where('company_id', $companyId);
             });

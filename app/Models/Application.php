@@ -2,15 +2,23 @@
 
 namespace App\Models;
 
-use App\Enums\CandidatesStage;
+use App\Enums\ApplicationStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Applicant extends Model
+class Application extends Model
 {
     use HasFactory;
+    
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'applications';
     
     /**
      * The attributes that are mass assignable.
@@ -21,32 +29,9 @@ class Applicant extends Model
         'user_id',
         'vacancy_period_id',
         'status_id',
+        'current_stage_id',
         'current_stage',
         'applied_at',
-        
-        // Administrative Selection
-        'admin_score',
-        'admin_notes',
-        'admin_reviewed_at',
-        'admin_reviewed_by',
-        
-        // Assessment/Psychotest
-        'test_score',
-        'test_notes',
-        'test_scheduled_at',
-        'test_completed_at',
-        
-        // Interview
-        'interview_score',
-        'interview_notes',
-        'interview_scheduled_at',
-        'interview_completed_at',
-        'interviewer_id',
-        
-        // Final decision
-        'rejection_reason',
-        'decision_made_at',
-        'decision_made_by',
     ];
     
     /**
@@ -55,17 +40,8 @@ class Applicant extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'current_stage' => CandidatesStage::class,
-        'admin_score' => 'decimal:2',
-        'test_score' => 'decimal:2',
-        'interview_score' => 'decimal:2',
+        'current_stage' => ApplicationStatus::class,
         'applied_at' => 'datetime',
-        'admin_reviewed_at' => 'datetime',
-        'test_scheduled_at' => 'datetime',
-        'test_completed_at' => 'datetime',
-        'interview_scheduled_at' => 'datetime',
-        'interview_completed_at' => 'datetime',
-        'decision_made_at' => 'datetime',
     ];
     
     /**
@@ -101,6 +77,14 @@ class Applicant extends Model
     }
     
     /**
+     * Get the current stage of the application.
+     */
+    public function currentStage(): BelongsTo
+    {
+        return $this->belongsTo(Status::class, 'current_stage_id');
+    }
+    
+    /**
      * Get the recruitment period for this application (through the vacancy_period relation)
      */
     public function period()
@@ -109,11 +93,27 @@ class Applicant extends Model
     }
     
     /**
+     * Get the application evaluation data.
+     */
+    public function evaluation(): HasOne
+    {
+        return $this->hasOne(ApplicationEvaluation::class);
+    }
+    
+    /**
+     * Get the application schedule data.
+     */
+    public function schedule(): HasOne
+    {
+        return $this->hasOne(ApplicationSchedule::class);
+    }
+    
+    /**
      * Get the admin who reviewed the application.
      */
     public function adminReviewer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'admin_reviewed_by');
+        return $this->evaluation ? $this->evaluation->adminReviewer() : null;
     }
     
     /**
@@ -121,7 +121,7 @@ class Applicant extends Model
      */
     public function interviewer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'interviewer_id');
+        return $this->evaluation ? $this->evaluation->interviewer() : null;
     }
     
     /**
@@ -129,15 +129,15 @@ class Applicant extends Model
      */
     public function decisionMaker(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'decision_made_by');
+        return $this->evaluation ? $this->evaluation->decisionMaker() : null;
     }
     
     /**
-     * Get all stage history records for this applicant.
+     * Get all stage history records for this application.
      */
     public function stageHistories(): HasMany
     {
-        return $this->hasMany(ApplicantStageHistory::class)->orderBy('changed_at');
+        return $this->hasMany(ApplicationStageHistory::class)->orderBy('changed_at');
     }
     
     /**
@@ -151,10 +151,10 @@ class Applicant extends Model
     /**
      * Add a stage progression entry
      */
-    public function addStageProgression(CandidatesStage $fromStage, CandidatesStage $toStage, ?string $notes = null, ?int $userId = null): void
+    public function addStageProgression(ApplicationStatus $fromStage, ApplicationStatus $toStage, ?string $notes = null, ?int $userId = null): void
     {
-        ApplicantStageHistory::create([
-            'applicant_id' => $this->id,
+        ApplicationStageHistory::create([
+            'application_id' => $this->id,
             'from_stage' => $fromStage,
             'to_stage' => $toStage,
             'notes' => $notes,
@@ -162,7 +162,19 @@ class Applicant extends Model
             'changed_at' => now(),
         ]);
         
+        // Update the enum stage
         $this->update(['current_stage' => $toStage]);
+        
+        // Update current_stage_id based on matching stage/status in statuses table
+        $statusRecord = Status::where('code', $toStage->value)->first();
+        if ($statusRecord) {
+            if ($statusRecord->isStage()) {
+                $this->update(['current_stage_id' => $statusRecord->id]);
+            }
+            if ($statusRecord->isStatus()) {
+                $this->update(['status_id' => $statusRecord->id]);
+            }
+        }
     }
     
     /**
@@ -174,17 +186,17 @@ class Applicant extends Model
     }
     
     /**
-     * Check if applicant is in a specific stage
+     * Check if application is in a specific stage
      */
-    public function isInStage(CandidatesStage $stage): bool
+    public function isInStage(ApplicationStatus $stage): bool
     {
         return $this->current_stage === $stage;
     }
     
     /**
-     * Check if applicant has completed a specific stage
+     * Check if application has completed a specific stage
      */
-    public function hasCompletedStage(CandidatesStage $stage): bool
+    public function hasCompletedStage(ApplicationStatus $stage): bool
     {
         return $this->stageHistories()
             ->where('from_stage', $stage)
@@ -204,12 +216,42 @@ class Applicant extends Model
      */
     public function getOverallScore(): ?float
     {
-        $scores = array_filter([
-            $this->admin_score,
-            $this->test_score,
-            $this->interview_score,
-        ]);
+        if (!$this->evaluation) {
+            return null;
+        }
         
-        return $scores ? round(array_sum($scores) / count($scores), 2) : null;
+        return $this->evaluation->getOverallScore();
     }
-}
+    
+    /**
+     * Get the next scheduled event for this application.
+     */
+    public function getNextSchedule(): ?array
+    {
+        return $this->schedule ? $this->schedule->getUpcomingSchedule() : null;
+    }
+    
+    /**
+     * Check if the application is accepted
+     */
+    public function isAccepted(): bool
+    {
+        return $this->status && $this->status->code === 'accepted';
+    }
+    
+    /**
+     * Check if the application is rejected
+     */
+    public function isRejected(): bool
+    {
+        return $this->status && $this->status->code === 'rejected';
+    }
+    
+    /**
+     * Check if the application is still pending
+     */
+    public function isPending(): bool
+    {
+        return $this->status && $this->status->code === 'pending';
+    }
+} 

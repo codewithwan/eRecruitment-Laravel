@@ -39,7 +39,6 @@ class DatabaseSeeder extends Seeder
             CandidatesSkillSeeder::class,
             CandidatesLanguageSeeder::class,
             CandidatesCourseSeeder::class,
-            CandidatesEnglishCertificationSeeder::class,
             CandidatesCertificationSeeder::class,
             CandidatesSocialMediaSeeder::class,
             CandidatesOrganizationSeeder::class,

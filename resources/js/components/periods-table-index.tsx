@@ -3,6 +3,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from 'lucide-react';
 
+// Vacancy interface
+export interface VacancyItem {
+    id: number;
+    title: string;
+    department: string;
+    company?: {
+        id: number;
+        name: string;
+    };
+}
+
+// Company interface
+export interface CompanyItem {
+    id: number;
+    name: string;
+}
+
 // Period interface aligned with index.tsx
 export interface Period {
     id: string;
@@ -16,13 +33,7 @@ export interface Period {
     questionPack?: string;
     applicantsCount?: number;
     vacanciesList?: VacancyItem[];
-}
-
-// Vacancy interface
-export interface VacancyItem {
-    id: number;
-    title: string;
-    department: string;
+    companies?: CompanyItem[];
 }
 
 interface PaginationData {
@@ -35,15 +46,18 @@ interface PaginationData {
 interface PeriodsTableProps {
     periods: Period[];
     pagination: PaginationData;
-    onView?: (id: string) => void;
-    onEdit?: (id: string) => void;
-    onDelete?: (id: string) => void;
-    onSelect?: (id: string) => void;
-    selectedPeriodId?: string | null;
+    onView: (periodId: string) => void;
+    onEdit: (periodId: string) => void;
+    onDelete: (periodId: string) => void;
+    onSelect: (periodId: string) => void;
+    selectedPeriodId: string | null;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
-    itemsPerPageOptions?: number[];
-    isLoading?: boolean;
+    isLoading: boolean;
+    // Add new navigation handlers
+    onNavigateToAssessment?: (periodId: string) => void;
+    onNavigateToInterview?: (periodId: string) => void;
+    onNavigateToReports?: (periodId: string) => void;
 }
 
 // Helper function to format dates
@@ -74,18 +88,23 @@ const formatSimpleDate = (dateString: string) => {
     }
 };
 
+// Options for items per page in pagination
+const itemsPerPageOptions = [5, 10, 20, 50, 100];
+
 export function PeriodsTable({
     periods,
     pagination,
-    onView = (id) => console.log('View period:', id),
-    onEdit = (id) => console.log('Edit period:', id),
-    onDelete = (id) => console.log('Delete period:', id),
-    onSelect = (id) => console.log('Select period:', id),
-    selectedPeriodId = null,
+    onView,
+    onEdit,
+    onDelete,
+    onSelect,
+    selectedPeriodId,
     onPageChange,
     onPerPageChange,
-    itemsPerPageOptions = [10, 25, 50, 100],
-    isLoading = false,
+    isLoading,
+    onNavigateToAssessment,
+    onNavigateToInterview,
+    onNavigateToReports,
 }: PeriodsTableProps) {
     const handleNextPage = () => {
         if (pagination.current_page < pagination.last_page) {
@@ -125,6 +144,7 @@ export function PeriodsTable({
                             <TableHead className="w-[120px] py-3">Start Date</TableHead>
                             <TableHead className="w-[120px] py-3">End Date</TableHead>
                             <TableHead className="w-[100px] py-3">Status</TableHead>
+                            <TableHead className="w-[150px] py-3">Companies</TableHead>
                             <TableHead className="w-[100px] py-3">Applicants</TableHead>
                             <TableHead className="w-[140px] py-3 text-center">Action</TableHead>
                         </TableRow>
@@ -150,6 +170,9 @@ export function PeriodsTable({
                                         </TableCell>
                                         <TableCell className="w-[100px]">
                                             <Skeleton className="h-6 w-16 rounded-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[150px]">
+                                            <Skeleton className="h-4 w-24" />
                                         </TableCell>
                                         <TableCell className="w-[100px]">
                                             <Skeleton className="h-4 w-8" />
@@ -197,6 +220,22 @@ export function PeriodsTable({
                                         }`}>
                                             {period.status || 'Not Set'}
                                         </span>
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {period.companies && period.companies.length > 0 ? (
+                                            <div className="flex flex-wrap gap-1">
+                                                {period.companies.map((company, idx) => (
+                                                    <span 
+                                                        key={company.id}
+                                                        className="px-2 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700"
+                                                    >
+                                                        {company.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-500 text-sm">No companies</span>
+                                        )}
                                     </TableCell>
                                     <TableCell className="whitespace-nowrap">
                                         {period.applicantsCount || 0}

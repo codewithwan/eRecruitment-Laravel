@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,6 +14,7 @@ export interface InterviewUser {
     registration_date: string;
     periodId?: string;
     vacancy?: string;
+    status?: 'pending' | 'scheduled' | 'completed' | 'rejected';
 }
 
 interface PaginationData {
@@ -63,6 +65,21 @@ export function InterviewTable({
         onPerPageChange(Number(value));
     };
 
+    const getStatusBadge = (status?: string) => {
+        switch (status) {
+            case 'pending':
+                return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
+            case 'scheduled':
+                return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Scheduled</Badge>;
+            case 'completed':
+                return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Completed</Badge>;
+            case 'rejected':
+                return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
+            default:
+                return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Pending</Badge>;
+        }
+    };
+
     return (
         <div className="w-full">
             {/* Responsive table container with horizontal scroll */}
@@ -75,6 +92,7 @@ export function InterviewTable({
                             <TableHead className="w-[200px] py-3">Email</TableHead>
                             <TableHead className="w-[140px] py-3">Position</TableHead>
                             <TableHead className="w-[140px] py-3">Registration Date</TableHead>
+                            <TableHead className="w-[100px] py-3">Status</TableHead>
                             <TableHead className="w-[120px] py-3 text-center">Action</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -100,6 +118,9 @@ export function InterviewTable({
                                         <TableCell className="w-[140px]">
                                             <Skeleton className="h-4 w-24" />
                                         </TableCell>
+                                        <TableCell className="w-[100px]">
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
                                         <TableCell className="w-[120px] text-center">
                                             <div className="flex justify-center">
                                                 <Skeleton className="h-8 w-8 rounded-full" />
@@ -119,6 +140,9 @@ export function InterviewTable({
                                     <TableCell className="whitespace-nowrap">
                                         {user.registration_date ? format(new Date(user.registration_date), 'MMM dd, yyyy') : '-'}
                                     </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {getStatusBadge(user.status)}
+                                    </TableCell>
                                     <TableCell>
                                         <div className="flex justify-center">
                                             <button
@@ -134,7 +158,7 @@ export function InterviewTable({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="py-4 text-center">
+                                <TableCell colSpan={7} className="py-4 text-center">
                                     No interview candidates found.
                                 </TableCell>
                             </TableRow>

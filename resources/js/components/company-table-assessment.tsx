@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
-import { InterviewScheduleModal } from '@/components/InterviewScheduleModal';
+import { InterviewScheduleModal } from '@/components/interview-schedule-modal';
 
 // Assessment User interface definition
 export interface AssessmentUser {

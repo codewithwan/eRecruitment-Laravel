@@ -11,7 +11,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { useState } from 'react';
-import { InterviewScheduleModal } from '@/components/InterviewScheduleModal';
+import { InterviewScheduleModal } from '@/components/interview-schedule-modal';
 
 interface AssessmentQuestion {
     id: string;

@@ -2,7 +2,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, Check, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useState } from 'react';
+import { InterviewScheduleModal } from '@/components/interview-schedule-modal';
 
 // Assessment User interface definition
 export interface AssessmentUser {
@@ -10,9 +16,12 @@ export interface AssessmentUser {
     name: string;
     email: string;
     position: string;
-    registration_date: string;
     periodId: string;
     vacancy: string;
+    assigned_date: string;    // tanggal diberi soal
+    submitted_date: string;   // tanggal dikerjakan
+    total_score: number;      // nilai yang diperoleh
+    max_total_score: number;  // nilai maksimal
 }
 
 interface PaginationData {
@@ -41,6 +50,32 @@ export function AssessmentTable({
     itemsPerPageOptions = [10, 25, 50, 100],
     isLoading = false,
 }: AssessmentTableProps) {
+    // Tambahkan state untuk modal
+    const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+    const [interviewDate, setInterviewDate] = useState('');
+    const [interviewLink, setInterviewLink] = useState('');
+    const [interviewNote, setInterviewNote] = useState('');
+
+    const handleOpenApproveModal = (user: AssessmentUser) => {
+        setInterviewDate('');
+        setInterviewLink('');
+        setInterviewNote('');
+        setIsApproveModalOpen(true);
+    };
+
+    const handleCloseApproveModal = () => {
+        setIsApproveModalOpen(false);
+        setInterviewDate('');
+        setInterviewLink('');
+        setInterviewNote('');
+    };
+
+    const handleSubmitApprove = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Lakukan aksi simpan interviewDate, interviewLink, interviewNote
+        setIsApproveModalOpen(false);
+    };
+
     const handleNextPage = () => {
         if (pagination.current_page < pagination.last_page) {
             onPageChange(pagination.current_page + 1);
@@ -68,7 +103,9 @@ export function AssessmentTable({
                             <TableHead className="w-[180px] py-3">Name</TableHead>
                             <TableHead className="w-[200px] py-3">Email</TableHead>
                             <TableHead className="w-[140px] py-3">Position</TableHead>
-                            <TableHead className="w-[140px] py-3">Registration Date</TableHead>
+                            <TableHead className="w-[120px] py-3">Assigned</TableHead>
+                            <TableHead className="w-[120px] py-3">Submitted</TableHead>
+                            <TableHead className="w-[100px] py-3 text-center">Score</TableHead>
                             <TableHead className="w-[100px] py-3 text-center">Action</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -91,7 +128,10 @@ export function AssessmentTable({
                                         <TableCell className="w-[140px]">
                                             <Skeleton className="h-4 w-20" />
                                         </TableCell>
-                                        <TableCell className="w-[140px]">
+                                        <TableCell className="w-[120px]">
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell className="w-[120px]">
                                             <Skeleton className="h-4 w-24" />
                                         </TableCell>
                                         <TableCell className="w-[100px] text-center">
@@ -109,10 +149,18 @@ export function AssessmentTable({
                                     <TableCell className="break-all whitespace-nowrap md:break-normal">{user.email}</TableCell>
                                     <TableCell className="whitespace-nowrap">{user.position}</TableCell>
                                     <TableCell className="whitespace-nowrap">
-                                        {user.registration_date ? format(new Date(user.registration_date), 'MMM dd, yyyy') : '-'}
+                                        {user.assigned_date ? format(new Date(user.assigned_date), 'MMM dd, yyyy') : '-'}
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {user.submitted_date ? format(new Date(user.submitted_date), 'MMM dd, yyyy') : '-'}
+                                    </TableCell>
+                                    <TableCell className="text-center font-semibold">
+                                        {user.max_total_score > 0
+                                            ? `${Math.round((user.total_score / user.max_total_score) * 100)}%`
+                                            : '-'}
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex justify-center">
+                                        <div className="flex justify-center space-x-2">
                                             <button
                                                 onClick={() => onView(user.id)}
                                                 className="rounded-full p-1.5 text-blue-500 hover:bg-blue-100 hover:text-blue-700"
@@ -120,13 +168,27 @@ export function AssessmentTable({
                                             >
                                                 <Eye className="h-4.5 w-4.5" />
                                             </button>
+                                            <button
+                                                onClick={() => handleOpenApproveModal(user)}
+                                                className="rounded-full p-1.5 text-green-500 hover:bg-green-100 hover:text-green-700"
+                                                title="Approve"
+                                            >
+                                                <Check className="h-4.5 w-4.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => {/* aksi reject/delete */}}
+                                                className="rounded-full p-1.5 text-red-500 hover:bg-red-100 hover:text-red-700"
+                                                title="Reject"
+                                            >
+                                                <X className="h-4.5 w-4.5" />
+                                            </button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="py-4 text-center">
+                                <TableCell colSpan={8} className="py-4 text-center">
                                     No assessment data found.
                                 </TableCell>
                             </TableRow>
@@ -207,6 +269,20 @@ export function AssessmentTable({
                     {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of {pagination.total} entries
                 </div>
             </div>
+
+            {/* Modal Approve Interview */}
+            <InterviewScheduleModal
+                open={isApproveModalOpen}
+                onOpenChange={setIsApproveModalOpen}
+                interviewDate={interviewDate}
+                setInterviewDate={setInterviewDate}
+                interviewLink={interviewLink}
+                setInterviewLink={setInterviewLink}
+                interviewNote={interviewNote}
+                setInterviewNote={setInterviewNote}
+                onSubmit={handleSubmitApprove}
+                isLoading={isLoading}
+            />
         </div>
     );
 }

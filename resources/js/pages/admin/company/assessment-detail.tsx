@@ -2,13 +2,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { useState } from 'react';
+import { InterviewScheduleModal } from '@/components/InterviewScheduleModal';
 
 interface AssessmentQuestion {
     id: string;
@@ -62,6 +65,11 @@ export default function AssessmentDetail({ assessment }: AssessmentDetailProps) 
     const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [hrNotes, setHrNotes] = useState('');
+    const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
+    const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+    const [interviewDate, setInterviewDate] = useState('');
+    const [interviewLink, setInterviewLink] = useState('');
+    const [interviewNote, setInterviewNote] = useState('');
 
     const handleApprove = async () => {
         setIsLoading(true);
@@ -109,6 +117,12 @@ export default function AssessmentDetail({ assessment }: AssessmentDetailProps) 
             setIsLoading(false);
             setIsRejectDialogOpen(false);
         }
+    };
+
+    const handleSubmitApprove = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Lakukan aksi simpan interviewDate, interviewLink, interviewNote
+        setIsApproveModalOpen(false);
     };
 
     const getScoreColor = (score: number, maxScore: number) => {
@@ -409,7 +423,7 @@ export default function AssessmentDetail({ assessment }: AssessmentDetailProps) 
                                                 Reject
                                             </Button>
                                             <Button
-                                                onClick={() => setIsApproveDialogOpen(true)}
+                                                onClick={() => setIsInterviewModalOpen(true)}
                                                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
                                             >
                                                 Approve for Interview
@@ -472,6 +486,71 @@ export default function AssessmentDetail({ assessment }: AssessmentDetailProps) 
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Interview Schedule Dialog */}
+            <Dialog open={isInterviewModalOpen} onOpenChange={setIsInterviewModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Set Interview Schedule</DialogTitle>
+                    </DialogHeader>
+                    <form
+                        onSubmit={e => {
+                            e.preventDefault();
+                            setIsInterviewModalOpen(false);
+                        }}
+                        className="space-y-4"
+                    >
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Interview Date</label>
+                            <Input
+                                type="datetime-local"
+                                value={interviewDate}
+                                onChange={e => setInterviewDate(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Interview Link</label>
+                            <Input
+                                type="url"
+                                placeholder="https://meet.example.com/..."
+                                value={interviewLink}
+                                onChange={e => setInterviewLink(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Note</label>
+                            <Textarea
+                                placeholder="Add interview notes (optional)..."
+                                value={hrNotes}
+                                onChange={e => setHrNotes(e.target.value)}
+                                className="min-h-[80px] border-gray-200 focus:border-gray-300 focus:ring-0"
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsInterviewModalOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit">Save & Approve</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Approve Modal */}
+            <InterviewScheduleModal
+                open={isApproveModalOpen}
+                onOpenChange={setIsApproveModalOpen}
+                interviewDate={interviewDate}
+                setInterviewDate={setInterviewDate}
+                interviewLink={interviewLink}
+                setInterviewLink={setInterviewLink}
+                interviewNote={interviewNote}
+                setInterviewNote={setInterviewNote}
+                onSubmit={handleSubmitApprove}
+                isLoading={isLoading}
+            />
         </AppLayout>
     );
 }

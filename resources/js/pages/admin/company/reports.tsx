@@ -31,7 +31,6 @@ type AdminUser = {
     name: string;
     email: string;
     position: string;
-    // registration_date: string;
     administration: number;
     assessment: number;
     interview: number;

@@ -31,7 +31,10 @@ type AdminUser = {
     name: string;
     email: string;
     position: string;
-    registration_date: string;
+    // registration_date: string;
+    administration: number;
+    assessment: number;
+    interview: number;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -88,56 +91,73 @@ export default function ReportsDashboard(props?: ReportsProps) {
             name: 'Rizal Farhan Nanda',
             email: 'Rizalfarhannanda@gmail.com',
             position: 'UI / UX',
-            registration_date: 'Mar 20, 2025',
+            administration: 80,
+            assessment: 85,
+            interview: 90,
+
         },
         {
             id: '02',
             name: 'M. Hassan Naufal Zayyan',
             email: 'Rizalfarhannanda@gmail.com',
             position: 'Back End',
-            registration_date: 'Mar 18, 2025',
+            administration: 80,
+            assessment: 70,
+            interview: 75,
         },
         {
             id: '03',
             name: 'Ardan Ferdiansah',
             email: 'Rizalfarhannanda@gmail.com',
             position: 'Front End',
-            registration_date: 'Mar 18, 2025',
+            administration: 80,
+            assessment: 70,
+            interview: 85,
         },
         {
             id: '04',
             name: 'Muhammad Ridwan',
             email: 'Rizalfarhannanda@gmail.com',
             position: 'UX Writer',
-            registration_date: 'Mar 20, 2025',
+            administration: 90,
+            assessment: 85,
+            interview: 95,
         },
         {
             id: '05',
             name: 'Untara Eka Saputra',
             email: 'Rizalfarhannanda@gmail.com',
             position: 'IT Spesialis',
-            registration_date: 'Mar 22, 2025',
+            administration: 70,
+            assessment: 75,
+            interview: 80,
         },
         {
             id: '06',
             name: 'Dea Derika Winahyu',
             email: 'Rizalfarhannanda@gmail.com',
             position: 'UX Writer',
-            registration_date: 'Mar 20, 2025',
+            administration: 80,
+            assessment: 75,
+            interview: 75,
         },
         {
             id: '07',
             name: 'Kartika Yuliana',
             email: 'Rizalfarhannanda@gmail.com',
             position: 'IT Spesialis',
-            registration_date: 'Mar 22, 2025',
+            administration: 85,
+            assessment: 90,
+            interview: 85,
         },
         {
             id: '08',
             name: 'Ayesha Dear Raisha',
             email: 'Rizalfarhannanda@gmail.com',
             position: 'UX Writer',
-            registration_date: 'Mar 20, 2025',
+            administration: 90,
+            assessment: 85,
+            interview: 80,
         },
     ]);
 
@@ -286,44 +306,7 @@ export default function ReportsDashboard(props?: ReportsProps) {
                     <div className="mb-6">
                         <CompanyWizard currentStep="reports" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                     </div>
-
-                    {/* Interview Statistics Cards */}
-                    <div className="mb-8">
-                        <h3 className="mb-4 text-xl font-semibold">
-                            Statistika
-                        </h3>
-
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                            <Card className="rounded-md border p-4">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-gray-600">Total Interviews</p>
-                                    <p className="text-3xl font-bold">15</p>
-                                </div>
-                            </Card>
-
-                            <Card className="rounded-md border p-4">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-gray-600">Completed</p>
-                                    <p className="text-3xl font-bold">7</p>
-                                </div>
-                            </Card>
-
-                            <Card className="rounded-md border p-4">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-gray-600">Scheduled</p>
-                                    <p className="text-3xl font-bold">5</p>
-                                </div>
-                            </Card>
-
-                            <Card className="rounded-md border p-4">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium text-gray-600">Waiting</p>
-                                    <p className="text-3xl font-bold">1</p>
-                                </div>
-                            </Card>
-                        </div>
-                    </div>
-
+                    
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
@@ -418,9 +401,6 @@ export default function ReportsDashboard(props?: ReportsProps) {
 
                                 <div className="font-medium">Position:</div>
                                 <div className="col-span-2">{selectedUser.position}</div>
-
-                                <div className="font-medium">Registration Date:</div>
-                                <div className="col-span-2">{selectedUser.registration_date}</div>
                             </div>
                         </div>
                     )}

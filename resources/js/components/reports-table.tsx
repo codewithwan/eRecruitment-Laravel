@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import SortButton from './sort-button';
 import { ChevronLeft, ChevronRight, Eye, Check, X } from 'lucide-react';
 
 export interface ReportCandidate {
@@ -8,7 +10,9 @@ export interface ReportCandidate {
     name: string;
     email: string;
     position: string;
-    registration_date: string;
+    administration: number;
+    assessment: number;
+    interview: number;
 }
 
 interface PaginationData {
@@ -49,6 +53,19 @@ export function ReportsTable({
         }
     };
 
+    const calculateAvg = (candidate: ReportCandidate) => {
+        const { administration, assessment, interview } = candidate;
+        return((administration + assessment + interview) / 3).toFixed(1);
+    }
+
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+    
+    const sortedCandidates = [...candidates].sort((a, b) => {
+        const avgA = Number(calculateAvg(a));
+        const avgB = Number(calculateAvg(b));
+        return sortOrder === 'asc' ? avgA - avgB : avgB - avgA;
+    })
+
     return (
         <div className="w-full">
             <div className="overflow-x-auto rounded-md border border-gray-200">
@@ -59,8 +76,16 @@ export function ReportsTable({
                             <TableHead className="w-[180px] py-3">Name</TableHead>
                             <TableHead className="w-[200px] py-3">Email</TableHead>
                             <TableHead className="w-[120px] py-3">Position</TableHead>
-                            <TableHead className="w-[140px] py-3">Registration Date</TableHead>
-                            <TableHead className="w-[140px] py-3 text-center">Action</TableHead>
+                            <TableHead className="w-[110px] py-3">Administration</TableHead>
+                            <TableHead className="w-[110px] py-3">Assessment</TableHead>
+                            <TableHead className="w-[110px] py-3">Interview</TableHead>
+                            <TableHead className="w-[100px] py-3 pt-1">Average Score 
+                                <SortButton 
+                                    sortOrder={sortOrder} 
+                                    onToggle={() => setSortOrder((sortOrder === 'asc' ? 'desc' : 'asc'))} 
+                                /> 
+                            </TableHead>
+                            <TableHead className="w-[130px] py-3 text-center">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -83,14 +108,17 @@ export function ReportsTable({
                                           </TableCell>
                                       </TableRow>
                                   ))
-                            : candidates.length > 0
-                            ? candidates.map((candidate, idx) => (
+                            : sortedCandidates.length > 0
+                            ? sortedCandidates.map((candidate, idx) => (
                                   <TableRow key={candidate.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
                                       <TableCell>{candidate.id}</TableCell>
                                       <TableCell>{candidate.name}</TableCell>
                                       <TableCell>{candidate.email}</TableCell>
                                       <TableCell>{candidate.position}</TableCell>
-                                      <TableCell>{candidate.registration_date}</TableCell>
+                                      <TableCell>{candidate.administration}</TableCell>
+                                      <TableCell>{candidate.assessment}</TableCell>
+                                      <TableCell>{candidate.interview}</TableCell>
+                                      <TableCell>{calculateAvg(candidate)}</TableCell>
                                       <TableCell>
                                           <div className="flex justify-center space-x-2">
                                               <Button

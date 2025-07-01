@@ -11,7 +11,6 @@ export interface InterviewUser {
     name: string;
     email: string;
     position: string;
-    registration_date: string;
     periodId?: string;
     vacancy?: string;
     status?: 'pending' | 'scheduled' | 'completed' | 'rejected';
@@ -91,7 +90,6 @@ export function InterviewTable({
                             <TableHead className="w-[180px] py-3">Name</TableHead>
                             <TableHead className="w-[200px] py-3">Email</TableHead>
                             <TableHead className="w-[140px] py-3">Position</TableHead>
-                            <TableHead className="w-[140px] py-3">Registration Date</TableHead>
                             <TableHead className="w-[100px] py-3">Status</TableHead>
                             <TableHead className="w-[120px] py-3 text-center">Action</TableHead>
                         </TableRow>
@@ -137,9 +135,6 @@ export function InterviewTable({
                                     <TableCell className="font-medium whitespace-nowrap">{user.name}</TableCell>
                                     <TableCell className="break-all whitespace-nowrap md:break-normal">{user.email}</TableCell>
                                     <TableCell className="whitespace-nowrap">{user.position}</TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        {user.registration_date ? format(new Date(user.registration_date), 'MMM dd, yyyy') : '-'}
-                                    </TableCell>
                                     <TableCell className="whitespace-nowrap">
                                         {getStatusBadge(user.status)}
                                     </TableCell>

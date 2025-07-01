@@ -35,10 +35,12 @@ interface InterviewData {
     interview_time?: string;
     status: 'pending' | 'approved' | 'rejected';
     notes?: string;
+    notes_1?: string;
     skills: string[];
     experience_years: number;
     education: string;
     portfolio_url?: string;
+    score?: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -62,7 +64,7 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
     const [isLoading, setIsLoading] = useState(false);
 
     // Mock interview data - replace with actual data fetching
-    const interviewData: InterviewData = {
+    const [interviewData, setInterviewData] = useState<InterviewData>({
         id: userId,
         name: 'Rizal Farhan Nanda',
         email: 'rizalfarhannanda@gmail.com',
@@ -73,12 +75,12 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
         interview_date: '2025-03-25',
         interview_time: '10:00',
         status: 'pending',
-        notes: 'Strong portfolio in mobile app design. Good understanding of user research.',
+        notes: 'Rizal has shown great potential in UI/UX design with a strong portfolio and good communication skills.',
         skills: ['Figma', 'Adobe XD', 'Sketch', 'User Research', 'Prototyping', 'Wireframing'],
         experience_years: 3,
         education: 'Bachelor of Design - Visual Communication Design',
-        portfolio_url: 'https://rizalfarhan.portfolio.com'
-    };
+        portfolio_url: 'https://rizalfarhan.portfolio.com',
+    });
 
     const handleApprove = () => {
         setIsApproveDialogOpen(true);
@@ -296,17 +298,17 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                     <CardDescription>Approve or reject this candidate</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
-                                    <Button 
-                                        onClick={handleApprove} 
+                                    <Button
+                                        onClick={handleApprove}
                                         className="w-full bg-green-600 hover:bg-green-700"
                                         disabled={isLoading}
                                     >
                                         <CheckCircle className="h-4 w-4 mr-2" />
                                         Approve Candidate
                                     </Button>
-                                    <Button 
-                                        onClick={handleReject} 
-                                        variant="destructive" 
+                                    <Button
+                                        onClick={handleReject}
+                                        variant="destructive"
                                         className="w-full"
                                         disabled={isLoading}
                                     >
@@ -328,15 +330,49 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                             <CheckCircle className="h-5 w-5 text-green-600" />
                             Approve Candidate
                         </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to approve <strong>{interviewData.name}</strong> for the position of{' '}
-                            <strong>{interviewData.position}</strong>? This will move them to the reports section.
-                        </AlertDialogDescription>
+                        <div className="space-y-4">
+                            {/* Score Input */}
+                            <div className="border rounded-lg shadow-sm bg-white mx-auto w-fit p-8 py-6">
+                                <label className="leading-none font-semibold mb-2 text-left block" htmlFor="score">
+                                    Score
+                                </label>
+                                <input
+                                    id="score"
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={interviewData.score || ''}
+                                    onChange={(e) => {
+                                        let value = e.target.value;
+                                        if (Number(value) > 100) value = '100';
+                                        if (Number(value) < 0) value = '0';
+                                        setInterviewData({ ...interviewData, score: value });
+                                    }}
+                                    className="text-4xl font-bold text-center text-gray-900 rounded px-4 py-2 w-32"
+                                    placeholder="-"
+                                />
+                            </div>
+
+                            {/* Notes Input */}
+                            <div className="bg-gray-50 rounded-lg p-4">
+                                <label className="leading-none font-semibold mb-3 block">Notes</label>
+
+                                <div className="space-y-2">
+                                    <textarea
+                                        value={interviewData.notes_1 || ''}
+                                        onChange={(e) => setInterviewData({ ...interviewData, notes_1: e.target.value })}
+                                        placeholder="Enter notes"
+                                        className="w-full text-sm text-gray-700 border rounded px-3 py-2"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={confirmApprove} 
+                        <AlertDialogAction
+                            onClick={confirmApprove}
                             className="bg-green-600 hover:bg-green-700"
                             disabled={isLoading}
                         >
@@ -360,8 +396,8 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={confirmReject} 
+                        <AlertDialogAction
+                            onClick={confirmReject}
                             className="bg-red-600 hover:bg-red-700"
                             disabled={isLoading}
                         >

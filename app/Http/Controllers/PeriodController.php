@@ -24,7 +24,13 @@ class PeriodController extends Controller
         }
         
         // Get periods with associated vacancies, filtered by company if provided
-        $periodsQuery = Period::with('vacancies.company', 'vacancies.questionPack');
+        $periodsQuery = Period::with([
+            'vacancies.company', 
+            'vacancies.questionPack',
+            'vacancies.departement',
+            'applications.user',
+            'applications.vacancyPeriod'
+        ]);
         
         if ($companyId) {
             // Filter by vacancies that belong to the selected company
@@ -39,7 +45,7 @@ class PeriodController extends Controller
         $now = Carbon::now();
         
         // Format the data to include dates from the associated vacancies
-        $periodsData = $periods->map(function ($period) use ($now) {
+        $periodsData = $periods->map(function ($period) use ($now, $companyId) {
             $data = $period->toArray();
             
             // Add start_time and end_time
@@ -64,35 +70,63 @@ class PeriodController extends Controller
             
             // Include all vacancy positions and departments, not just the first one
             if ($period->vacancies->isNotEmpty()) {
-                // Still include the first vacancy for backward compatibility
-                $firstVacancy = $period->vacancies->first();
-                $data['title'] = $firstVacancy->title ?? null;
-                $data['department'] = $firstVacancy->department ?? null;
-                $data['question_pack'] = $firstVacancy->questionPack ? $firstVacancy->questionPack->pack_name : null;
+                // Filter vacancies by company if specified
+                $relevantVacancies = $companyId 
+                    ? $period->vacancies->where('company_id', $companyId)
+                    : $period->vacancies;
                 
-                // Add all vacancies as a separate array with company information
-                $data['vacancies_list'] = $period->vacancies->map(function ($vacancy) {
-                    return [
-                        'id' => $vacancy->id,
-                        'title' => $vacancy->title,
-                        'department' => $vacancy->department,
-                        'company' => $vacancy->company ? [
-                            'id' => $vacancy->company->id,
-                            'name' => $vacancy->company->name
-                        ] : null
-                    ];
-                })->toArray();
-                
-                // Add unique companies for this period
-                $data['companies'] = $period->vacancies->pluck('company')->filter()->unique('id')->map(function ($company) {
-                    return [
-                        'id' => $company->id,
-                        'name' => $company->name
-                    ];
-                })->values()->toArray();
-                
-                // Count applicants for this period
-                $data['applicants_count'] = $period->applications()->count();
+                if ($relevantVacancies->isNotEmpty()) {
+                    // Still include the first vacancy for backward compatibility
+                    $firstVacancy = $relevantVacancies->first();
+                    $data['title'] = $firstVacancy->title ?? null;
+                    $data['department'] = $firstVacancy->departement ? $firstVacancy->departement->name : null;
+                    $data['question_pack'] = $firstVacancy->questionPack ? $firstVacancy->questionPack->pack_name : null;
+                    
+                    // Add all vacancies as a separate array with company information
+                    $data['vacancies_list'] = $relevantVacancies->map(function ($vacancy) {
+                        return [
+                            'id' => $vacancy->id,
+                            'title' => $vacancy->title,
+                            'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                            'company' => $vacancy->company ? [
+                                'id' => $vacancy->company->id,
+                                'name' => $vacancy->company->name
+                            ] : null
+                        ];
+                    })->toArray();
+                    
+                    // Add unique companies for this period
+                    $data['companies'] = $relevantVacancies->pluck('company')->filter()->unique('id')->map(function ($company) {
+                        return [
+                            'id' => $company->id,
+                            'name' => $company->name
+                        ];
+                    })->values()->toArray();
+                    
+                    // Count applicants for this period (filtered by company if specified)
+                    if ($companyId) {
+                        // Count applications for this period and company combination
+                        $data['applicants_count'] = Application::whereHas('vacancyPeriod', function($query) use ($period) {
+                            $query->where('period_id', $period->id);
+                        })
+                        ->whereHas('vacancyPeriod.vacancy', function($query) use ($companyId) {
+                            $query->where('company_id', $companyId);
+                        })->count();
+                    } else {
+                        // Count all applications for this period
+                        $data['applicants_count'] = Application::whereHas('vacancyPeriod', function($query) use ($period) {
+                            $query->where('period_id', $period->id);
+                        })->count();
+                    }
+                } else {
+                    // No relevant vacancies for this company
+                    $data['title'] = null;
+                    $data['department'] = null;
+                    $data['question_pack'] = null;
+                    $data['vacancies_list'] = [];
+                    $data['companies'] = [];
+                    $data['applicants_count'] = 0;
+                }
             } else {
                 $data['title'] = null;
                 $data['department'] = null;
@@ -106,7 +140,8 @@ class PeriodController extends Controller
         });
 
         // Get available vacancies for the period dropdown
-        $vacancies = Vacancies::select('id', 'title', 'department')
+        $vacancies = Vacancies::with('departement')
+            ->select('id', 'title', 'department_id')
             ->when($companyId, function($query) use ($companyId) {
                 return $query->where('company_id', $companyId);
             })
@@ -115,7 +150,7 @@ class PeriodController extends Controller
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->department,
+                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
                 ];
             });
 
@@ -133,14 +168,14 @@ class PeriodController extends Controller
 
     public function create()
     {
-        $vacancies = Vacancies::with('company')
-            ->select('id', 'title', 'department', 'company_id')
+        $vacancies = Vacancies::with(['company', 'departement'])
+            ->select('id', 'title', 'department_id', 'company_id')
             ->get()
             ->map(function ($vacancy) {
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->department,
+                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
                     'company' => $vacancy->company ? $vacancy->company->name : null
                 ];
             });
@@ -182,7 +217,7 @@ class PeriodController extends Controller
         }
         
         // Get the period with its associated vacancies for the response
-        $period->load('vacancies.company', 'vacancies.questionPack');
+        $period->load('vacancies.company', 'vacancies.questionPack', 'vacancies.departement');
         
         // Get current date for status checking
         $now = Carbon::now();
@@ -199,7 +234,7 @@ class PeriodController extends Controller
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->department,
+                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
                     'company' => $vacancy->company ? $vacancy->company->name : null,
                 ];
             })
@@ -224,7 +259,7 @@ class PeriodController extends Controller
 
     public function show(Period $period)
     {
-        $period->load('vacancies.company', 'applications.user', 'applications.vacancy', 'applications.status');
+        $period->load('vacancies.company', 'vacancies.departement', 'applications.user', 'applications.vacancy', 'applications.status');
         
         // Get current date for status checking
         $now = Carbon::now();
@@ -266,7 +301,7 @@ class PeriodController extends Controller
                     return [
                         'id' => $vacancy->id,
                         'title' => $vacancy->title,
-                        'department' => $vacancy->department,
+                        'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
                         'company' => $vacancy->company ? $vacancy->company->name : null,
                     ];
                 }),
@@ -280,14 +315,14 @@ class PeriodController extends Controller
     {
         $period->load('vacancies');
         
-        $vacancies = Vacancies::with('company')
-            ->select('id', 'title', 'department', 'company_id')
+        $vacancies = Vacancies::with(['company', 'departement'])
+            ->select('id', 'title', 'department_id', 'company_id')
             ->get()
             ->map(function ($vacancy) {
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->department,
+                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
                     'company' => $vacancy->company ? $vacancy->company->name : null
                 ];
             });
@@ -328,7 +363,7 @@ class PeriodController extends Controller
         $period->vacancies()->sync($validated['vacancies_ids']);
 
         // Get the period with its associated vacancies for the response
-        $period->load('vacancies.company', 'vacancies.questionPack');
+        $period->load('vacancies.company', 'vacancies.questionPack', 'vacancies.departement');
         
         // Get current date for status checking
         $now = Carbon::now();
@@ -345,7 +380,7 @@ class PeriodController extends Controller
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->department,
+                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
                 ];
             })
         ];
@@ -431,11 +466,17 @@ class PeriodController extends Controller
             $period = Period::find($selectedPeriodId);
         }
         
-        // Get applicants for this company and period
-        $applicantsQuery = Application::with(['user', 'vacancyPeriod.vacancy', 'vacancyPeriod.period', 'status'])
-            ->whereHas('vacancyPeriod.vacancy', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            });
+        // Get applications with administration data for this company and period
+        $applicantsQuery = Application::with([
+            'user', 
+            'vacancyPeriod.vacancy', 
+            'vacancyPeriod.period', 
+            'administration.reviewer',
+            'status'
+        ])
+        ->whereHas('vacancyPeriod.vacancy', function ($query) use ($companyId) {
+            $query->where('company_id', $companyId);
+        });
             
         if ($selectedPeriodId) {
             $applicantsQuery->whereHas('vacancyPeriod', function ($query) use ($selectedPeriodId) {
@@ -444,18 +485,27 @@ class PeriodController extends Controller
         }
         
         $applicants = $applicantsQuery->get()
-            ->map(function ($applicant) {
+            ->map(function ($application) {
+                $vacancy = $application->vacancyPeriod->vacancy ?? null;
+                $period = $application->vacancyPeriod->period ?? null;
+                $administration = $application->administration;
+                
                 return [
-                    'id' => (string)$applicant->id,
-                    'name' => $applicant->user->name,
-                    'email' => $applicant->user->email,
-                    'position' => $applicant->vacancy->title ?? 'Unknown',
-                    'status' => $applicant->status->name ?? 'Pending',
-                    'registration_date' => $applicant->applied_at->format('M d, Y'),
-                    'period' => $applicant->period->name ?? 'Unknown',
-                    'periodId' => (string)$applicant->period_id,
-                    'application_data' => $applicant->application_data,
-                    'test_results' => $applicant->test_results,
+                    'id' => (string)$application->id,
+                    'name' => $application->user->name,
+                    'email' => $application->user->email,
+                    'position' => $vacancy ? $vacancy->title : 'Unknown',
+                    'status' => $application->status->name ?? 'Pending',
+                    'registration_date' => $application->applied_at->format('M d, Y'),
+                    'period' => $period ? $period->name : 'Unknown',
+                    'periodId' => $period ? (string)$period->id : '1',
+                    'admin_score' => $administration ? $administration->score : null,
+                    'admin_status' => $administration ? $administration->status : 'pending',
+                    'admin_notes' => $administration ? $administration->notes : null,
+                    'documents_checked' => $administration ? $administration->documents_checked : null,
+                    'requirements_met' => $administration ? $administration->requirements_met : null,
+                    'reviewed_by' => $administration && $administration->reviewer ? $administration->reviewer->name : null,
+                    'reviewed_at' => $administration && $administration->reviewed_at ? $administration->reviewed_at->format('M d, Y H:i') : null,
                 ];
             });
         

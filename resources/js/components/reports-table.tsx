@@ -9,6 +9,23 @@ export interface ReportCandidate {
     email: string;
     position: string;
     registration_date: string;
+    period?: string;
+    overall_score?: number;
+    final_decision?: string;
+    final_notes?: string;
+    rejection_reason?: string;
+    recommendation?: string;
+    decision_made_by?: string;
+    decision_made_at?: string;
+    report_generated_by?: string;
+    report_generated_at?: string;
+    administration_score?: number;
+    assessment_score?: number;
+    interview_score?: number;
+    stage_summary?: any;
+    strengths?: string;
+    weaknesses?: string;
+    next_steps?: string;
 }
 
 interface PaginationData {

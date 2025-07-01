@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, ClipboardList, Github, LayoutGrid, LucideFileQuestion, Package, SearchIcon, Settings, User } from 'lucide-react';
+import { Building2, ClipboardList, Github, LayoutGrid, LucideFileQuestion, Package, SearchIcon, Settings, User, FolderTree } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
@@ -38,6 +38,7 @@ const testAssessmentItems: NavItem[] = [
 const mainNavItems: { name: string; icon: React.ElementType; href?: string; items?: NavItem[] }[] = [
     { name: 'User Management', href: '/dashboard/users', icon: User },
     { name: 'Company Management', href: '/dashboard/company-management', icon: Settings }, // Menggunakan icon Settings
+    { name: 'Department Management', href: '/dashboard/management/department-stage', icon: FolderTree }, // Menambahkan Department Management
     { name: 'Job Management', href: '/dashboard/jobs', icon: SearchIcon },
     { name: 'Test & Assessment', icon: LucideFileQuestion, items: testAssessmentItems },
 ];

@@ -34,14 +34,14 @@ Route::get('/debug/questions', function () {
 // API Routes
 Route::prefix('api')->group(function () {
     Route::get('/vacancies', function () {
-        return App\Models\Vacancies::with('company')
-            ->select('id', 'title', 'department', 'company_id')
+            return App\Models\Vacancies::with(['company', 'departement'])
+        ->select('id', 'title', 'department_id', 'company_id')
             ->get()
             ->map(function ($vacancy) {
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->department,
+                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
                     'company' => $vacancy->company ? $vacancy->company->name : null,
                 ];
             });

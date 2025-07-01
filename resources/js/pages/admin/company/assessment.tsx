@@ -1,4 +1,4 @@
-import { AssessmentTable, type AssessmentUser } from '@/components/company-table-assessment';
+import { AssessmentTable } from '@/components/company-table-assessment';
 import { CompanyWizard } from '@/components/company-wizard';
 import { SearchBar } from '@/components/searchbar';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePeriodCompanyInfo } from '@/hooks/usePeriodCompanyInfo';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Filter, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
+export interface AssessmentUser {
+    id: string;
+    name: string;
+    email: string;
+    position: string;
+    registration_date: string;
+    periodId: string;
+    vacancy: string;
+    test_date?: string;
+    test_time?: string;
+    status?: string;
+    score?: number;
+    test_type?: string;
+    test_results?: any;
+    notes?: string;
+    test_location?: string;
+    attendance_confirmed?: boolean;
+    started_at?: string;
+    completed_at?: string;
+}
 
 interface PaginationData {
     total: number;
@@ -22,6 +43,7 @@ interface PaginationData {
 
 interface AssessmentManagementProps {
     users?: AssessmentUser[];
+    assessments?: AssessmentUser[];
     pagination?: PaginationData;
     selectedPeriod?: {
         id: string;
@@ -37,7 +59,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Assessment Management',
-        href: '/dashboard/assessment',
+        href: '/dashboard/company/assessment',
     },
 ];
 
@@ -127,8 +149,8 @@ const dummyAssessmentUsers: AssessmentUser[] = [
 
 export default function AssessmentManagement({ 
     users: initialUsers = [], 
-    pagination: initialPagination,
-    selectedPeriod
+    assessments: initialAssessments = [],
+    pagination: initialPagination
 }: AssessmentManagementProps) {
     // State for filtering
     const [filteredUsers, setFilteredUsers] = useState<AssessmentUser[]>([]);
@@ -162,14 +184,14 @@ export default function AssessmentManagement({
         }
     }, [periodInfo, loading, error]);
 
-    // Use dummy data if no props provided
-    const users = initialUsers.length > 0 ? initialUsers : dummyAssessmentUsers;
+    // Use real data from backend (assessments or users prop)
+    const users = initialAssessments.length > 0 ? initialAssessments : initialUsers;
     const [pagination, setPagination] = useState<PaginationData>(
         initialPagination || {
-            total: 42,
+            total: users.length,
             per_page: 10,
-            current_page: 2,
-            last_page: 5,
+            current_page: 1,
+            last_page: Math.ceil(users.length / 10),
         }
     );
 
@@ -188,34 +210,52 @@ export default function AssessmentManagement({
             try {
                 updateUrlParams(page, perPage);
 
-                // Simulate API call with dummy data
-                setTimeout(() => {
-                    setFilteredUsers(dummyAssessmentUsers);
+                // If no real data from backend, show empty state
+                if (users.length === 0) {
+                    setFilteredUsers([]);
                     setPagination({
-                        total: 42,
+                        total: 0,
                         per_page: perPage,
                         current_page: page,
-                        last_page: Math.ceil(42 / perPage)
+                        last_page: 1
                     });
                     setIsLoading(false);
-                }, 500);
+                    return;
+                }
+
+                // Use real data from backend
+                const startIndex = (page - 1) * perPage;
+                const endIndex = startIndex + perPage;
+                const paginatedUsers = users.slice(startIndex, endIndex);
+                
+                setFilteredUsers(paginatedUsers);
+                setPagination({
+                    total: users.length,
+                    per_page: perPage,
+                    current_page: page,
+                    last_page: Math.ceil(users.length / perPage)
+                });
+                setIsLoading(false);
             } catch (error) {
                 console.error('Error fetching assessment data:', error);
                 setIsLoading(false);
             }
         },
-        [pagination.per_page],
+        [users, pagination.per_page],
     );
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 2;
+        const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
         const perPage = urlParams.get('per_page') ? parseInt(urlParams.get('per_page')!) : 10;
 
         if (page !== pagination.current_page || perPage !== pagination.per_page) {
             fetchUsers(page, perPage);
+        } else {
+            // Initialize with current data
+            fetchUsers(page, perPage);
         }
-    }, [fetchUsers, pagination.current_page, pagination.per_page]);
+    }, [fetchUsers]);
 
     // Get unique positions dynamically from the user data
     const uniquePositions = useMemo(() => {
@@ -242,11 +282,23 @@ export default function AssessmentManagement({
             result = result.filter((user) => user.position === positionFilterState);
         }
 
-        setFilteredUsers(result);
+        // Apply pagination to filtered results
+        const startIndex = (pagination.current_page - 1) * pagination.per_page;
+        const endIndex = startIndex + pagination.per_page;
+        const paginatedResult = result.slice(startIndex, endIndex);
+
+        setFilteredUsers(paginatedResult);
+
+        // Update pagination based on filtered results
+        setPagination(prev => ({
+            ...prev,
+            total: result.length,
+            last_page: Math.ceil(result.length / prev.per_page)
+        }));
 
         // Set filter active state
         setIsFilterActive(searchQuery !== '' || positionFilterState !== 'all');
-    }, [searchQuery, positionFilterState, users]);
+    }, [searchQuery, positionFilterState, users, pagination.current_page, pagination.per_page]);
 
     // Function to update URL parameters without page refresh
     const updateUrlParams = (page: number, perPage: number) => {
@@ -265,13 +317,17 @@ export default function AssessmentManagement({
     };
 
     const handleViewUser = (userId: string) => {
-        // Navigate to assessment detail page instead of opening dialog
-        router.visit(`/dashboard/assessment/detail/${userId}`);
+        const user = users.find((u) => u.id === userId);
+        if (user) {
+            setSelectedUser(user);
+            setIsViewDialogOpen(true);
+        }
     };
 
     const resetFilters = () => {
         setSearchQuery('');
         setPositionFilterState('all');
+        setIsFilterActive(false);
     };
 
     return (
@@ -303,7 +359,7 @@ export default function AssessmentManagement({
                                     {periodName && periodName !== "Loading..." && periodName !== "No period selected" ? (
                                         `Manage assessments for ${periodName} recruitment period`
                                     ) : (
-                                        'Manage all assessments in the system'
+                                        'Manage assessments for all recruitment data'
                                     )}
                                 </CardDescription>
                             </div>

@@ -2,6 +2,7 @@
 
 use App\Enums\UserRole;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionPackController;
@@ -107,4 +108,30 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
             
         // Add route to get period with company information
         Route::get('/periods/{id}/with-company', [PeriodController::class, 'getPeriodWithCompany'])->name('periods.with-company');
+        
+        // Department and Stage Management Routes
+        Route::prefix('management')->name('management.')->group(function () {
+            Route::get('/department-stage', [App\Http\Controllers\DepartmentController::class, 'index'])->name('department-stage');
+            
+            // Department routes
+            Route::post('/departments', [App\Http\Controllers\DepartmentController::class, 'storeDepartment'])->name('departments.store');
+            Route::put('/departments/{id}', [App\Http\Controllers\DepartmentController::class, 'updateDepartment'])->name('departments.update');
+            Route::delete('/departments/{id}', [App\Http\Controllers\DepartmentController::class, 'destroyDepartment'])->name('departments.destroy');
+            
+            // Recruitment Stage routes
+            Route::post('/stages', [App\Http\Controllers\DepartmentController::class, 'storeStage'])->name('stages.store');
+            Route::put('/stages/{id}', [App\Http\Controllers\DepartmentController::class, 'updateStage'])->name('stages.update');
+            Route::delete('/stages/{id}', [App\Http\Controllers\DepartmentController::class, 'destroyStage'])->name('stages.destroy');
+            Route::put('/stages/order', [App\Http\Controllers\DepartmentController::class, 'updateStageOrder'])->name('stages.order');
+            
+            // Education Level routes
+            Route::post('/education-levels', [App\Http\Controllers\DepartmentController::class, 'storeEducationLevel'])->name('education-levels.store');
+            Route::put('/education-levels/{id}', [App\Http\Controllers\DepartmentController::class, 'updateEducationLevel'])->name('education-levels.update');
+            Route::delete('/education-levels/{id}', [App\Http\Controllers\DepartmentController::class, 'destroyEducationLevel'])->name('education-levels.destroy');
+            
+            // Major routes
+            Route::post('/majors', [App\Http\Controllers\DepartmentController::class, 'storeMajor'])->name('majors.store');
+            Route::put('/majors/{id}', [App\Http\Controllers\DepartmentController::class, 'updateMajor'])->name('majors.update');
+            Route::delete('/majors/{id}', [App\Http\Controllers\DepartmentController::class, 'destroyMajor'])->name('majors.destroy');
+        });
     });

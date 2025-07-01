@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\Period;
 use App\Models\Vacancies;
+use App\Models\Application;
+use App\Models\VacancyPeriods;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -29,73 +31,63 @@ class CompanyController extends Controller
         
         $company = Company::findOrFail($companyId);
         
-        // Dummy data based on both screenshots - with period information from Periods page
-        // and following the structure of the Assessment page
-        $candidates = [
-            [
-                'id' => '01',
-                'name' => 'Rizal Farhan Nanda',
-                'email' => 'rizalfarhannanda@gmail.com',
-                'position' => 'UI / UX',
-                'period' => 'Q1 2025 Recruitment',  // From periods page
-                'registration_date' => 'Mar 20, 2025',
-            ],
-            [
-                'id' => '02',
-                'name' => 'M. Hassan Naufal Zayyan',
-                'email' => 'hassan@example.com',
-                'position' => 'Back End',
-                'period' => 'Q1 2025 Recruitment',
-                'registration_date' => 'Mar 18, 2025',
-            ],
-            [
-                'id' => '03',
-                'name' => 'Ardan Ferdiansah',
-                'email' => 'ardan@example.com',
-                'position' => 'Front End',
-                'period' => 'Q2 2025 Recruitment',
-                'registration_date' => 'Mar 18, 2025',
-            ],
-            [
-                'id' => '04',
-                'name' => 'Muhammad Ridwan',
-                'email' => 'ridwan@example.com',
-                'position' => 'UX Writer',
-                'period' => 'Q3 2025 Recruitment',
-                'registration_date' => 'Mar 20, 2025',
-            ],
-            [
-                'id' => '05',
-                'name' => 'Untara Eka Saputra',
-                'email' => 'untara@example.com',
-                'position' => 'IT Spesialis',
-                'period' => 'Q4 2025 Recruitment',
-                'registration_date' => 'Mar 22, 2025',
-            ],
-            [
-                'id' => '06',
-                'name' => 'Dea Derika Winahyu',
-                'email' => 'dea@example.com',
-                'position' => 'UX Writer',
-                'period' => 'Special Recruitment',
-                'registration_date' => 'Mar 20, 2025',
-            ],
-            [
-                'id' => '07',
-                'name' => 'Kartika Yuliana',
-                'email' => 'kartika@example.com',
-                'position' => 'IT Spesialis',
-                'period' => 'Q4 2025 Recruitment',
-                'registration_date' => 'Mar 22, 2025',
-            ],
-        ];
+        // Get applications with administration data
+        $applicationsQuery = Application::with([
+            'user',
+            'vacancyPeriod.vacancy.company',
+            'vacancyPeriod.period',
+            'administration',
+            'status'
+        ])
+        ->whereHas('vacancyPeriod.vacancy', function($query) use ($companyId) {
+            $query->where('company_id', $companyId);
+        });
+        
+        // Filter by period if specified
+        if ($periodId) {
+            $applicationsQuery->whereHas('vacancyPeriod', function($query) use ($periodId) {
+                $query->where('period_id', $periodId);
+            });
+        }
+        
+        $applications = $applicationsQuery->get();
+        
+        // Format data for frontend
+        $candidates = $applications->map(function ($application) {
+            $vacancy = $application->vacancyPeriod->vacancy ?? null;
+            $period = $application->vacancyPeriod->period ?? null;
+            $administration = $application->administration;
+            
+            return [
+                'id' => (string)$application->id,
+                'name' => $application->user->name,
+                'email' => $application->user->email,
+                'position' => $vacancy ? $vacancy->title : 'Unknown',
+                'period' => $period ? $period->name : 'Unknown',
+                'registration_date' => $application->applied_at->format('M d, Y'),
+                'cv' => [
+                    'filename' => $application->user->name . '_cv.pdf',
+                    'fileType' => 'pdf',
+                    'url' => '/uploads/cv/' . $application->user->name . '_cv.pdf'
+                ],
+                'periodId' => $period ? (string)$period->id : '1',
+                'vacancy' => $vacancy ? $vacancy->title : 'Unknown',
+                'admin_score' => $administration ? $administration->score : null,
+                'admin_status' => $administration ? $administration->status : 'pending',
+                'admin_notes' => $administration ? $administration->notes : null,
+                'documents_checked' => $administration ? $administration->documents_checked : null,
+                'requirements_met' => $administration ? $administration->requirements_met : null,
+                'reviewed_by' => $administration && $administration->reviewer ? $administration->reviewer->name : null,
+                'reviewed_at' => $administration && $administration->reviewed_at ? $administration->reviewed_at->format('M d, Y H:i') : null,
+            ];
+        });
         
         return Inertia::render('admin/company/administration', [
             'company' => $company,
             'candidates' => $candidates,
             'users' => $candidates, // For compatibility with existing component
             'pagination' => [
-                'total' => count($candidates),
+                'total' => $candidates->count(),
                 'per_page' => 10,
                 'current_page' => 1,
                 'last_page' => 1,
@@ -119,45 +111,68 @@ class CompanyController extends Controller
             }
         }
         
-        // Assessment dummy data
-        $assessments = [
-            [
-                'id' => '01',
-                'name' => 'Rizal Farhan Nanda',
-                'email' => 'rizalfarhannanda@gmail.com',
-                'position' => 'UI / UX',
-                'period' => 'Q1 2025 Recruitment',
-                'test_date' => 'Mar 25, 2025',
-                'test_time' => '09:00 AM',
-                'status' => 'completed'
-            ],
-            [
-                'id' => '02',
-                'name' => 'M. Hassan Naufal Zayyan',
-                'email' => 'hassan@example.com',
-                'position' => 'Back End',
-                'period' => 'Q1 2025 Recruitment',
-                'test_date' => 'Mar 25, 2025',
-                'test_time' => '10:00 AM',
-                'status' => 'pending'
-            ],
-            [
-                'id' => '03',
-                'name' => 'Ardan Ferdiansah',
-                'email' => 'ardan@example.com',
-                'position' => 'Front End',
-                'period' => 'Q2 2025 Recruitment',
-                'test_date' => 'Mar 26, 2025',
-                'test_time' => '09:00 AM',
-                'status' => 'scheduled'
-            ],
-        ];
+        // Get applications with assessment data
+        $applicationsQuery = Application::with([
+            'user',
+            'vacancyPeriod.vacancy.company',
+            'vacancyPeriod.period',
+            'assessment',
+            'status'
+        ])
+        ->whereHas('vacancyPeriod.vacancy', function($query) use ($companyId) {
+            $query->where('company_id', $companyId);
+        })
+        // Only get applications that have passed administration or are in assessment stage
+        ->where(function($query) {
+            $query->whereHas('administration', function($adminQuery) {
+                $adminQuery->where('status', 'passed');
+            })
+            ->orWhere('current_stage', 'assessment');
+        });
+        
+        // Filter by period if specified
+        if ($periodId) {
+            $applicationsQuery->whereHas('vacancyPeriod', function($query) use ($periodId) {
+                $query->where('period_id', $periodId);
+            });
+        }
+        
+        $applications = $applicationsQuery->get();
+        
+        // Format data for frontend
+        $assessments = $applications->map(function ($application) {
+            $vacancy = $application->vacancyPeriod->vacancy ?? null;
+            $period = $application->vacancyPeriod->period ?? null;
+            $assessment = $application->assessment;
+            
+            return [
+                'id' => (string)$application->id,
+                'name' => $application->user->name,
+                'email' => $application->user->email,
+                'position' => $vacancy ? $vacancy->title : 'Unknown',
+                'period' => $period ? $period->name : 'Unknown',
+                'periodId' => $period ? (string)$period->id : '1',
+                'vacancy' => $vacancy ? $vacancy->title : 'Unknown',
+                'registration_date' => $application->applied_at->format('M d, Y'),
+                'test_date' => $assessment && $assessment->scheduled_at ? $assessment->scheduled_at->format('M d, Y') : null,
+                'test_time' => $assessment && $assessment->scheduled_at ? $assessment->scheduled_at->format('h:i A') : null,
+                'status' => $assessment ? $assessment->status : 'scheduled',
+                'score' => $assessment ? $assessment->score : null,
+                'test_type' => $assessment ? $assessment->test_type : null,
+                'test_results' => $assessment ? $assessment->test_results : null,
+                'notes' => $assessment ? $assessment->notes : null,
+                'test_location' => $assessment ? $assessment->test_location : null,
+                'attendance_confirmed' => $assessment ? $assessment->attendance_confirmed : false,
+                'started_at' => $assessment && $assessment->started_at ? $assessment->started_at->format('M d, Y H:i') : null,
+                'completed_at' => $assessment && $assessment->completed_at ? $assessment->completed_at->format('M d, Y H:i') : null,
+            ];
+        });
         
         return Inertia::render('admin/company/assessment', [
             'assessments' => $assessments,
             'users' => $assessments, // For compatibility
             'pagination' => [
-                'total' => count($assessments),
+                'total' => $assessments->count(),
                 'per_page' => 10,
                 'current_page' => 1,
                 'last_page' => 1,
@@ -181,51 +196,70 @@ class CompanyController extends Controller
             }
         }
         
-        // Interview dummy data
-        $interviews = [
-            [
-                'id' => '01',
-                'name' => 'Rizal Farhan Nanda',
-                'email' => 'rizalfarhannanda@gmail.com',
-                'position' => 'UI / UX',
-                'period' => 'Q1 2025 Recruitment',
-                'interview_date' => 'Mar 30, 2025',
-                'interview_time' => '10:00 AM',
-                'interviewer' => 'John Doe',
-                'status' => 'scheduled',
-                'type' => 'Technical Interview'
-            ],
-            [
-                'id' => '02',
-                'name' => 'M. Hassan Naufal Zayyan',
-                'email' => 'hassan@example.com',
-                'position' => 'Back End',
-                'period' => 'Q1 2025 Recruitment',
-                'interview_date' => 'Mar 30, 2025',
-                'interview_time' => '11:00 AM',
-                'interviewer' => 'Jane Smith',
-                'status' => 'completed',
-                'type' => 'HR Interview'
-            ],
-            [
-                'id' => '03',
-                'name' => 'Ardan Ferdiansah',
-                'email' => 'ardan@example.com',
-                'position' => 'Front End',
-                'period' => 'Q2 2025 Recruitment',
-                'interview_date' => 'Apr 01, 2025',
-                'interview_time' => '09:00 AM',
-                'interviewer' => 'Mike Johnson',
-                'status' => 'pending',
-                'type' => 'Technical Interview'
-            ],
-        ];
+        // Get applications with interview data
+        $applicationsQuery = Application::with([
+            'user',
+            'vacancyPeriod.vacancy.company',
+            'vacancyPeriod.period',
+            'interview.interviewer',
+            'interview.scheduler',
+            'status'
+        ])
+        ->whereHas('vacancyPeriod.vacancy', function($query) use ($companyId) {
+            $query->where('company_id', $companyId);
+        })
+        // Only get applications that have passed assessment or are in interview stage
+        ->where(function($query) {
+            $query->whereHas('assessment', function($assessmentQuery) {
+                $assessmentQuery->where('status', 'completed');
+            })
+            ->orWhere('current_stage', 'interview');
+        });
+        
+        // Filter by period if specified
+        if ($periodId) {
+            $applicationsQuery->whereHas('vacancyPeriod', function($query) use ($periodId) {
+                $query->where('period_id', $periodId);
+            });
+        }
+        
+        $applications = $applicationsQuery->get();
+        
+        // Format data for frontend
+        $interviews = $applications->map(function ($application) {
+            $vacancy = $application->vacancyPeriod->vacancy ?? null;
+            $period = $application->vacancyPeriod->period ?? null;
+            $interview = $application->interview;
+            
+            return [
+                'id' => (string)$application->id,
+                'name' => $application->user->name,
+                'email' => $application->user->email,
+                'position' => $vacancy ? $vacancy->title : 'Unknown',
+                'period' => $period ? $period->name : 'Unknown',
+                'registration_date' => $application->applied_at->format('M d, Y'),
+                'status' => $interview ? $interview->status : 'scheduled',
+                'interview_date' => $interview && $interview->scheduled_at ? $interview->scheduled_at->format('M d, Y') : null,
+                'interview_time' => $interview && $interview->scheduled_at ? $interview->scheduled_at->format('h:i A') : null,
+                'interviewer' => $interview && $interview->interviewer ? $interview->interviewer->name : null,
+                'interview_type' => $interview ? $interview->interview_type : 'Technical Interview',
+                'score' => $interview ? $interview->score : null,
+                'notes' => $interview ? $interview->notes : null,
+                'feedback' => $interview ? $interview->feedback : null,
+                'evaluation_criteria' => $interview ? $interview->evaluation_criteria : null,
+                'is_online' => $interview ? $interview->is_online : true,
+                'location' => $interview ? $interview->location : null,
+                'attendance_confirmed' => $interview ? $interview->attendance_confirmed : false,
+                'started_at' => $interview && $interview->started_at ? $interview->started_at->format('M d, Y H:i') : null,
+                'completed_at' => $interview && $interview->completed_at ? $interview->completed_at->format('M d, Y H:i') : null,
+            ];
+        });
         
         return Inertia::render('admin/company/interview', [
             'interviews' => $interviews,
             'users' => $interviews, // For compatibility
             'pagination' => [
-                'total' => count($interviews),
+                'total' => $interviews->count(),
                 'per_page' => 10,
                 'current_page' => 1,
                 'last_page' => 1,
@@ -249,51 +283,98 @@ class CompanyController extends Controller
             }
         }
         
-        // Reports dummy data
-        $reportsData = [
-            'total_applications' => 245,
-            'completed_assessments' => 189,
-            'scheduled_interviews' => 67,
-            'hired_candidates' => 23,
-            'pending_reviews' => 34,
-            
-            'recent_activities' => [
-                [
-                    'id' => 1,
-                    'activity' => 'New application received',
-                    'candidate' => 'Rizal Farhan Nanda',
-                    'position' => 'UI / UX',
-                    'date' => '2025-03-20',
-                    'time' => '10:30 AM'
-                ],
-                [
-                    'id' => 2,
-                    'activity' => 'Assessment completed',
-                    'candidate' => 'M. Hassan Naufal Zayyan',
-                    'position' => 'Back End',
-                    'date' => '2025-03-19',
-                    'time' => '02:15 PM'
-                ],
-                [
-                    'id' => 3,
-                    'activity' => 'Interview scheduled',
-                    'candidate' => 'Ardan Ferdiansah',
-                    'position' => 'Front End',
-                    'date' => '2025-03-18',
-                    'time' => '11:45 AM'
-                ],
-            ],
-            
-            'monthly_stats' => [
-                'january' => ['applications' => 45, 'hired' => 8],
-                'february' => ['applications' => 52, 'hired' => 12],
-                'march' => ['applications' => 67, 'hired' => 15],
-            ]
-        ];
+        // Get applications with report data
+        $applicationsQuery = Application::with([
+            'user',
+            'vacancyPeriod.vacancy.company',
+            'vacancyPeriod.period',
+            'report.decisionMaker',
+            'report.reportGenerator',
+            'administration',
+            'assessment',
+            'interview',
+            'status'
+        ])
+        ->whereHas('vacancyPeriod.vacancy', function($query) use ($companyId) {
+            $query->where('company_id', $companyId);
+        })
+        // Only get applications that have completed all stages or have reports
+        ->where(function($query) {
+            $query->whereHas('report')
+            ->orWhere('current_stage', 'completed');
+        });
         
+        // Filter by period if specified
+        if ($periodId) {
+            $applicationsQuery->whereHas('vacancyPeriod', function($query) use ($periodId) {
+                $query->where('period_id', $periodId);
+            });
+        }
+        
+        $applications = $applicationsQuery->get();
+        
+        // Format data for frontend
+        $reports = $applications->map(function ($application) {
+            $vacancy = $application->vacancyPeriod->vacancy ?? null;
+            $period = $application->vacancyPeriod->period ?? null;
+            $report = $application->report;
+            $administration = $application->administration;
+            $assessment = $application->assessment;
+            $interview = $application->interview;
+            
+            return [
+                'id' => (string)$application->id,
+                'name' => $application->user->name,
+                'email' => $application->user->email,
+                'position' => $vacancy ? $vacancy->title : 'Unknown',
+                'registration_date' => $application->applied_at->format('M d, Y'),
+                'period' => $period ? $period->name : 'Unknown',
+                'overall_score' => $report ? $report->overall_score : null,
+                'final_decision' => $report ? $report->final_decision : 'pending',
+                'final_notes' => $report ? $report->final_notes : null,
+                'rejection_reason' => $report ? $report->rejection_reason : null,
+                'recommendation' => $report ? $report->recommendation : null,
+                'decision_made_by' => $report && $report->decisionMaker ? $report->decisionMaker->name : null,
+                'decision_made_at' => $report && $report->decision_made_at ? $report->decision_made_at->format('M d, Y H:i') : null,
+                'report_generated_by' => $report && $report->reportGenerator ? $report->reportGenerator->name : null,
+                'report_generated_at' => $report && $report->report_generated_at ? $report->report_generated_at->format('M d, Y H:i') : null,
+                'administration_score' => $administration ? $administration->score : null,
+                'assessment_score' => $assessment ? $assessment->score : null,
+                'interview_score' => $interview ? $interview->score : null,
+                'stage_summary' => $report ? $report->stage_summary : null,
+                'strengths' => $report ? $report->strengths : null,
+                'weaknesses' => $report ? $report->weaknesses : null,
+                'next_steps' => $report ? $report->next_steps : null,
+            ];
+        });
+        
+        // Calculate real statistics from the data
+        $totalReports = $reports->count();
+        $completedReports = $reports->filter(function ($report) {
+            return in_array($report['final_decision'], ['accepted', 'rejected']);
+        })->count();
+        $inProgressReports = $reports->filter(function ($report) {
+            return $report['final_decision'] === 'pending' && $report['overall_score'] !== null;
+        })->count();
+        $pendingReports = $reports->filter(function ($report) {
+            return $report['final_decision'] === 'pending' && $report['overall_score'] === null;
+        })->count();
+
         return Inertia::render('admin/company/reports', [
-            'reportsData' => $reportsData,
-            'companyId' => $companyId
+            'reports' => $reports,
+            'users' => $reports, // For compatibility
+            'statistics' => [
+                'total' => $totalReports,
+                'completed' => $completedReports,
+                'scheduled' => $inProgressReports,
+                'waiting' => $pendingReports,
+            ],
+            'pagination' => [
+                'total' => $reports->count(),
+                'per_page' => 10,
+                'current_page' => 1,
+                'last_page' => 1,
+            ]
         ]);
     }
 
@@ -370,44 +451,93 @@ class CompanyController extends Controller
         // Debug: Log the received company
         Log::info('Company received: ' . $company->name . ' (ID: ' . $company->id . ')');
         
-        // Ambil periods yang terkait dengan company ini
-        // Jika belum ada relasi periods dengan company, gunakan dummy data
-        $periods = collect([
-            [
-                'id' => 1,
-                'name' => 'Q1 2025 Recruitment',
-                'description' => 'First quarter recruitment for ' . $company->name,
-                'start_date' => '2025-01-01',
-                'end_date' => '2025-03-31',
-                'status' => 'Active',
-                'applicants_count' => 15,
-                'vacancies_list' => [
-                    ['id' => 1, 'title' => 'Frontend Developer', 'department' => 'Engineering'],
-                    ['id' => 2, 'title' => 'Backend Developer', 'department' => 'Engineering']
+        // Get real periods associated with this company through vacancies
+        $periodsQuery = Period::with([
+            'vacancies.company', 
+            'vacancies.questionPack',
+            'vacancies.departement'
+        ])
+        ->whereHas('vacancies', function ($query) use ($company) {
+            $query->where('company_id', $company->id);
+        });
+        
+        $periods = $periodsQuery->get();
+        
+        // Get current date for status checking
+        $now = \Carbon\Carbon::now();
+        
+        // Format the data for the frontend
+        $periodsData = $periods->map(function ($period) use ($company, $now) {
+            // Calculate status based on current date
+            $status = 'Not Set';
+            if ($period->start_time && $period->end_time) {
+                $startTime = \Carbon\Carbon::parse($period->start_time);
+                $endTime = \Carbon\Carbon::parse($period->end_time);
+                
+                if ($now->lt($startTime)) {
+                    $status = 'Upcoming';
+                } elseif ($now->gt($endTime)) {
+                    $status = 'Closed';
+                } else {
+                    $status = 'Open';
+                }
+            }
+            
+            // Get vacancies for this company in this period
+            $companyVacancies = $period->vacancies->where('company_id', $company->id);
+            
+            // Count applications for this company in this period
+            $applicantsCount = Application::whereHas('vacancyPeriod', function($query) use ($period) {
+                $query->where('period_id', $period->id);
+            })
+            ->whereHas('vacancyPeriod.vacancy', function($query) use ($company) {
+                $query->where('company_id', $company->id);
+            })->count();
+            
+            return [
+                'id' => $period->id,
+                'name' => $period->name,
+                'description' => $period->description,
+                'start_date' => $period->start_time ? \Carbon\Carbon::parse($period->start_time)->format('d/m/Y') : null,
+                'end_date' => $period->end_time ? \Carbon\Carbon::parse($period->end_time)->format('d/m/Y') : null,
+                'status' => $status,
+                'applicants_count' => $applicantsCount,
+                'vacancies_list' => $companyVacancies->map(function ($vacancy) {
+                    return [
+                        'id' => $vacancy->id,
+                        'title' => $vacancy->title,
+                        'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                    ];
+                })->toArray(),
+                'title' => $companyVacancies->first() ? $companyVacancies->first()->title : null,
+                'department' => $companyVacancies->first() && $companyVacancies->first()->departement ? $companyVacancies->first()->departement->name : null,
+                'question_pack' => $companyVacancies->first() && $companyVacancies->first()->questionPack ? $companyVacancies->first()->questionPack->pack_name : null,
+                'companies' => [
+                    [
+                        'id' => $company->id,
+                        'name' => $company->name
+                    ]
                 ]
-            ],
-            [
-                'id' => 2,
-                'name' => 'Q2 2025 Recruitment',
-                'description' => 'Second quarter recruitment for ' . $company->name,
-                'start_date' => '2025-04-01',
-                'end_date' => '2025-06-30',
-                'status' => 'Scheduled',
-                'applicants_count' => 8,
-                'vacancies_list' => [
-                    ['id' => 3, 'title' => 'UI/UX Designer', 'department' => 'Design'],
-                    ['id' => 4, 'title' => 'Product Manager', 'department' => 'Product']
-                ]
-            ]
-        ]);
+            ];
+        });
         
         // Get available vacancies for this company
-        $vacancies = Vacancies::where('company_id', $company->id)->get();
+        $vacancies = Vacancies::where('company_id', $company->id)
+            ->with('departement')
+            ->select('id', 'title', 'department_id')
+            ->get()
+            ->map(function ($vacancy) {
+                return [
+                    'id' => $vacancy->id,
+                    'title' => $vacancy->title,
+                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                ];
+            });
         
         return Inertia::render('admin/periods/index', [
-            'periods' => $periods->toArray(),
+            'periods' => $periodsData->toArray(),
             'pagination' => [
-                'total' => $periods->count(),
+                'total' => $periodsData->count(),
                 'per_page' => 10,
                 'current_page' => 1,
                 'last_page' => 1,

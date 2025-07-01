@@ -30,7 +30,10 @@ import { format, parseISO } from 'date-fns';
 interface JobProps {
     vacancies: Job[];
     companies: { id: number; name: string }[];
+    departments: { id: number; name: string }[];
+    majors: { id: number; name: string }[];
     questionPacks: { id: number; pack_name: string; description?: string; test_type?: string; duration?: number }[];
+    educationLevels: { id: number; name: string }[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -44,9 +47,37 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+// Helper function to ensure array format
+const ensureArray = (value: any): string[] => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') return value.split('\n').filter(item => item.trim() !== '');
+    return [];
+};
+
+// Helper function to get array as string for forms
+const getArrayAsString = (value: any): string => {
+    if (Array.isArray(value)) return value.join('\n');
+    if (typeof value === 'string') return value;
+    return '';
+};
+
 export default function Jobs(props: JobProps) {
     const jobs = props.vacancies || [];
     const companies = props.companies || [];
+    const departments = props.departments || [];
+    const majors = props.majors || [];
+    const educationLevels = props.educationLevels || [];
+    
+    // Debug data yang diterima
+    console.log('Props data:', {
+        jobs: jobs.length,
+        companies: companies.length,
+        departments: departments.length,
+        majors: majors.length,
+        educationLevels: educationLevels.length,
+        departments_sample: departments.slice(0, 3),
+        majors_sample: majors.slice(0, 3)
+    });
     const [jobsList, setJobsList] = useState<Job[]>(jobs);
     const [filteredJobs, setFilteredJobs] = useState<Job[]>(jobs);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -64,16 +95,18 @@ export default function Jobs(props: JobProps) {
     const [isFilterActive, setIsFilterActive] = useState(false);
 
     // Get unique departments and locations for filters
-    const departments = ['all', ...Array.from(new Set(jobs.map((job) => job.department)))];
+    const departmentNames = ['all', ...Array.from(new Set(jobs.map((job) => job.departement?.name).filter((name): name is string => Boolean(name))))];
     const locations = ['all', ...Array.from(new Set(jobs.map((job) => job.location)))];
 
     // New job form state
     const [newJob, setNewJob] = useState({
         title: '',
-        department: '',
+        department_id: '',
+        major_id: 'none',
         location: '',
         salary: '',
         company_id: '',
+        education_level_id: 'none',
         requirements: '',
         benefits: '',
         question_pack_id: 'none',
@@ -83,10 +116,12 @@ export default function Jobs(props: JobProps) {
     const [editJob, setEditJob] = useState({
         id: 0,
         title: '',
-        department: '',
+        department_id: '',
+        major_id: '',
         location: '',
         salary: '',
         company_id: '',
+        education_level_id: '',
         requirements: '',
         benefits: '',
         question_pack_id: '',
@@ -101,14 +136,14 @@ export default function Jobs(props: JobProps) {
             result = result.filter(
                 (job) =>
                     job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (job.departement?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                     job.location.toLowerCase().includes(searchQuery.toLowerCase()),
             );
         }
 
         // Apply department filter
         if (departmentFilter && departmentFilter !== 'all') {
-            result = result.filter((job) => job.department === departmentFilter);
+            result = result.filter((job) => job.departement?.name === departmentFilter);
         }
 
         // Apply location filter
@@ -136,12 +171,14 @@ export default function Jobs(props: JobProps) {
             setEditJob({
                 id: job.id,
                 title: job.title,
-                department: job.department,
+                department_id: String(job.department_id || ''),
+                major_id: job.major_id ? String(job.major_id) : 'none',
                 location: job.location,
                 salary: job.salary || '',
                 company_id: String(job.company_id || ''),
-                requirements: job.requirements.join('\n'),
-                benefits: job.benefits ? job.benefits.join('\n') : '',
+                education_level_id: job.education_level_id ? String(job.education_level_id) : 'none',
+                requirements: getArrayAsString(job.requirements),
+                benefits: getArrayAsString(job.benefits),
                 question_pack_id: job.question_pack_id ? String(job.question_pack_id) : 'none',
             });
             setIsEditDialogOpen(true);
@@ -183,36 +220,74 @@ export default function Jobs(props: JobProps) {
         setEditJob((prevState) => ({ ...prevState, [name]: value }));
     };
 
-    // Removed start date handling
-
     const handleCreateJob = async () => {
         setIsLoading(true);
         try {
+            // Better data validation and formatting
+            const requirementsArray = newJob.requirements.split('\n').filter((req) => req.trim() !== '');
+            const benefitsArray = newJob.benefits ? newJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : [];
+            
+            // Validate requirements array is not empty
+            if (requirementsArray.length === 0) {
+                console.error('Requirements cannot be empty');
+                alert('Please add at least one requirement');
+                setIsLoading(false);
+                return;
+            }
+            
+            // Ensure company_id is valid
+            const companyId = newJob.company_id ? parseInt(newJob.company_id) : null;
+            if (!companyId || isNaN(companyId)) {
+                console.error('Invalid company_id:', newJob.company_id);
+                alert('Please select a company');
+                setIsLoading(false);
+                return;
+            }
+            
+            // Handle question_pack_id properly
+            let questionPackId = null;
+            if (newJob.question_pack_id && newJob.question_pack_id !== 'none') {
+                questionPackId = parseInt(newJob.question_pack_id);
+                if (isNaN(questionPackId)) {
+                    questionPackId = null;
+                }
+            }
+            
             const formattedData = {
-                ...newJob,
-                requirements: newJob.requirements.split('\n').filter((req) => req.trim() !== ''),
-                benefits: newJob.benefits ? newJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : null,
-                company_id: parseInt(newJob.company_id),
-                question_pack_id: (newJob.question_pack_id && newJob.question_pack_id !== 'none') ? parseInt(newJob.question_pack_id) : null,
+                title: newJob.title.trim(),
+                department_id: parseInt(newJob.department_id),
+                major_id: (newJob.major_id && newJob.major_id !== 'none') ? parseInt(newJob.major_id) : null,
+                location: newJob.location.trim(),
+                salary: newJob.salary.trim() || null,
+                company_id: companyId,
+                education_level_id: (newJob.education_level_id && newJob.education_level_id !== 'none') ? parseInt(newJob.education_level_id) : null,
+                requirements: requirementsArray,
+                benefits: benefitsArray.length > 0 ? benefitsArray : null,
+                question_pack_id: questionPackId,
             };
-            console.log('formattedData', formattedData);
+            
             const response = await axios.post('/dashboard/jobs', formattedData);
-            console.log('response', response);
-            console.log('response', response.status);
             setJobsList((prevJobs) => [...prevJobs, response.data.job]);
             setIsCreateDialogOpen(false);
             setNewJob({
                 title: '',
-                department: '',
+                department_id: '',
+                major_id: 'none',
                 location: '',
                 salary: '',
                 company_id: '',
+                education_level_id: 'none',
                 requirements: '',
                 benefits: '',
                 question_pack_id: 'none',
             });
         } catch (error) {
             console.error('Error creating job:', error);
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as any;
+                console.error('Error response:', axiosError.response?.data);
+                console.error('Error status:', axiosError.response?.status);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -221,12 +296,47 @@ export default function Jobs(props: JobProps) {
     const handleUpdateJob = async () => {
         setIsLoading(true);
         try {
+            // Better data validation and formatting
+            const requirementsArray = editJob.requirements.split('\n').filter((req) => req.trim() !== '');
+            const benefitsArray = editJob.benefits ? editJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : [];
+            
+            // Validate requirements array is not empty
+            if (requirementsArray.length === 0) {
+                console.error('Requirements cannot be empty');
+                alert('Please add at least one requirement');
+                setIsLoading(false);
+                return;
+            }
+            
+            // Ensure company_id is valid
+            const companyId = editJob.company_id ? parseInt(editJob.company_id) : null;
+            if (!companyId || isNaN(companyId)) {
+                console.error('Invalid company_id:', editJob.company_id);
+                alert('Please select a company');
+                setIsLoading(false);
+                return;
+            }
+            
+            // Handle question_pack_id properly
+            let questionPackId = null;
+            if (editJob.question_pack_id && editJob.question_pack_id !== 'none') {
+                questionPackId = parseInt(editJob.question_pack_id);
+                if (isNaN(questionPackId)) {
+                    questionPackId = null;
+                }
+            }
+            
             const formattedData = {
-                ...editJob,
-                requirements: editJob.requirements.split('\n').filter((req) => req.trim() !== ''),
-                benefits: editJob.benefits ? editJob.benefits.split('\n').filter((ben) => ben.trim() !== '') : null,
-                company_id: parseInt(editJob.company_id),
-                question_pack_id: (editJob.question_pack_id && editJob.question_pack_id !== 'none') ? parseInt(editJob.question_pack_id) : null,
+                title: editJob.title.trim(),
+                department_id: parseInt(editJob.department_id),
+                major_id: (editJob.major_id && editJob.major_id !== 'none') ? parseInt(editJob.major_id) : null,
+                location: editJob.location.trim(),
+                salary: editJob.salary.trim() || null,
+                company_id: companyId,
+                education_level_id: (editJob.education_level_id && editJob.education_level_id !== 'none') ? parseInt(editJob.education_level_id) : null,
+                requirements: requirementsArray,
+                benefits: benefitsArray.length > 0 ? benefitsArray : null,
+                question_pack_id: questionPackId,
             };
 
             const response = await axios.put(`/dashboard/jobs/${editJob.id}`, formattedData);
@@ -236,6 +346,11 @@ export default function Jobs(props: JobProps) {
             setIsEditDialogOpen(false);
         } catch (error) {
             console.error('Error updating job:', error);
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as any;
+                console.error('Error response:', axiosError.response?.data);
+                console.error('Error status:', axiosError.response?.status);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -308,7 +423,7 @@ export default function Jobs(props: JobProps) {
                                                 <SelectValue placeholder="Filter by department" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {departments.map((dept) => (
+                                                {departmentNames.map((dept) => (
                                                     <SelectItem key={dept} value={dept}>
                                                         {dept === 'all' ? 'All Departments' : dept}
                                                     </SelectItem>
@@ -368,14 +483,35 @@ export default function Jobs(props: JobProps) {
                             />
                         </div>
                         <div>
-                            <Label htmlFor="department">Department</Label>
-                            <Input 
-                                id="department" 
-                                name="department" 
-                                placeholder="Enter department"
-                                value={newJob.department} 
-                                onChange={handleCreateJobChange} 
-                            />
+                            <Label htmlFor="create-department-id">Department</Label>
+                            <Select name="department_id" value={newJob.department_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, department_id: value }))}>
+                                <SelectTrigger id="create-department-id">
+                                    <SelectValue placeholder="Select department" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {departments.map((department) => (
+                                        <SelectItem key={department.id} value={String(department.id)}>
+                                            {department.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="create-major-id">Major</Label>
+                            <Select name="major_id" value={newJob.major_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, major_id: value }))}>
+                                <SelectTrigger id="create-major-id">
+                                    <SelectValue placeholder="Select major" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {majors.map((major) => (
+                                        <SelectItem key={major.id} value={String(major.id)}>
+                                            {major.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label htmlFor="location">Location</Label>
@@ -398,9 +534,9 @@ export default function Jobs(props: JobProps) {
                             />
                         </div>
                         <div>
-                            <Label htmlFor="company_id">Company</Label>
+                            <Label htmlFor="create-company-id">Company</Label>
                             <Select name="company_id" value={newJob.company_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, company_id: value }))}>
-                                <SelectTrigger>
+                                <SelectTrigger id="create-company-id">
                                     <SelectValue placeholder="Select company" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -413,9 +549,9 @@ export default function Jobs(props: JobProps) {
                             </Select>
                         </div>
                         <div>
-                            <Label htmlFor="question_pack_id">Question Pack</Label>
+                            <Label htmlFor="create-question-pack-id">Question Pack</Label>
                             <Select name="question_pack_id" value={newJob.question_pack_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, question_pack_id: value }))}>
-                                <SelectTrigger>
+                                <SelectTrigger id="create-question-pack-id">
                                     <SelectValue placeholder="Select question pack" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -423,6 +559,22 @@ export default function Jobs(props: JobProps) {
                                     {props.questionPacks.map((pack) => (
                                         <SelectItem key={pack.id} value={String(pack.id)}>
                                             {pack.pack_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="create-education-level-id">Education Level</Label>
+                            <Select name="education_level_id" value={newJob.education_level_id} onValueChange={(value) => setNewJob(prev => ({ ...prev, education_level_id: value }))}>
+                                <SelectTrigger id="create-education-level-id">
+                                    <SelectValue placeholder="Select education level" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {educationLevels.map((level) => (
+                                        <SelectItem key={level.id} value={String(level.id)}>
+                                            {level.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -475,8 +627,35 @@ export default function Jobs(props: JobProps) {
                             <Input id="edit-title" name="title" value={editJob.title} onChange={handleEditJobChange} />
                         </div>
                         <div>
-                            <Label htmlFor="edit-department">Department</Label>
-                            <Input id="edit-department" name="department" value={editJob.department} onChange={handleEditJobChange} />
+                            <Label htmlFor="edit-department-id">Department</Label>
+                            <Select name="department_id" value={editJob.department_id} onValueChange={(value) => setEditJob(prev => ({ ...prev, department_id: value }))}>
+                                <SelectTrigger id="edit-department-id">
+                                    <SelectValue placeholder="Select department" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {departments.map((department) => (
+                                        <SelectItem key={department.id} value={String(department.id)}>
+                                            {department.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-major-id">Major</Label>
+                            <Select name="major_id" value={editJob.major_id} onValueChange={(value) => setEditJob(prev => ({ ...prev, major_id: value }))}>
+                                <SelectTrigger id="edit-major-id">
+                                    <SelectValue placeholder="Select major" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {majors.map((major) => (
+                                        <SelectItem key={major.id} value={String(major.id)}>
+                                            {major.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
                             <Label htmlFor="edit-location">Location</Label>
@@ -493,9 +672,9 @@ export default function Jobs(props: JobProps) {
                             />
                         </div>
                         <div>
-                            <Label htmlFor="edit-company_id">Company</Label>
+                            <Label htmlFor="edit-company-id">Company</Label>
                             <Select name="company_id" value={String(editJob.company_id)} onValueChange={(value) => setEditJob(prev => ({ ...prev, company_id: value }))}>
-                                <SelectTrigger>
+                                <SelectTrigger id="edit-company-id">
                                     <SelectValue placeholder="Select company" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -508,9 +687,9 @@ export default function Jobs(props: JobProps) {
                             </Select>
                         </div>
                         <div>
-                            <Label htmlFor="edit-question_pack_id">Question Pack</Label>
+                            <Label htmlFor="edit-question-pack-id">Question Pack</Label>
                             <Select name="question_pack_id" value={editJob.question_pack_id} onValueChange={(value) => setEditJob(prev => ({ ...prev, question_pack_id: value }))}>
-                                <SelectTrigger>
+                                <SelectTrigger id="edit-question-pack-id">
                                     <SelectValue placeholder="Select question pack" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -518,6 +697,22 @@ export default function Jobs(props: JobProps) {
                                     {props.questionPacks.map((pack) => (
                                         <SelectItem key={pack.id} value={String(pack.id)}>
                                             {pack.pack_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-education-level-id">Education Level</Label>
+                            <Select name="education_level_id" value={editJob.education_level_id} onValueChange={(value) => setEditJob(prev => ({ ...prev, education_level_id: value }))}>
+                                <SelectTrigger id="edit-education-level-id">
+                                    <SelectValue placeholder="Select education level" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {educationLevels.map((level) => (
+                                        <SelectItem key={level.id} value={String(level.id)}>
+                                            {level.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -563,7 +758,10 @@ export default function Jobs(props: JobProps) {
                                 <div className="col-span-2">{selectedJob.title}</div>
 
                                 <div className="font-medium">Department:</div>
-                                <div className="col-span-2">{selectedJob.department}</div>
+                                <div className="col-span-2">{selectedJob.departement?.name || 'Not specified'}</div>
+
+                                <div className="font-medium">Major:</div>
+                                <div className="col-span-2">{selectedJob.major?.name || 'Not specified'}</div>
 
                                 <div className="font-medium">Location:</div>
                                 <div className="col-span-2">{selectedJob.location}</div>
@@ -582,19 +780,19 @@ export default function Jobs(props: JobProps) {
                                 <div className="font-medium">Requirements:</div>
                                 <div className="col-span-2">
                                     <ul className="list-disc pl-5">
-                                        {selectedJob.requirements.map((req, index) => (
-                                            <li key={index}>{req}</li>
+                                        {ensureArray(selectedJob.requirements).map((req, index) => (
+                                            <li key={`req-${index}`}>{req}</li>
                                         ))}
                                     </ul>
                                 </div>
 
-                                {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+                                {selectedJob.benefits && ensureArray(selectedJob.benefits).length > 0 && (
                                     <>
                                         <div className="font-medium">Benefits:</div>
                                         <div className="col-span-2">
                                             <ul className="list-disc pl-5">
-                                                {selectedJob.benefits.map((benefit, index) => (
-                                                    <li key={index}>{benefit}</li>
+                                                {ensureArray(selectedJob.benefits).map((benefit, index) => (
+                                                    <li key={`benefit-${index}`}>{benefit}</li>
                                                 ))}
                                             </ul>
                                         </div>

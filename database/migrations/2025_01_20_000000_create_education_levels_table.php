@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('periods', function (Blueprint $table) {
-            $table->foreignId('company_id')->nullable()->after('name')->constrained()->onDelete('set null');
+        Schema::create('education_levels', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique(); // SMK/SMA, D3, S1, S2, S3
+            $table->timestamps();
         });
     }
 
@@ -21,9 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('periods', function (Blueprint $table) {
-            $table->dropForeign(['company_id']);
-            $table->dropColumn('company_id');
-        });
+        Schema::dropIfExists('education_levels');
     }
-};
+}; 

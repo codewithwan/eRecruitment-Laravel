@@ -13,7 +13,7 @@ class CandidatesEducation extends Model
 
     protected $fillable = [
         'user_id',
-        'education_level',
+        'education_level_id',
         'faculty',
         'major_id',
         'institution_name',
@@ -36,5 +36,10 @@ class CandidatesEducation extends Model
     public function major()
     {
         return $this->belongsTo(MasterMajor::class, 'major_id');
+    }
+
+    public function educationLevel()
+    {
+        return $this->belongsTo(EducationLevel::class, 'education_level_id');
     }
 }

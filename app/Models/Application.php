@@ -29,9 +29,8 @@ class Application extends Model
         'user_id',
         'vacancy_period_id',
         'status_id',
-        'current_stage_id',
-        'current_stage',
-        'applied_at',
+        'resume_path',
+        'cover_letter_path',
     ];
     
     /**
@@ -40,8 +39,7 @@ class Application extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'current_stage' => ApplicationStatus::class,
-        'applied_at' => 'datetime',
+        //
     ];
     
     /**
@@ -76,13 +74,7 @@ class Application extends Model
         return $this->belongsTo(Status::class);
     }
     
-    /**
-     * Get the current stage of the application.
-     */
-    public function currentStage(): BelongsTo
-    {
-        return $this->belongsTo(Status::class, 'current_stage_id');
-    }
+
     
     /**
      * Get the recruitment period for this application (through the vacancy_period relation)
@@ -93,27 +85,41 @@ class Application extends Model
     }
     
     /**
-     * Get the application administration data.
+     * Get all application history records.
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(ApplicationHistory::class);
+    }
+    
+    /**
+     * Get administration history (admin_selection status).
      */
     public function administration(): HasOne
     {
-        return $this->hasOne(ApplicationAdministration::class);
+        return $this->hasOne(ApplicationHistory::class)->whereHas('status', function($query) {
+            $query->where('code', 'administration');
+        });
     }
     
     /**
-     * Get the application assessment data.
+     * Get assessment history (psychotest status).
      */
     public function assessment(): HasOne
     {
-        return $this->hasOne(ApplicationAssessment::class);
+        return $this->hasOne(ApplicationHistory::class)->whereHas('status', function($query) {
+            $query->where('code', 'assessment');
+        });
     }
     
     /**
-     * Get the application interview data.
+     * Get interview history (interview status).
      */
     public function interview(): HasOne
     {
-        return $this->hasOne(ApplicationInterview::class);
+        return $this->hasOne(ApplicationHistory::class)->whereHas('status', function($query) {
+            $query->where('code', 'interview');
+        });
     }
     
     /**
@@ -131,7 +137,7 @@ class Application extends Model
      */
     public function adminReviewer(): ?User
     {
-        return $this->administration?->reviewer;
+        return $this->administration()?->reviewer;
     }
     
     /**
@@ -139,7 +145,7 @@ class Application extends Model
      */
     public function interviewer(): ?User
     {
-        return $this->interview?->interviewer;
+        return $this->interview()?->reviewer;
     }
     
     /**
@@ -158,46 +164,7 @@ class Application extends Model
         return $this->hasMany(UserAnswer::class, 'user_id', 'user_id');
     }
     
-    /**
-     * Update application stage and status
-     */
-    public function updateStage(ApplicationStatus $stage, ?int $statusId = null): void
-    {
-        // Update the enum stage
-        $this->update(['current_stage' => $stage]);
-        
-        // Update current_stage_id and status_id based on matching stage/status in statuses table
-        $statusRecord = Status::where('code', $stage->value)->first();
-        if ($statusRecord) {
-            if ($statusRecord->isStage()) {
-                $this->update(['current_stage_id' => $statusRecord->id]);
-        }
-            if ($statusRecord->isStatus()) {
-                $this->update(['status_id' => $statusRecord->id]);
-            }
-        }
-        
-        // If a specific status is provided, update it
-        if ($statusId) {
-            $this->update(['status_id' => $statusId]);
-        }
-    }
-    
-    /**
-     * Get the current stage label
-     */
-    public function getCurrentStageLabel(): string
-    {
-        return $this->current_stage->label();
-    }
-    
-    /**
-     * Check if application is in a specific stage
-     */
-    public function isInStage(ApplicationStatus $stage): bool
-    {
-        return $this->current_stage === $stage;
-    }
+
     
     /**
      * Get overall score based on current stage
@@ -219,21 +186,22 @@ class Application extends Model
         $upcomingEvents = [];
         
         // Check assessment schedule
-        if ($this->assessment && $this->assessment->scheduled_at && $this->assessment->scheduled_at->isFuture()) {
+        $assessment = $this->assessment();
+        if ($assessment && $assessment->scheduled_at && $assessment->scheduled_at->isFuture()) {
             $upcomingEvents[] = [
                 'type' => 'assessment',
-                'scheduled_at' => $this->assessment->scheduled_at,
-                'location' => $this->assessment->test_location,
+                'scheduled_at' => $assessment->scheduled_at,
+                'notes' => $assessment->notes,
             ];
         }
         
         // Check interview schedule
-        if ($this->interview && $this->interview->scheduled_at && $this->interview->scheduled_at->isFuture()) {
+        $interview = $this->interview();
+        if ($interview && $interview->scheduled_at && $interview->scheduled_at->isFuture()) {
             $upcomingEvents[] = [
                 'type' => 'interview',
-                'scheduled_at' => $this->interview->scheduled_at,
-                'location' => $this->interview->location,
-                'is_online' => $this->interview->is_online,
+                'scheduled_at' => $interview->scheduled_at,
+                'notes' => $interview->notes,
             ];
         }
         

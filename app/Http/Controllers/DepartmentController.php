@@ -18,8 +18,8 @@ class DepartmentController extends Controller
     public function index()
     {
         $departments = Departement::withCount('vacancies')->get();
-        $recruitmentStages = Status::stages()->orderBy('order')->get();
-        $applicationStatuses = Status::statuses()->orderBy('order')->get();
+        $recruitmentStages = Status::whereIn('code', ['admin_selection', 'psychotest', 'interview'])->get();
+        $applicationStatuses = Status::whereIn('code', ['accepted', 'rejected'])->get();
         $educationLevels = EducationLevel::withCount('vacancies')->orderBy('name')->get();
         $majors = MasterMajor::withCount('candidatesEducations')->orderBy('name')->get();
 
@@ -133,14 +133,11 @@ class DepartmentController extends Controller
                 'name' => 'required|string|max:255',
                 'code' => 'required|string|max:100|unique:statuses,code',
                 'description' => 'nullable|string|max:500',
-                'order' => 'required|integer|min:1',
+                'stage' => 'required|string|max:255',
                 'is_active' => 'required|boolean',
             ]);
 
-            $stage = Status::create([
-                ...$validated,
-                'type' => 'stage',
-            ]);
+            $stage = Status::create($validated);
 
             return response()->json([
                 'message' => 'Recruitment stage created successfully',
@@ -166,13 +163,13 @@ class DepartmentController extends Controller
     public function updateStage(Request $request, $id)
     {
         try {
-            $stage = Status::where('type', 'stage')->findOrFail($id);
+            $stage = Status::findOrFail($id);
             
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'code' => 'required|string|max:100|unique:statuses,code,' . $id,
                 'description' => 'nullable|string|max:500',
-                'order' => 'required|integer|min:1',
+                'stage' => 'required|string|max:255',
                 'is_active' => 'required|boolean',
             ]);
 
@@ -202,12 +199,12 @@ class DepartmentController extends Controller
     public function destroyStage($id)
     {
         try {
-            $stage = Status::where('type', 'stage')->findOrFail($id);
+            $stage = Status::findOrFail($id);
             
             // Check if stage is being used in applications
-            if ($stage->currentStageApplications()->count() > 0) {
+            if ($stage->applications()->count() > 0) {
                 return response()->json([
-                    'message' => 'Cannot delete recruitment stage that is currently in use',
+                    'message' => 'Cannot delete status that is currently in use',
                 ], 400);
             }
 
@@ -227,37 +224,13 @@ class DepartmentController extends Controller
 
     /**
      * Update recruitment stage order.
+     * Note: Order functionality has been removed in new structure.
      */
     public function updateStageOrder(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'stages' => 'required|array',
-                'stages.*.id' => 'required|exists:statuses,id',
-                'stages.*.order' => 'required|integer|min:1',
-            ]);
-
-            foreach ($validated['stages'] as $stageData) {
-                Status::where('id', $stageData['id'])
-                    ->where('type', 'stage')
-                    ->update(['order' => $stageData['order']]);
-            }
-
-            return response()->json([
-                'message' => 'Recruitment stage order updated successfully',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Error updating stage order: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error updating stage order',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Stage ordering is no longer supported in the current system structure',
+        ], 400);
     }
 
     /**

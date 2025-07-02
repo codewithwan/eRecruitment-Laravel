@@ -17,12 +17,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('vacancy_period_id')->constrained('vacancy_periods')->onDelete('cascade');
             $table->foreignId('status_id')->constrained('statuses')->onDelete('restrict');
-            $table->foreignId('current_stage_id')->constrained('statuses')->onDelete('restrict');
-            
-            // Tetap menyimpan enum untuk kompatibilitas
-            $table->enum('current_stage', ApplicationStatus::values())->default(ApplicationStatus::ADMINISTRATIVE_SELECTION->value);
-            
-            $table->timestamp('applied_at');
+            $table->string('resume_path')->nullable();
+            $table->string('cover_letter_path')->nullable();
             $table->timestamps();
             
             // Create a unique constraint to prevent duplicate applications

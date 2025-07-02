@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Application;
+use App\Models\Status;
 
 class AssessmentController extends Controller
 {
@@ -13,94 +15,115 @@ class AssessmentController extends Controller
      */
     public function show(string $id): Response
     {
-        // Mock data untuk demo - nanti ganti dengan data dari database
-        $mockAssessmentData = [
-            'id' => $id,
-            'name' => 'Rizal Farhan Nanda',
-            'email' => 'Rizalfarhananda@gmail.com',
-            'phone' => '+62 812-3456-7890',
-            'position' => 'UI / UX',
-            'vacancy' => 'UI/UX Designer',
-            'registration_date' => '2025-03-20',
-            'assessment_date' => '2025-03-22',
-            'cv_path' => '/storage/cv/rizal_cv.pdf',
-            'portfolio_path' => '/storage/portfolio/rizal_portfolio.pdf',
-            'cover_letter' => 'Saya sangat tertarik untuk bergabung dengan perusahaan ini karena visi dan misi yang sejalan dengan passion saya di bidang UI/UX Design...',
-            'status' => 'completed',
-            'total_score' => 85,
-            'max_total_score' => 100,
-            'notes' => 'Kandidat menunjukkan pemahaman yang baik tentang design principles dan user experience.',
-            'questions' => [
-                [
-                    'id' => '1',
-                    'question' => 'Jelaskan perbedaan antara UI dan UX Design?',
-                    'answer' => 'UI Design fokus pada tampilan visual dan interaksi interface, sedangkan UX Design fokus pada pengalaman pengguna secara keseluruhan dalam menggunakan produk.',
-                    'score' => 9,
-                    'maxScore' => 10,
-                    'category' => 'Theory'
-                ],
-                [
-                    'id' => '2',
-                    'question' => 'Sebutkan tools yang biasa Anda gunakan untuk design?',
-                    'answer' => 'Saya menggunakan Figma untuk UI Design, Adobe XD untuk prototyping, dan Miro untuk user journey mapping.',
-                    'score' => 8,
-                    'maxScore' => 10,
-                    'category' => 'Tools'
-                ],
-                [
-                    'id' => '3',
-                    'question' => 'Bagaimana Anda melakukan user research?',
-                    'answer' => 'Saya melakukan user interview, survey, dan usability testing untuk memahami kebutuhan dan pain points pengguna.',
-                    'score' => 8,
-                    'maxScore' => 10,
-                    'category' => 'Research'
-                ],
-                [
-                    'id' => '4',
-                    'question' => 'Ceritakan tentang project terbaik yang pernah Anda kerjakan?',
-                    'answer' => 'Project aplikasi mobile untuk e-commerce dimana saya berhasil meningkatkan conversion rate sebesar 25% melalui redesign checkout flow.',
-                    'score' => 9,
-                    'maxScore' => 10,
-                    'category' => 'Experience'
-                ]
-            ]
+        // Fetch application and related data from database
+        $application = \App\Models\Application::with([
+            'user',
+            'vacancyPeriod.vacancy',
+            'vacancyPeriod.period',
+            'assessment.status',
+            'assessment',
+        ])->findOrFail($id);
+
+        $assessmentHistory = $application->assessment;
+        $assessmentQuestions = [];
+        $totalScore = 0;
+        $maxTotalScore = 0;
+
+        if ($assessmentHistory && $assessmentHistory->test_results) {
+            // test_results assumed to be an array of question results
+            foreach ($assessmentHistory->test_results as $result) {
+                $assessmentQuestions[] = [
+                    'id' => $result['id'] ?? '',
+                    'question' => $result['question'] ?? '',
+                    'answer' => $result['answer'] ?? '',
+                    'score' => $result['score'] ?? 0,
+                    'maxScore' => $result['maxScore'] ?? 0,
+                    'category' => $result['category'] ?? '',
+                ];
+                $totalScore += $result['score'] ?? 0;
+                $maxTotalScore += $result['maxScore'] ?? 0;
+            }
+        }
+
+        $assessmentData = [
+            'id' => $application->id,
+            'name' => $application->user->name,
+            'email' => $application->user->email,
+            'phone' => $application->user->phone ?? null,
+            'position' => $application->vacancyPeriod->vacancy->title ?? '-',
+            'vacancy' => $application->vacancyPeriod->vacancy->title ?? '-',
+            'company_id' => $application->vacancyPeriod->vacancy->company_id ?? null,
+            'period_id' => $application->vacancyPeriod->period_id ?? null,
+            'registration_date' => $application->created_at->format('Y-m-d'),
+            'assessment_date' => $assessmentHistory && $assessmentHistory->completed_at ? $assessmentHistory->completed_at->format('Y-m-d') : null,
+            'cv_path' => $application->user->cv_path ?? null,
+            'portfolio_path' => $application->user->portfolio_path ?? null,
+            'cover_letter' => $application->user->cover_letter ?? null,
+            'status' => $assessmentHistory && $assessmentHistory->status ? $assessmentHistory->status->code : 'pending',
+            'total_score' => $totalScore,
+            'max_total_score' => $maxTotalScore > 0 ? $maxTotalScore : 100,
+            'notes' => $assessmentHistory ? $assessmentHistory->notes : null,
+            'questions' => $assessmentQuestions,
         ];
 
         return Inertia::render('admin/company/assessment-detail', [
-            'assessment' => $mockAssessmentData
+            'assessment' => $assessmentData
         ]);
     }
 
     /**
      * Approve a candidate for interview stage.
      */
-    public function approve(Request $request, string $id)
+    public function approve(Request $request, $id)
     {
-        try {
-            // Logic untuk approve kandidat
-            // Update status di database
-            // Pindahkan ke tahap interview
-            
-            return redirect()->route('company.interview')
-                ->with('success', 'Candidate approved successfully and moved to interview stage.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to approve candidate.');
-        }
+        $application = Application::findOrFail($id);
+
+        // Update or create assessment history
+        $application->history()->updateOrCreate(
+            ['status_id' => Status::where('code', 'assessment')->first()->id],
+            [
+                'processed_at' => now(),
+                'notes' => $request->input('hr_notes', 'Passed assessment stage.'),
+                'status_id' => Status::where('code', 'passed')->first()->id, // Status passed
+            ]
+        );
+
+        // Update application status to interview
+        $application->status_id = Status::where('code', 'interview')->first()->id;
+        $application->save();
+
+        $companyId = $application->vacancyPeriod->vacancy->company_id;
+        $periodId = $application->vacancyPeriod->period_id;
+
+        return redirect()->route('company.interview', ['company' => $companyId, 'period' => $periodId])
+            ->with('success', 'Candidate approved and moved to interview phase.');
     }
 
     /**
      * Reject a candidate.
      */
-    public function reject(Request $request, string $id)
+    public function reject(Request $request, $id)
     {
-        try {
-            // Logic untuk reject kandidat
-            // Update status di database
-            
-            return redirect()->route('assessment.index')
-                ->with('success', 'Candidate rejected successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to reject candidate.');
-        }
+        $application = Application::findOrFail($id);
+
+        // Update or create assessment history
+        $application->history()->updateOrCreate(
+            ['status_id' => Status::where('code', 'assessment')->first()->id],
+            [
+                'processed_at' => now(),
+                'notes' => $request->input('hr_notes', 'Rejected at assessment stage.'),
+                'status_id' => Status::where('code', 'failed')->first()->id, // Status failed
+            ]
+        );
+
+        // Update application status to rejected
+        $application->status_id = Status::where('code', 'rejected')->first()->id;
+        $application->save();
+
+        $companyId = $application->vacancyPeriod->vacancy->company_id;
+        $periodId = $application->vacancyPeriod->period_id;
+
+        return redirect()->route('company.assessment', ['company' => $companyId, 'period' => $periodId])
+            ->with('success', 'Candidate application has been rejected.');
     }
 }

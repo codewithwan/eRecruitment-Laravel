@@ -207,15 +207,6 @@ class PeriodController extends Controller
         // Attach vacancies to this period
         $period->vacancies()->attach($validated['vacancies_ids']);
         
-        // Get the first vacancy to get its company
-        if (count($validated['vacancies_ids']) > 0) {
-            $vacancy = Vacancies::find($validated['vacancies_ids'][0]);
-            if ($vacancy && $vacancy->company_id) {
-                $period->company_id = $vacancy->company_id;
-                $period->save();
-            }
-        }
-        
         // Get the period with its associated vacancies for the response
         $period->load('vacancies.company', 'vacancies.questionPack', 'vacancies.departement');
         

@@ -4,35 +4,44 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Application;
+use App\Models\Status;
 
 class AdministrationController extends Controller
 {
     public function show($id)
     {
-        // Fetch user data from database
-        // For now, using dummy data
+        // Fetch application and related data from database
+        $application = \App\Models\Application::with([
+            'user',
+            'vacancyPeriod.vacancy',
+            'vacancyPeriod.period',
+            'history.status',
+        ])->findOrFail($id);
+
         $user = [
-            'id' => $id,
-            'name' => 'Rizal Farhan Nanda',
-            'email' => 'rizalfarhannanda@gmail.com',
-            'position' => 'UI / UX',
-            'registration_date' => '2025-03-20',
+            'id' => $application->id,
+            'name' => $application->user->name,
+            'email' => $application->user->email,
+            'position' => $application->vacancyPeriod->vacancy->title ?? '-',
+            'registration_date' => $application->created_at->format('Y-m-d'),
             'cv' => [
-                'filename' => 'rizal_cv.pdf',
+                'filename' => $application->user->name . '_cv.pdf',
                 'fileType' => 'pdf',
-                'url' => '/uploads/cv/rizal_cv.pdf'
+                'url' => '/uploads/cv/' . $application->user->name . '_cv.pdf',
             ],
-            'periodId' => '1',
-            'vacancy' => 'UI/UX Designer',
-            'phone' => '+62 812-3456-7890',
-            'address' => 'Jl. Sudirman No. 123, Jakarta Selatan',
-            'education' => 'S1 Desain Komunikasi Visual - Universitas Indonesia (2020-2024)',
-            'experience' => '2 tahun sebagai UI/UX Designer di PT Digital Creative',
-            'skills' => ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'User Research', 'Wireframing'],
-            'status' => 'pending'
+            'company_id' => $application->vacancyPeriod->vacancy->company_id ?? null,
+            'period_id' => $application->vacancyPeriod->period_id ?? null,
+            'vacancy' => $application->vacancyPeriod->vacancy->title ?? '-',
+            'phone' => $application->user->phone ?? null,
+            'address' => $application->user->address ?? null,
+            'education' => $application->user->education ?? null,
+            'experience' => $application->user->experience ?? null,
+            'skills' => $application->user->skills ? $application->user->skills->pluck('name')->toArray() : [],
+            'status' => $application->status->code ?? 'pending',
         ];
 
-        $periodName = 'Q1 2025 Recruitment';
+        $periodName = $application->vacancyPeriod->period->name ?? '-';
 
         return Inertia::render('admin/company/administration-detail', [
             'user' => $user,
@@ -40,22 +49,54 @@ class AdministrationController extends Controller
         ]);
     }
 
-    public function approve($id)
+    public function approve(Request $request, $id)
     {
-        // Logic untuk approve candidate
-        // Update status di database
-        // Move ke assessment phase
-        
-        return redirect()->route('assessment.index')
+        $application = Application::findOrFail($id);
+
+        // Update or create administration history
+        $application->history()->updateOrCreate(
+            ['status_id' => Status::where('code', 'administration')->firstOrFail()->id],
+            [
+                'processed_at' => now(),
+                'notes' => $request->input('notes', 'Passed administration stage.'),
+                'score' => $request->input('score'),
+                'status_id' => Status::where('code', 'passed')->first()->id, // Status passed
+            ]
+        );
+
+        // Update application status to assessment
+        $application->status_id = Status::where('code', 'assessment')->first()->id;
+        $application->save();
+
+        $companyId = $application->vacancyPeriod->vacancy->company_id;
+        $periodId = $application->vacancyPeriod->period_id;
+
+        return redirect()->route('company.administration', ['company' => $companyId, 'period' => $periodId])
             ->with('success', 'Candidate approved and moved to assessment phase.');
     }
 
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
-        // Logic untuk reject candidate
-        // Update status di database
+        $application = Application::findOrFail($id);
+
+        // Update or create administration history
+        $application->history()->updateOrCreate(
+            ['status_id' => Status::where('code', 'administration')->firstOrFail()->id],
+            [
+                'processed_at' => now(),
+                'notes' => $request->input('notes', 'Rejected at administration stage.'),
+                'status_id' => Status::where('code', 'failed')->first()->id, // Status failed
+            ]
+        );
         
-        return redirect()->route('administration.index')
+        // Update application status to rejected
+        $application->status_id = Status::where('code', 'rejected')->first()->id;
+        $application->save();
+
+        $companyId = $application->vacancyPeriod->vacancy->company_id;
+        $periodId = $application->vacancyPeriod->period_id;
+
+        return redirect()->route('company.administration', ['company' => $companyId, 'period' => $periodId])
             ->with('success', 'Candidate application has been rejected.');
     }
 }

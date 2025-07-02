@@ -16,28 +16,13 @@ return new class extends Migration
             $table->foreignId('application_id')->constrained('applications')->onDelete('cascade');
             
             // Final decision and reporting
-            $table->decimal('overall_score', 5, 2)->nullable(); // Calculated from all stages
+            $table->decimal('overall_score', 5, 2)->nullable();
             $table->text('final_notes')->nullable();
-            $table->text('rejection_reason')->nullable();
-            $table->text('recommendation')->nullable(); // HR recommendation
             $table->enum('final_decision', ['pending', 'accepted', 'rejected'])->default('pending');
             
-            // Decision makers
+            // Decision maker
             $table->foreignId('decision_made_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('decision_made_at')->nullable();
-            $table->foreignId('report_generated_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->timestamp('report_generated_at')->nullable();
-            
-            // Detailed scores from each stage
-            $table->decimal('administration_score', 5, 2)->nullable();
-            $table->decimal('assessment_score', 5, 2)->nullable();
-            $table->decimal('interview_score', 5, 2)->nullable();
-            
-            // Additional reporting data
-            $table->json('stage_summary')->nullable(); // Summary of each stage
-            $table->json('strengths')->nullable(); // Candidate strengths
-            $table->json('weaknesses')->nullable(); // Areas for improvement
-            $table->text('next_steps')->nullable(); // If accepted, what's next
             
             $table->timestamps();
             

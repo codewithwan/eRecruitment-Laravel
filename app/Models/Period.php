@@ -14,10 +14,8 @@ class Period extends Model
     protected $fillable = [
         'name',
         'description',
-        'start_date',
-        'end_date',
-        'status',
-        'company_id',
+        'start_time',
+        'end_time',
     ];
 
     /**

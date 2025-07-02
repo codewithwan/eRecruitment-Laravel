@@ -19,8 +19,7 @@ class Status extends Model
         'name',
         'code',
         'description',
-        'type',
-        'order',
+        'stage',
         'is_active',
     ];
 
@@ -31,7 +30,6 @@ class Status extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
-        'order' => 'integer',
     ];
 
     /**
@@ -42,43 +40,7 @@ class Status extends Model
         return $this->hasMany(Application::class, 'status_id');
     }
 
-    /**
-     * Get the applications in this stage (for current_stage_id).
-     */
-    public function currentStageApplications(): HasMany
-    {
-        return $this->hasMany(Application::class, 'current_stage_id');
-    }
 
-    /**
-     * Scope to get only stages.
-     */
-    public function scopeStages($query)
-    {
-        return $query->where('type', 'stage')->orderBy('order');
-    }
 
-    /**
-     * Scope to get only statuses.
-     */
-    public function scopeStatuses($query)
-    {
-        return $query->where('type', 'status');
-    }
 
-    /**
-     * Check if this is a stage.
-     */
-    public function isStage(): bool
-    {
-        return $this->type === 'stage';
-    }
-
-    /**
-     * Check if this is a status.
-     */
-    public function isStatus(): bool
-    {
-        return $this->type === 'status';
-    }
 }

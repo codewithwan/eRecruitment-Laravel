@@ -29,12 +29,14 @@ interface AssessmentDetailData {
     phone?: string;
     position: string;
     vacancy: string;
+    company_id?: number;
+    period_id?: number;
     registration_date: string;
     assessment_date?: string;
     cv_path?: string;
     portfolio_path?: string;
     cover_letter?: string;
-    status: 'pending' | 'completed' | 'approved' | 'rejected';
+    status: 'pending' | 'completed' | 'approved' | 'rejected' | 'assessment';
     total_score: number;
     max_total_score: number;
     questions: AssessmentQuestion[];
@@ -61,6 +63,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function AssessmentDetail({ assessment }: AssessmentDetailProps) {
+    const backUrl = assessment.company_id && assessment.period_id
+        ? `/dashboard/company/assessment?company=${assessment.company_id}&period=${assessment.period_id}`
+        : '/dashboard/company/assessment';
+
     const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
     const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -184,7 +190,7 @@ export default function AssessmentDetail({ assessment }: AssessmentDetailProps) 
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => router.visit('/dashboard/assessment')}
+                                onClick={() => router.visit(backUrl)}
                                 className="shrink-0 hover:bg-gray-100"
                             >
                                 <ArrowLeft className="h-5 w-5" />
@@ -398,23 +404,14 @@ export default function AssessmentDetail({ assessment }: AssessmentDetailProps) 
                                 </CardHeader>
                                 <CardContent>
                                     <Textarea
+                                        id="assessment-notes"
                                         placeholder="Add your review notes..."
                                         value={hrNotes}
                                         onChange={(e) => setHrNotes(e.target.value)}
                                         className="min-h-[100px] border-gray-200 focus:border-gray-300 focus:ring-0"
                                     />
-                                </CardContent>
-                            </Card>
-
-                            {/* Action Buttons */}
-                            {assessment.status === 'completed' && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Actions</CardTitle>
-                                        <CardDescription>Approve or reject this candidate based on assessment results</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex justify-end gap-3">
+                                    {assessment.status === 'completed' && (
+                                        <div className="flex justify-end gap-3 mt-4">
                                             <Button
                                                 variant="outline"
                                                 onClick={() => setIsRejectDialogOpen(true)}
@@ -429,9 +426,9 @@ export default function AssessmentDetail({ assessment }: AssessmentDetailProps) 
                                                 Approve for Interview
                                             </Button>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            )}
+                                    )}
+                                </CardContent>
+                            </Card>
                         </div>
                     </div>
                 </div>

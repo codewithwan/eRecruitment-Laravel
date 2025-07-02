@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\CandidatesEducation;
+use App\Models\EducationLevel;
 use App\Models\MasterMajor;
 use App\Models\User;
 use App\Enums\UserRole;
@@ -16,18 +17,10 @@ class CandidatesEducationSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get candidate users and majors
+        // Get candidate users, majors, and education levels
         $candidateUsers = User::where('role', UserRole::CANDIDATE)->get();
         $majors = MasterMajor::all();
-
-        $educationLevels = [
-            'SMA/SMK',
-            'Diploma III (D3)',
-            'Diploma IV (D4)',
-            'Sarjana (S1)',
-            'Magister (S2)',
-            'Doktor (S3)',
-        ];
+        $educationLevels = EducationLevel::all();
 
         $faculties = [
             'Fakultas Teknik',
@@ -128,9 +121,9 @@ class CandidatesEducationSeeder extends Seeder
             $numberOfEducations = rand(1, 3);
             
             for ($i = 0; $i < $numberOfEducations; $i++) {
-                $educationLevel = $educationLevels[array_rand($educationLevels)];
+                $educationLevel = $educationLevels->random();
                 $startYear = 2010 + rand(0, 10); // 2010-2020
-                $endYear = $startYear + $this->getEducationDuration($educationLevel);
+                $endYear = $startYear + $this->getEducationDuration($educationLevel->name);
                 
                 // For current education, end year might be null
                 if (rand(0, 1) && $i == $numberOfEducations - 1) {
@@ -139,7 +132,7 @@ class CandidatesEducationSeeder extends Seeder
                 
                 CandidatesEducation::create([
                     'user_id' => $user->id,
-                    'education_level' => $educationLevel,
+                    'education_level_id' => $educationLevel->id,
                     'faculty' => $faculties[array_rand($faculties)],
                     'major_id' => $majors->random()->id,
                     'institution_name' => $institutions[array_rand($institutions)],
@@ -154,12 +147,14 @@ class CandidatesEducationSeeder extends Seeder
     private function getEducationDuration($level)
     {
         $durations = [
+            'SMP' => 3,
             'SMA/SMK' => 3,
-            'Diploma III (D3)' => 3,
-            'Diploma IV (D4)' => 4,
-            'Sarjana (S1)' => 4,
-            'Magister (S2)' => 2,
-            'Doktor (S3)' => 3,
+            'D1' => 1,
+            'D2' => 2,
+            'D3' => 3,
+            'D4/S1' => 4,
+            'S2' => 2,
+            'S3' => 3,
         ];
 
         return $durations[$level] ?? 4;

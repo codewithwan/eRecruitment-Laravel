@@ -17,8 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('code')->unique();
             $table->string('description')->nullable();
-            $table->string('type')->default('status'); // 'status' or 'stage'
-            $table->integer('order')->nullable(); // For stages ordering
+            $table->string('stage');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
@@ -41,54 +40,39 @@ return new class extends Migration
     private function seedStatuses(): void
     {
         $data = [
-            // Recruitment stages
             [
                 'name' => 'Administrative Selection',
-                'code' => 'administrative_selection',
+                'code' => 'admin_selection',
                 'description' => 'Candidate is in administrative selection stage',
-                'type' => 'stage',
-                'order' => 1,
+                'stage' => 'administrative_selection',
                 'is_active' => true,
             ],
             [
                 'name' => 'Psychological Test',
-                'code' => 'psychological_test',
+                'code' => 'psychotest',
                 'description' => 'Candidate is taking psychological test',
-                'type' => 'stage',
-                'order' => 2,
+                'stage' => 'psychological_test',
                 'is_active' => true,
             ],
             [
                 'name' => 'Interview',
                 'code' => 'interview',
                 'description' => 'Candidate is in interview stage',
-                'type' => 'stage',
-                'order' => 3,
-                'is_active' => true,
-            ],
-            // Final statuses
-            [
-                'name' => 'Pending',
-                'code' => 'pending',
-                'description' => 'Application is still in process',
-                'type' => 'status',
-                'order' => null,
+                'stage' => 'interview',
                 'is_active' => true,
             ],
             [
                 'name' => 'Accepted',
                 'code' => 'accepted',
                 'description' => 'Candidate has been accepted',
-                'type' => 'status',
-                'order' => null,
+                'stage' => 'accepted',
                 'is_active' => true,
             ],
             [
                 'name' => 'Rejected',
                 'code' => 'rejected',
                 'description' => 'Candidate has been rejected',
-                'type' => 'status',
-                'order' => null,
+                'stage' => 'rejected',
                 'is_active' => true,
             ],
         ];

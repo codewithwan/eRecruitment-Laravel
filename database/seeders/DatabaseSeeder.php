@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             MasterMajorSeeder::class,
             VacancyTypeSeeder::class,
             DepartementSeeder::class,
+            EducationLevelSeeder::class,
+            
             
             // 3. Question System (QuestionPack depends on Question)
             QuestionSeeder::class,
@@ -32,7 +34,10 @@ class DatabaseSeeder extends Seeder
             // 5. Period System (Depends on: Vacancies)
             PeriodSeeder::class,
             
-            // 6. Candidate Data (Depends on: User with role CANDIDATE)
+            // 6. Company Information (Depends on: Company)
+            AboutUsSeeder::class,
+            
+            // 7. Candidate Data (Depends on: User with role CANDIDATE)
             CandidatesProfileSeeder::class,
             CandidatesEducationSeeder::class,
             CandidatesWorkExperienceSeeder::class,
@@ -45,8 +50,11 @@ class DatabaseSeeder extends Seeder
             CandidatesAchievementSeeder::class,
             CandidatesCVSeeder::class,
             
-            // 7. Application System (Depends on: User, VacancyPeriods which is created by Vacancies+Periods)
-            ApplicantSeeder::class,
+            // 8. User Test Answers (Depends on: User, Question)
+            UserAnswerSeeder::class,
+            
+            // 9. Application System (Depends on: User, VacancyPeriods which is created by Vacancies+Periods, Status)
+            ApplicationSeeder::class,
         ]);
     }
 }

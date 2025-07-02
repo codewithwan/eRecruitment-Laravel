@@ -23,7 +23,8 @@ class Vacancies extends Model
         'salary',
         'requirements',
         'benefits',
-        'question_pack_id'
+        'question_pack_id',
+        'education_level_id'
     ];
     
     protected $casts = [
@@ -58,10 +59,10 @@ class Vacancies extends Model
     /**
      * Get the applicants associated with this vacancy through the vacancy_period table.
      */
-    public function applicants()
+    public function applications()
     {
         return $this->hasManyThrough(
-            Applicant::class,
+            Application::class,
             VacancyPeriods::class,
             'vacancy_id', // Foreign key on vacancy_periods table
             'vacancy_period_id', // Foreign key on applicants table
@@ -100,5 +101,13 @@ class Vacancies extends Model
     public function vacancyType()
     {
         return $this->belongsTo(VacancyType::class, 'vacancy_type_id');
+    }
+    
+    /**
+     * Get the education level associated with this vacancy.
+     */
+    public function educationLevel()
+    {
+        return $this->belongsTo(EducationLevel::class, 'education_level_id');
     }
 }

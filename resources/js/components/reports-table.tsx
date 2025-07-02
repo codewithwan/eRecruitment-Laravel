@@ -10,9 +10,24 @@ export interface ReportCandidate {
     name: string;
     email: string;
     position: string;
-    administration: number;
-    assessment: number;
-    interview: number;
+    registration_date: string;
+    period?: string;
+    overall_score?: number;
+    final_decision?: string;
+    final_notes?: string;
+    rejection_reason?: string;
+    recommendation?: string;
+    decision_made_by?: string;
+    decision_made_at?: string;
+    report_generated_by?: string;
+    report_generated_at?: string;
+    administration_score?: number;
+    assessment_score?: number;
+    interview_score?: number;
+    stage_summary?: any;
+    strengths?: string;
+    weaknesses?: string;
+    next_steps?: string;
 }
 
 interface PaginationData {
@@ -54,8 +69,11 @@ export function ReportsTable({
     };
 
     const calculateAvg = (candidate: ReportCandidate) => {
-        const { administration, assessment, interview } = candidate;
-        return((administration + assessment + interview) / 3).toFixed(1);
+        const { administration_score, assessment_score, interview_score } = candidate;
+        const admin = administration_score || 0;
+        const assess = assessment_score || 0;
+        const inter = interview_score || 0;
+        return((admin + assess + inter) / 3).toFixed(1);
     }
 
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -115,9 +133,9 @@ export function ReportsTable({
                                       <TableCell>{candidate.name}</TableCell>
                                       <TableCell>{candidate.email}</TableCell>
                                       <TableCell>{candidate.position}</TableCell>
-                                      <TableCell>{candidate.administration}</TableCell>
-                                      <TableCell>{candidate.assessment}</TableCell>
-                                      <TableCell>{candidate.interview}</TableCell>
+                                      <TableCell>{candidate.administration_score || 0}</TableCell>
+                                      <TableCell>{candidate.assessment_score || 0}</TableCell>
+                                      <TableCell>{candidate.interview_score || 0}</TableCell>
                                       <TableCell>{calculateAvg(candidate)}</TableCell>
                                       <TableCell>
                                           <div className="flex justify-center space-x-2">

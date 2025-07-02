@@ -41,12 +41,12 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
+                <DialogFooter className="sm:justify-end">
                     <Button variant="outline" onClick={handleCancel}>
                         {cancelLabel}
                     </Button>

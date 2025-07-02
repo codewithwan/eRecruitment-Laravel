@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
-use App\Enums\CandidatesStage;
 
 return new class extends Migration
 {
@@ -18,12 +17,13 @@ return new class extends Migration
             $table->string('name');
             $table->string('code')->unique();
             $table->string('description')->nullable();
-            $table->enum('stage', CandidatesStage::values());
+            $table->string('type')->default('status'); // 'status' or 'stage'
+            $table->integer('order')->nullable(); // For stages ordering
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
-        // Insert default statuses
+        // Insert default statuses and stages
         $this->seedStatuses();
     }
 
@@ -36,50 +36,65 @@ return new class extends Migration
     }
 
     /**
-     * Seed the initial status values
+     * Seed the initial status and stage values
      */
     private function seedStatuses(): void
     {
-        $statuses = [
+        $data = [
+            // Recruitment stages
             [
                 'name' => 'Administrative Selection',
-                'code' => 'admin_selection',
+                'code' => 'administrative_selection',
                 'description' => 'Candidate is in administrative selection stage',
-                'stage' => CandidatesStage::ADMINISTRATIVE_SELECTION->value,
+                'type' => 'stage',
+                'order' => 1,
                 'is_active' => true,
             ],
             [
                 'name' => 'Psychological Test',
-                'code' => 'psychotest',
+                'code' => 'psychological_test',
                 'description' => 'Candidate is taking psychological test',
-                'stage' => CandidatesStage::PSYCHOTEST->value,
+                'type' => 'stage',
+                'order' => 2,
                 'is_active' => true,
             ],
             [
                 'name' => 'Interview',
                 'code' => 'interview',
                 'description' => 'Candidate is in interview stage',
-                'stage' => CandidatesStage::INTERVIEW->value,
+                'type' => 'stage',
+                'order' => 3,
+                'is_active' => true,
+            ],
+            // Final statuses
+            [
+                'name' => 'Pending',
+                'code' => 'pending',
+                'description' => 'Application is still in process',
+                'type' => 'status',
+                'order' => null,
                 'is_active' => true,
             ],
             [
                 'name' => 'Accepted',
                 'code' => 'accepted',
                 'description' => 'Candidate has been accepted',
-                'stage' => CandidatesStage::ACCEPTED->value,
+                'type' => 'status',
+                'order' => null,
                 'is_active' => true,
             ],
             [
                 'name' => 'Rejected',
                 'code' => 'rejected',
                 'description' => 'Candidate has been rejected',
-                'stage' => CandidatesStage::REJECTED->value,
+                'type' => 'status',
+                'order' => null,
                 'is_active' => true,
             ],
         ];
 
-        foreach ($statuses as $status) {
-            DB::table('statuses')->insert($status);
+        foreach ($data as $item) {
+            DB::table('statuses')->insert($item);
         }
     }
 };

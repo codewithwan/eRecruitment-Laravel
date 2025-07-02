@@ -10,6 +10,7 @@ use App\Models\QuestionPack;
 use App\Models\Departement;
 use App\Models\MasterMajor;
 use App\Models\VacancyType;
+use App\Models\EducationLevel;
 use Illuminate\Database\Seeder;
 
 class VacanciesSeeder extends Seeder
@@ -26,6 +27,7 @@ class VacanciesSeeder extends Seeder
         $departments = Departement::all();
         $majors = MasterMajor::all();
         $vacancyTypes = VacancyType::all();
+        $educationLevels = EducationLevel::all();
         
         // Check if dependencies exist
         if ($companies->isEmpty()) {
@@ -58,6 +60,12 @@ class VacanciesSeeder extends Seeder
             $vacancyTypes = VacancyType::all();
         }
 
+        if ($educationLevels->isEmpty()) {
+            $this->command->info('No education levels found. Running EducationLevelSeeder first.');
+            $this->call(EducationLevelSeeder::class);
+            $educationLevels = EducationLevel::all();
+        }
+
         // Indonesian job vacancies data
         $vacanciesData = [
             [
@@ -67,6 +75,7 @@ class VacanciesSeeder extends Seeder
                 'vacancy_type' => 'Full Time',
                 'location' => 'Jakarta',
                 'salary' => 'Rp. 8.000.000 - 15.000.000',
+                'education_level' => 'D4/S1', // Minimum S1
                 'requirements' => [
                     'Lulusan S1 Teknik Informatika atau Ilmu Komputer',
                     'Pengalaman minimal 2 tahun dalam pengembangan software',
@@ -91,6 +100,7 @@ class VacanciesSeeder extends Seeder
                 'vacancy_type' => 'Full Time',
                 'location' => 'Bandung',
                 'salary' => 'Rp. 5.000.000 - 9.000.000',
+                'education_level' => 'D4/S1', // Minimum S1
                 'requirements' => [
                     'Lulusan S1 Marketing, Komunikasi, atau bidang terkait',
                     'Pengalaman minimal 1 tahun di digital marketing',
@@ -115,6 +125,7 @@ class VacanciesSeeder extends Seeder
                 'vacancy_type' => 'Full Time',
                 'location' => 'Surabaya',
                 'salary' => 'Rp. 6.000.000 - 10.000.000',
+                'education_level' => 'D4/S1', // Minimum S1
                 'requirements' => [
                     'Lulusan S1 Akuntansi, Keuangan, atau Ekonomi',
                     'Pengalaman 1-3 tahun di bidang finance/accounting',
@@ -310,6 +321,15 @@ class VacanciesSeeder extends Seeder
             $company = $companies->random();
             $questionPack = $questionPacks->random();
 
+            // Get education level if specified, otherwise random
+            $educationLevel = null;
+            if (isset($vacancyData['education_level'])) {
+                $educationLevel = $educationLevels->where('name', $vacancyData['education_level'])->first();
+            }
+            if (!$educationLevel) {
+                $educationLevel = $educationLevels->random();
+            }
+
             // Fallback if specific department/major/type not found
             if (!$department) $department = $departments->random();
             if (!$major) $major = $majors->random();
@@ -327,6 +347,7 @@ class VacanciesSeeder extends Seeder
                 'user_id' => $user->id,
                 'company_id' => $company->id,
                 'question_pack_id' => $questionPack->id,
+                'education_level_id' => $educationLevel->id,
             ]);
         }
 

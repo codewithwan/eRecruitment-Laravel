@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\CandidatesStage;
+use App\Enums\ApplicationStatus;
 use App\Enums\UserRole;
-use App\Models\Applicant;
+use App\Models\Application;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +21,7 @@ class UserController extends Controller
             return $users->count();
         });
 
-        $job_applications = Applicant::all();
+        $job_applications = Application::all();
         $job_applied = $job_applications->groupBy(function ($job_applications) {
             return $job_applications->applied_at->format('Y-m-d');
         })->map(function ($job_applications) {

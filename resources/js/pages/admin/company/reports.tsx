@@ -1,5 +1,5 @@
 import { CompanyWizard } from '@/components/company-wizard';
-import { ReportsTable } from '@/components/reports-table'; // Tambahkan import ini
+import { ReportsTable } from '@/components/reports-table';
 import { SearchBar } from '@/components/searchbar';
 import {
     AlertDialog,
@@ -24,17 +24,37 @@ import { Head } from '@inertiajs/react';
 import { Filter, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-// Removed unused PaginationData interface
-
-type AdminUser = {
+type ReportUser = {
     id: string;
     name: string;
     email: string;
     position: string;
-    administration: number;
-    assessment: number;
-    interview: number;
+    registration_date: string;
+    period?: string;
+    overall_score?: number;
+    final_decision?: string;
+    final_notes?: string;
+    rejection_reason?: string;
+    recommendation?: string;
+    decision_made_by?: string;
+    decision_made_at?: string;
+    report_generated_by?: string;
+    report_generated_at?: string;
+    administration_score?: number;
+    assessment_score?: number;
+    interview_score?: number;
+    stage_summary?: any;
+    strengths?: string;
+    weaknesses?: string;
+    next_steps?: string;
 };
+
+interface PaginationData {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -48,6 +68,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 interface ReportsProps {
+    users?: ReportUser[];
+    reports?: ReportUser[];
+    pagination?: PaginationData;
+    statistics?: {
+        total: number;
+        completed: number;
+        scheduled: number;
+        waiting: number;
+    };
     selectedPeriod?: {
         id: string;
         name: string;
@@ -55,7 +84,12 @@ interface ReportsProps {
     };
 }
 
-export default function ReportsDashboard(props?: ReportsProps) {
+export default function ReportsDashboard({ 
+    users: initialUsers = [],
+    reports: initialReports = [],
+    pagination: initialPagination,
+    statistics: backendStatistics
+}: ReportsProps) {
     // Get period ID from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const periodId = urlParams.get('period');
@@ -83,115 +117,96 @@ export default function ReportsDashboard(props?: ReportsProps) {
         }
     }, [periodInfo, loading, error]);
 
-    // Mock data for the administration table
-    const [adminUsers] = useState<AdminUser[]>([
-        {
-            id: '01',
-            name: 'Rizal Farhan Nanda',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'UI / UX',
-            administration: 80,
-            assessment: 85,
-            interview: 90,
-
-        },
-        {
-            id: '02',
-            name: 'M. Hassan Naufal Zayyan',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'Back End',
-            administration: 80,
-            assessment: 70,
-            interview: 75,
-        },
-        {
-            id: '03',
-            name: 'Ardan Ferdiansah',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'Front End',
-            administration: 80,
-            assessment: 70,
-            interview: 85,
-        },
-        {
-            id: '04',
-            name: 'Muhammad Ridwan',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'UX Writer',
-            administration: 90,
-            assessment: 85,
-            interview: 95,
-        },
-        {
-            id: '05',
-            name: 'Untara Eka Saputra',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'IT Spesialis',
-            administration: 70,
-            assessment: 75,
-            interview: 80,
-        },
-        {
-            id: '06',
-            name: 'Dea Derika Winahyu',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'UX Writer',
-            administration: 80,
-            assessment: 75,
-            interview: 75,
-        },
-        {
-            id: '07',
-            name: 'Kartika Yuliana',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'IT Spesialis',
-            administration: 85,
-            assessment: 90,
-            interview: 85,
-        },
-        {
-            id: '08',
-            name: 'Ayesha Dear Raisha',
-            email: 'Rizalfarhannanda@gmail.com',
-            position: 'UX Writer',
-            administration: 90,
-            assessment: 85,
-            interview: 80,
-        },
-    ]);
+    // Use real data from backend (reports or users prop)
+    const reportUsers = initialReports.length > 0 ? initialReports : initialUsers;
 
     // Filter and search state
-    const [filteredUsers, setFilteredUsers] = useState(adminUsers);
+    const [filteredUsers, setFilteredUsers] = useState(reportUsers);
     const [searchQuery, setSearchQuery] = useState('');
     const [positionFilter, setPositionFilter] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+    const [selectedUser, setSelectedUser] = useState<ReportUser | null>(null);
     const [userIdToDelete, setUserIdToDelete] = useState<string | null>(null);
-    const [editUser, setEditUser] = useState<Partial<AdminUser>>({});
+    const [editUser, setEditUser] = useState<Partial<ReportUser>>({});
     const [isLoading, setIsLoading] = useState(false);
 
-    // Tambahkan mock pagination
-    const [pagination, setPagination] = useState({
-        total: filteredUsers.length,
-        per_page: 8,
-        current_page: 1,
-        last_page: 1,
-    });
+    // Use statistics from backend or calculate from data as fallback
+    const statistics = useMemo(() => {
+        if (backendStatistics) {
+            return backendStatistics;
+        }
+        
+        // Fallback calculation if no backend statistics provided
+        if (reportUsers.length === 0) {
+            return {
+                total: 0,
+                completed: 0,
+                scheduled: 0,
+                waiting: 0
+            };
+        }
 
-    // Handler untuk pagination (jika ingin paging manual, update filteredUsers sesuai page)
+        const total = reportUsers.length;
+        const completed = reportUsers.filter(user => user.final_decision === 'accepted' || user.final_decision === 'rejected').length;
+        const scheduled = reportUsers.filter(user => user.final_decision === 'pending' && user.overall_score !== null).length;
+        const waiting = reportUsers.filter(user => user.final_decision === 'pending' && user.overall_score === null).length;
+
+        return {
+            total,
+            completed,
+            scheduled,
+            waiting
+        };
+    }, [backendStatistics, reportUsers]);
+
+    // Real pagination based on filtered data
+    const [pagination, setPagination] = useState<PaginationData>(
+        initialPagination || {
+            total: reportUsers.length,
+            per_page: 8,
+            current_page: 1,
+            last_page: Math.ceil(reportUsers.length / 8),
+        }
+    );
+
+    // Handler untuk pagination
     const handlePageChange = (page: number) => {
         setPagination((prev) => ({ ...prev, current_page: page }));
-        // Jika data dari backend, fetch data page baru di sini
+        // Apply pagination to current filtered data
+        const startIndex = (page - 1) * pagination.per_page;
+        const endIndex = startIndex + pagination.per_page;
+        const paginatedData = applyFiltersToData(reportUsers).slice(startIndex, endIndex);
+        setFilteredUsers(paginatedData);
     };
 
     // Get unique positions dynamically from the user data
     const uniquePositions = useMemo(() => {
-        const positions = new Set(adminUsers.map(user => user.position));
+        const positions = new Set(reportUsers.map(user => user.position));
         return Array.from(positions).sort();
-    }, [adminUsers]);
+    }, [reportUsers]);
+
+    // Helper function to apply filters to data
+    const applyFiltersToData = (data: ReportUser[]) => {
+        let result = data;
+
+        if (searchQuery) {
+            result = result.filter(
+                (user) =>
+                    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.position.toLowerCase().includes(searchQuery.toLowerCase()),
+            );
+        }
+
+        if (positionFilter !== 'all') {
+            result = result.filter((user) => user.position.toLowerCase() === positionFilter.toLowerCase());
+        }
+
+        return result;
+    };
 
     // Filter users based on search and position filter
     const handleSearch = (query: string) => {
@@ -205,49 +220,63 @@ export default function ReportsDashboard(props?: ReportsProps) {
     };
 
     const applyFilters = (query: string, position: string) => {
-        let result = adminUsers;
-
-        if (query) {
-            result = result.filter(
-                (user) =>
-                    user.name.toLowerCase().includes(query.toLowerCase()) ||
-                    user.email.toLowerCase().includes(query.toLowerCase()) ||
-                    user.position.toLowerCase().includes(query.toLowerCase()),
-            );
-        }
-
-        if (position !== 'all') {
-            result = result.filter((user) => user.position.toLowerCase() === position.toLowerCase());
-        }
-
-        setFilteredUsers(result);
+        const filteredData = applyFiltersToData(reportUsers);
+        
+        // Reset to first page when filtering
+        const newPagination = {
+            total: filteredData.length,
+            per_page: pagination.per_page,
+            current_page: 1,
+            last_page: Math.ceil(filteredData.length / pagination.per_page),
+        };
+        
+        setPagination(newPagination);
+        
+        // Apply pagination to filtered data
+        const paginatedData = filteredData.slice(0, newPagination.per_page);
+        setFilteredUsers(paginatedData);
         setIsFilterActive(query !== '' || position !== 'all');
     };
 
     const resetFilters = () => {
         setSearchQuery('');
         setPositionFilter('all');
-        setFilteredUsers(adminUsers);
+        const newPagination = {
+            total: reportUsers.length,
+            per_page: pagination.per_page,
+            current_page: 1,
+            last_page: Math.ceil(reportUsers.length / pagination.per_page),
+        };
+        setPagination(newPagination);
+        setFilteredUsers(reportUsers.slice(0, newPagination.per_page));
         setIsFilterActive(false);
     };
 
+    // Initialize filtered users when component mounts or data changes
+    useEffect(() => {
+        const initialData = reportUsers.slice(0, pagination.per_page);
+        setFilteredUsers(initialData);
+        setPagination(prev => ({
+            ...prev,
+            total: reportUsers.length,
+            last_page: Math.ceil(reportUsers.length / prev.per_page)
+        }));
+    }, [reportUsers]);
+
     const handleViewUser = (userId: string) => {
-        const user = adminUsers.find((u) => u.id === userId);
+        const user = reportUsers.find((u) => u.id === userId);
         if (user) {
             setSelectedUser(user);
             setIsViewDialogOpen(true);
         }
     };
 
-    // Menambahkan fungsi baru untuk meng-handle check/approve user
+    // Handle approve user
     const handleApproveUser = (userId: string) => {
-        // Mock approval functionality
         setIsLoading(true);
         setTimeout(() => {
             console.log('Approving user with ID:', userId);
-            // Di sini Anda dapat menambahkan logika untuk mengubah status user menjadi "approved" jika diperlukan
             setIsLoading(false);
-            // Optional: Tampilkan notifikasi sukses atau perbarui UI
         }, 500);
     };
 
@@ -257,11 +286,11 @@ export default function ReportsDashboard(props?: ReportsProps) {
     };
 
     const confirmDeleteUser = () => {
-        // Mock deletion functionality
         setIsLoading(true);
         setTimeout(() => {
             console.log('Deleting user with ID:', userIdToDelete);
-            setFilteredUsers(filteredUsers.filter((user) => user.id !== userIdToDelete));
+            const updatedUsers = reportUsers.filter((user) => user.id !== userIdToDelete);
+            setFilteredUsers(updatedUsers.slice(0, pagination.per_page));
             setIsDeleteDialogOpen(false);
             setUserIdToDelete(null);
             setIsLoading(false);
@@ -274,11 +303,11 @@ export default function ReportsDashboard(props?: ReportsProps) {
     };
 
     const handleUpdateUser = () => {
-        // Mock update functionality
         setIsLoading(true);
         setTimeout(() => {
             console.log('Updating user:', editUser);
-            setFilteredUsers(filteredUsers.map((user) => (user.id === editUser.id ? ({ ...user, ...editUser } as AdminUser) : user)));
+            const updatedUsers = reportUsers.map((user) => (user.id === editUser.id ? ({ ...user, ...editUser } as ReportUser) : user));
+            setFilteredUsers(updatedUsers.slice(0, pagination.per_page));
             setIsEditDialogOpen(false);
             setIsLoading(false);
         }, 500);
@@ -305,7 +334,44 @@ export default function ReportsDashboard(props?: ReportsProps) {
                     <div className="mb-6">
                         <CompanyWizard currentStep="reports" className="!mb-0 !shadow-none !bg-transparent !border-0" />
                     </div>
-                    
+
+                    {/* Real Statistics Cards */}
+                    <div className="mb-8">
+                        <h3 className="mb-4 text-xl font-semibold">
+                            Statistika
+                        </h3>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                            <Card className="rounded-md border p-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-gray-600">Total Applications</p>
+                                    <p className="text-3xl font-bold">{statistics.total}</p>
+                                </div>
+                            </Card>
+
+                            <Card className="rounded-md border p-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-gray-600">Completed</p>
+                                    <p className="text-3xl font-bold">{statistics.completed}</p>
+                                </div>
+                            </Card>
+
+                            <Card className="rounded-md border p-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-gray-600">In Progress</p>
+                                    <p className="text-3xl font-bold">{statistics.scheduled}</p>
+                                </div>
+                            </Card>
+
+                            <Card className="rounded-md border p-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-gray-600">Pending</p>
+                                    <p className="text-3xl font-bold">{statistics.waiting}</p>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+
                     <Card>
                         <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div>
@@ -400,6 +466,23 @@ export default function ReportsDashboard(props?: ReportsProps) {
 
                                 <div className="font-medium">Position:</div>
                                 <div className="col-span-2">{selectedUser.position}</div>
+
+                                <div className="font-medium">Registration Date:</div>
+                                <div className="col-span-2">{selectedUser.registration_date}</div>
+
+                                {selectedUser.overall_score && (
+                                    <>
+                                        <div className="font-medium">Overall Score:</div>
+                                        <div className="col-span-2">{selectedUser.overall_score}</div>
+                                    </>
+                                )}
+
+                                {selectedUser.final_decision && (
+                                    <>
+                                        <div className="font-medium">Final Decision:</div>
+                                        <div className="col-span-2 capitalize">{selectedUser.final_decision}</div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -411,69 +494,18 @@ export default function ReportsDashboard(props?: ReportsProps) {
                 </DialogContent>
             </Dialog>
 
-            {/* Edit User Dialog */}
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit User</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="grid gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="edit-name">Name</Label>
-                                <input
-                                    id="edit-name"
-                                    name="name"
-                                    value={editUser.name || ''}
-                                    onChange={handleEditUserChange}
-                                    className="w-full rounded-md border px-3 py-2"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="edit-email">Email</Label>
-                                <input
-                                    id="edit-email"
-                                    name="email"
-                                    value={editUser.email || ''}
-                                    onChange={handleEditUserChange}
-                                    className="w-full rounded-md border px-3 py-2"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="edit-position">Position</Label>
-                                <input
-                                    id="edit-position"
-                                    name="position"
-                                    value={editUser.position || ''}
-                                    onChange={handleEditUserChange}
-                                    className="w-full rounded-md border px-3 py-2"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleUpdateUser} className="bg-blue-500 text-white hover:bg-blue-600" disabled={isLoading}>
-                            {isLoading ? 'Updating...' : 'Update'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
             {/* Delete User Confirmation Dialog */}
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-                        <AlertDialogDescription>Are you sure you want to delete this user? This action cannot be undone.</AlertDialogDescription>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the user from the system.
+                        </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDeleteUser} className="bg-blue-500 text-white hover:bg-blue-600">
+                        <AlertDialogAction onClick={confirmDeleteUser} className="bg-red-500 hover:bg-red-600">
                             Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>

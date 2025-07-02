@@ -10,17 +10,23 @@ import { format, parseISO } from 'date-fns';
 export interface Job {
     id: number;
     title: string;
-    department: string;
+    department_id?: number;
+    major_id?: number;
     location: string;
     salary?: string;
-    company?: { name: string };
+    company?: { id: number; name: string };
     company_id?: number | string;
+    education_level_id?: number;
+    question_pack_id?: number | null;
     requirements: string[];
     benefits?: string[];
     created_at: string;
     updated_at: string;
     status?: string;
     start_date?: string;
+    departement?: { id: number; name: string };
+    major?: { id: number; name: string };
+    educationLevel?: { id: number; name: string };
     questionPack?: {
         id: number;
         pack_name: string;
@@ -28,7 +34,6 @@ export interface Job {
         test_type?: string;
         duration?: number;
     };
-    question_pack_id?: number | null;
 }
 
 interface JobTableProps {
@@ -67,6 +72,7 @@ export function JobTable({
                             <TableHead className="w-[60px] py-3">ID</TableHead>
                             <TableHead className="w-[200px] py-3">Title</TableHead>
                             <TableHead className="w-[180px] py-3">Department</TableHead>
+                            <TableHead className="w-[180px] py-3">Major</TableHead>
                             <TableHead className="w-[180px] py-3">Location</TableHead>
                             <TableHead className="w-[180px] py-3">Salary</TableHead>
                             <TableHead className="w-[180px] py-3">Company</TableHead>
@@ -95,6 +101,9 @@ export function JobTable({
                                         <TableCell className="w-[180px]">
                                             <Skeleton className="h-4 w-full" />
                                         </TableCell>
+                                        <TableCell className="w-[180px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
                                         <TableCell className="w-[140px]">
                                             <Skeleton className="h-4 w-full" />
                                         </TableCell>
@@ -112,7 +121,8 @@ export function JobTable({
                                 <TableRow key={job.id} className={index % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
                                     <TableCell className="whitespace-nowrap">{String(job.id).padStart(2, '0')}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.title}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{job.department}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.departement?.name || '-'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.major?.name || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.location}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.salary || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.company?.name || '-'}</TableCell>
@@ -151,7 +161,7 @@ export function JobTable({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={8} className="py-4 text-center">
+                                <TableCell colSpan={9} className="py-4 text-center">
                                     No jobs found.
                                 </TableCell>
                             </TableRow>

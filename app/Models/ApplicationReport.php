@@ -26,20 +26,9 @@ class ApplicationReport extends Model
         'application_id',
         'overall_score',
         'final_notes',
-        'rejection_reason',
-        'recommendation',
         'final_decision',
         'decision_made_by',
         'decision_made_at',
-        'report_generated_by',
-        'report_generated_at',
-        'administration_score',
-        'assessment_score',
-        'interview_score',
-        'stage_summary',
-        'strengths',
-        'weaknesses',
-        'next_steps',
     ];
 
     /**
@@ -49,14 +38,7 @@ class ApplicationReport extends Model
      */
     protected $casts = [
         'overall_score' => 'decimal:2',
-        'administration_score' => 'decimal:2',
-        'assessment_score' => 'decimal:2',
-        'interview_score' => 'decimal:2',
         'decision_made_at' => 'datetime',
-        'report_generated_at' => 'datetime',
-        'stage_summary' => 'array',
-        'strengths' => 'array',
-        'weaknesses' => 'array',
     ];
 
     /**
@@ -75,13 +57,7 @@ class ApplicationReport extends Model
         return $this->belongsTo(User::class, 'decision_made_by');
     }
 
-    /**
-     * Get the user who generated the report.
-     */
-    public function reportGenerator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'report_generated_by');
-    }
+
 
     /**
      * Check if the final decision is accepted.
@@ -108,21 +84,20 @@ class ApplicationReport extends Model
     }
 
     /**
-     * Calculate overall score from stage scores.
+     * Calculate overall score from application history.
      */
     public function calculateOverallScore(): ?float
     {
-        $scores = array_filter([
-            $this->administration_score,
-            $this->assessment_score,
-            $this->interview_score,
-        ]);
+        $historyScores = $this->application->history()
+            ->whereNotNull('score')
+            ->pluck('score')
+            ->toArray();
 
-        if (empty($scores)) {
+        if (empty($historyScores)) {
             return null;
         }
 
-        return round(array_sum($scores) / count($scores), 2);
+        return round(array_sum($historyScores) / count($historyScores), 2);
     }
 
     /**
@@ -130,57 +105,14 @@ class ApplicationReport extends Model
      */
     public function generateSummary(): array
     {
+        $historyRecords = $this->application->history()->with('status')->get();
+        
         return [
-            'total_stages_completed' => count(array_filter([
-                $this->administration_score,
-                $this->assessment_score,
-                $this->interview_score,
-            ])),
-            'highest_score_stage' => $this->getHighestScoreStage(),
-            'lowest_score_stage' => $this->getLowestScoreStage(),
+            'total_stages_completed' => $historyRecords->whereNotNull('score')->count(),
             'decision_status' => $this->final_decision,
             'overall_performance' => $this->getOverallPerformanceRating(),
+            'stages_completed' => $historyRecords->pluck('status.name')->toArray(),
         ];
-    }
-
-    /**
-     * Get the stage with the highest score.
-     */
-    private function getHighestScoreStage(): ?string
-    {
-        $scores = [
-            'administration' => $this->administration_score,
-            'assessment' => $this->assessment_score,
-            'interview' => $this->interview_score,
-        ];
-
-        $scores = array_filter($scores);
-        
-        if (empty($scores)) {
-            return null;
-        }
-
-        return array_search(max($scores), $scores);
-    }
-
-    /**
-     * Get the stage with the lowest score.
-     */
-    private function getLowestScoreStage(): ?string
-    {
-        $scores = [
-            'administration' => $this->administration_score,
-            'assessment' => $this->assessment_score,
-            'interview' => $this->interview_score,
-        ];
-
-        $scores = array_filter($scores);
-        
-        if (empty($scores)) {
-            return null;
-        }
-
-        return array_search(min($scores), $scores);
     }
 
     /**

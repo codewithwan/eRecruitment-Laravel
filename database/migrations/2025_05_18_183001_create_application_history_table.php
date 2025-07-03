@@ -11,25 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('application_administrations', function (Blueprint $table) {
+        Schema::create('application_history', function (Blueprint $table) {
             $table->id();
             $table->foreignId('application_id')->constrained('applications')->onDelete('cascade');
-            
-            // Administrative Selection fields
+            $table->foreignId('status_id')->constrained('statuses')->onDelete('restrict');
+            $table->timestamp('processed_at')->nullable();
             $table->decimal('score', 5, 2)->nullable();
             $table->text('notes')->nullable();
-            $table->text('documents_checked')->nullable(); // CV, documents verification
-            $table->json('requirements_met')->nullable(); // Which requirements are met
-            $table->enum('status', ['pending', 'passed', 'failed'])->default('pending');
-            
-            // Reviewer information
+            $table->timestamp('scheduled_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
             $table->foreignId('reviewed_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('reviewed_at')->nullable();
-            
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
-            // Ensure one administration record per application
-            $table->unique('application_id');
         });
     }
 
@@ -38,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('application_administrations');
+        Schema::dropIfExists('application_history');
     }
 }; 

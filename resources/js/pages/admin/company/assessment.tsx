@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePeriodCompanyInfo } from '@/hooks/usePeriodCompanyInfo';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Filter, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -21,6 +21,10 @@ export interface AssessmentUser {
     registration_date: string;
     periodId: string;
     vacancy: string;
+    assigned_date?: string;
+    submitted_date?: string;
+    total_score?: number;
+    max_total_score?: number;
     test_date?: string;
     test_time?: string;
     status?: string;
@@ -184,8 +188,8 @@ export default function AssessmentManagement({
         }
     }, [periodInfo, loading, error]);
 
-    // Use real data from backend (assessments or users prop)
-    const users = initialAssessments.length > 0 ? initialAssessments : initialUsers;
+    const users = useMemo(() => initialAssessments.length > 0 ? initialAssessments : initialUsers, [initialAssessments, initialUsers]);
+
     const [pagination, setPagination] = useState<PaginationData>(
         initialPagination || {
             total: users.length,
@@ -204,66 +208,8 @@ export default function AssessmentManagement({
     const [positionFilterState, setPositionFilterState] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
 
-    const fetchUsers = useCallback(
-        async (page = 1, perPage = pagination.per_page) => {
-            setIsLoading(true);
-            try {
-                updateUrlParams(page, perPage);
-
-                // If no real data from backend, show empty state
-                if (users.length === 0) {
-                    setFilteredUsers([]);
-                    setPagination({
-                        total: 0,
-                        per_page: perPage,
-                        current_page: page,
-                        last_page: 1
-                    });
-                    setIsLoading(false);
-                    return;
-                }
-
-                // Use real data from backend
-                const startIndex = (page - 1) * perPage;
-                const endIndex = startIndex + perPage;
-                const paginatedUsers = users.slice(startIndex, endIndex);
-                
-                setFilteredUsers(paginatedUsers);
-                setPagination({
-                    total: users.length,
-                    per_page: perPage,
-                    current_page: page,
-                    last_page: Math.ceil(users.length / perPage)
-                });
-                setIsLoading(false);
-            } catch (error) {
-                console.error('Error fetching assessment data:', error);
-                setIsLoading(false);
-            }
-        },
-        [users, pagination.per_page],
-    );
-
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
-        const perPage = urlParams.get('per_page') ? parseInt(urlParams.get('per_page')!) : 10;
-
-        if (page !== pagination.current_page || perPage !== pagination.per_page) {
-            fetchUsers(page, perPage);
-        } else {
-            // Initialize with current data
-            fetchUsers(page, perPage);
-        }
-    }, [fetchUsers]);
-
-    // Get unique positions dynamically from the user data
-    const uniquePositions = useMemo(() => {
-        const positions = new Set(users.map(user => user.position));
-        return Array.from(positions).sort();
-    }, [users]);
-
-    // Apply filters whenever filter states change
+    // Remove fetchUsers and related useEffect
+    // Combine filtering and pagination in a single useEffect
     useEffect(() => {
         let result = users;
 
@@ -282,46 +228,37 @@ export default function AssessmentManagement({
             result = result.filter((user) => user.position === positionFilterState);
         }
 
-        // Apply pagination to filtered results
-        const startIndex = (pagination.current_page - 1) * pagination.per_page;
+        // Update pagination based on filtered results
+        const total = result.length;
+        const last_page = Math.ceil(total / pagination.per_page);
+        let current_page = pagination.current_page;
+        if (current_page > last_page) current_page = last_page || 1;
+        const startIndex = (current_page - 1) * pagination.per_page;
         const endIndex = startIndex + pagination.per_page;
         const paginatedResult = result.slice(startIndex, endIndex);
 
         setFilteredUsers(paginatedResult);
-
-        // Update pagination based on filtered results
-        setPagination(prev => ({
+        setPagination((prev) => ({
             ...prev,
-            total: result.length,
-            last_page: Math.ceil(result.length / prev.per_page)
+            total,
+            last_page,
+            current_page,
         }));
-
-        // Set filter active state
         setIsFilterActive(searchQuery !== '' || positionFilterState !== 'all');
-    }, [searchQuery, positionFilterState, users, pagination.current_page, pagination.per_page]);
+    }, [users, searchQuery, positionFilterState, pagination.per_page, pagination.current_page]);
 
-    // Function to update URL parameters without page refresh
-    const updateUrlParams = (page: number, perPage: number) => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('page', page.toString());
-        url.searchParams.set('per_page', perPage.toString());
-        window.history.pushState({}, '', url.toString());
-    };
-
+    // Update page
     const handlePageChange = (page: number) => {
-        fetchUsers(page, pagination.per_page);
+        setPagination((prev) => ({ ...prev, current_page: page }));
     };
 
+    // Update per page
     const handlePerPageChange = (perPage: number) => {
-        fetchUsers(1, perPage);
+        setPagination((prev) => ({ ...prev, per_page: perPage, current_page: 1 }));
     };
 
     const handleViewUser = (userId: string) => {
-        const user = users.find((u) => u.id === userId);
-        if (user) {
-            setSelectedUser(user);
-            setIsViewDialogOpen(true);
-        }
+        router.visit(`/dashboard/assessment/detail/${userId}`);
     };
 
     const resetFilters = () => {
@@ -397,13 +334,13 @@ export default function AssessmentManagement({
                                                         >
                                                             All Positions
                                                         </SelectItem>
-                                                        {uniquePositions.map((position) => (
+                                                        {positions.map((position) => (
                                                             <SelectItem
-                                                                key={position}
-                                                                value={position.toLowerCase()}
+                                                                key={position.value}
+                                                                value={position.value}
                                                                 className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
                                                             >
-                                                                {position}
+                                                                {position.label}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>

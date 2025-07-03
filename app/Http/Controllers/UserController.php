@@ -23,7 +23,7 @@ class UserController extends Controller
 
         $job_applications = Application::all();
         $job_applied = $job_applications->groupBy(function ($job_applications) {
-            return $job_applications->applied_at->format('Y-m-d');
+            return $job_applications->created_at->format('Y-m-d');
         })->map(function ($job_applications) {
             return $job_applications->count();
         });

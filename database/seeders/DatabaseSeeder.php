@@ -55,6 +55,12 @@ class DatabaseSeeder extends Seeder
             
             // 9. Application System (Depends on: User, VacancyPeriods which is created by Vacancies+Periods, Status)
             ApplicationSeeder::class,
+            
+            // 10. Application History (Depends on: Applications, Status, User)
+            ApplicationHistorySeeder::class,
+            
+            // 11. Application Reports (Depends on: Applications, ApplicationHistory, User)
+            ApplicationReportSeeder::class,
         ]);
     }
 }

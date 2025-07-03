@@ -105,13 +105,12 @@ Route::middleware(['auth'])->group(function () {
     // Administration routes
     Route::get('/dashboard/administration/{id}', [AdministrationController::class, 'show'])->name('administration.show');
     Route::post('/dashboard/administration/{id}/approve', [AdministrationController::class, 'approve'])->name('administration.approve');
+    Route::post('/dashboard/administration/{id}/reject', [AdministrationController::class, 'reject'])->name('administration.reject');
 
     // Interview detail route
-    Route::get('/dashboard/company/interview/{userId}', function ($userId) {
-        return Inertia::render('admin/company/interview-detail', [
-            'userId' => $userId
-        ]);
-    })->name('company.interview.detail');
+    Route::get('/dashboard/company/interview/{userId}', [App\Http\Controllers\CompanyController::class, 'interviewDetail'])->name('company.interview.detail');
+    Route::post('/dashboard/company/interview/{id}/approve', [App\Http\Controllers\CompanyController::class, 'approveInterview'])->name('company.interview.approve');
+    Route::post('/dashboard/company/interview/{id}/reject', [App\Http\Controllers\CompanyController::class, 'rejectInterview'])->name('company.interview.reject');
 });
 
 require __DIR__ . '/settings.php';

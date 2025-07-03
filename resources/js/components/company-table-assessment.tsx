@@ -18,10 +18,10 @@ export interface AssessmentUser {
     position: string;
     periodId: string;
     vacancy: string;
-    assigned_date: string;    // tanggal diberi soal
-    submitted_date: string;   // tanggal dikerjakan
-    total_score: number;      // nilai yang diperoleh
-    max_total_score: number;  // nilai maksimal
+    assigned_date?: string;    // tanggal diberi soal
+    submitted_date?: string;   // tanggal dikerjakan
+    total_score?: number;      // nilai yang diperoleh
+    max_total_score?: number;  // nilai maksimal
 }
 
 interface PaginationData {
@@ -155,7 +155,7 @@ export function AssessmentTable({
                                         {user.submitted_date ? format(new Date(user.submitted_date), 'MMM dd, yyyy') : '-'}
                                     </TableCell>
                                     <TableCell className="text-center font-semibold">
-                                        {user.max_total_score > 0
+                                        {(user.total_score != null && user.max_total_score != null && user.max_total_score > 0)
                                             ? `${Math.round((user.total_score / user.max_total_score) * 100)}%`
                                             : '-'}
                                     </TableCell>
@@ -167,20 +167,6 @@ export function AssessmentTable({
                                                 title="View Details"
                                             >
                                                 <Eye className="h-4.5 w-4.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleOpenApproveModal(user)}
-                                                className="rounded-full p-1.5 text-green-500 hover:bg-green-100 hover:text-green-700"
-                                                title="Approve"
-                                            >
-                                                <Check className="h-4.5 w-4.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => {/* aksi reject/delete */}}
-                                                className="rounded-full p-1.5 text-red-500 hover:bg-red-100 hover:text-red-700"
-                                                title="Reject"
-                                            >
-                                                <X className="h-4.5 w-4.5" />
                                             </button>
                                         </div>
                                     </TableCell>

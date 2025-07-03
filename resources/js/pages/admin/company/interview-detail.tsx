@@ -21,6 +21,7 @@ import { useState } from 'react';
 
 interface InterviewDetailProps {
     userId: string;
+    interviewData: InterviewData;
 }
 
 interface InterviewData {
@@ -33,7 +34,7 @@ interface InterviewData {
     cv_url?: string;
     interview_date?: string;
     interview_time?: string;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'interview';
     notes?: string;
     notes_1?: string;
     skills: string[];
@@ -41,6 +42,8 @@ interface InterviewData {
     education: string;
     portfolio_url?: string;
     score?: string;
+    company_id?: number;
+    period_id?: number;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -58,29 +61,15 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function InterviewDetail({ userId }: InterviewDetailProps) {
+export default function InterviewDetail({ userId, interviewData }: InterviewDetailProps) {
+    const backUrl = interviewData.company_id && interviewData.period_id
+        ? `/dashboard/company/interview?company=${interviewData.company_id}&period=${interviewData.period_id}`
+        : '/dashboard/company/interview';
+
     const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
     const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
-    // Mock interview data - replace with actual data fetching
-    const [interviewData, setInterviewData] = useState<InterviewData>({
-        id: userId,
-        name: 'Rizal Farhan Nanda',
-        email: 'rizalfarhannanda@gmail.com',
-        position: 'UI / UX Designer',
-        registration_date: '2025-03-20',
-        phone: '+62 812-3456-7890',
-        cv_url: '/files/cv-rizal-farhan.pdf',
-        interview_date: '2025-03-25',
-        interview_time: '10:00',
-        status: 'pending',
-        notes: 'Rizal has shown great potential in UI/UX design with a strong portfolio and good communication skills.',
-        skills: ['Figma', 'Adobe XD', 'Sketch', 'User Research', 'Prototyping', 'Wireframing'],
-        experience_years: 3,
-        education: 'Bachelor of Design - Visual Communication Design',
-        portfolio_url: 'https://rizalfarhan.portfolio.com',
-    });
+    const [localInterviewData, setLocalInterviewData] = useState<InterviewData>(interviewData);
 
     const handleApprove = () => {
         setIsApproveDialogOpen(true);
@@ -111,7 +100,7 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
     };
 
     const handleBack = () => {
-        router.visit('/dashboard/company/interview');
+        router.visit(backUrl);
     };
 
     const getStatusBadge = (status: string) => {
@@ -127,7 +116,7 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Interview - ${interviewData.name}`} />
+            <Head title={`Interview - ${localInterviewData.name}`} />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -140,7 +129,7 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                             <p className="text-sm text-gray-500">Review candidate information and make a decision</p>
                         </div>
                     </div>
-                    {getStatusBadge(interviewData.status)}
+                    {getStatusBadge(localInterviewData.status)}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -158,24 +147,24 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Full Name</label>
-                                        <p className="text-base font-medium text-gray-900">{interviewData.name}</p>
+                                        <p className="text-base font-medium text-gray-900">{localInterviewData.name}</p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Email</label>
                                         <div className="flex items-center gap-2">
                                             <Mail className="h-4 w-4 text-gray-400" />
-                                            <p className="text-base text-gray-900">{interviewData.email}</p>
+                                            <p className="text-base text-gray-900">{localInterviewData.email}</p>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Phone</label>
-                                        <p className="text-base text-gray-900">{interviewData.phone || '-'}</p>
+                                        <p className="text-base text-gray-900">{localInterviewData.phone || '-'}</p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Applied Position</label>
                                         <div className="flex items-center gap-2">
                                             <Briefcase className="h-4 w-4 text-gray-400" />
-                                            <p className="text-base font-medium text-gray-900">{interviewData.position}</p>
+                                            <p className="text-base font-medium text-gray-900">{localInterviewData.position}</p>
                                         </div>
                                     </div>
                                     <div>
@@ -183,13 +172,13 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                         <div className="flex items-center gap-2">
                                             <Calendar className="h-4 w-4 text-gray-400" />
                                             <p className="text-base text-gray-900">
-                                                {format(new Date(interviewData.registration_date), 'MMMM dd, yyyy')}
+                                                {format(new Date(localInterviewData.registration_date), 'MMMM dd, yyyy')}
                                             </p>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Experience</label>
-                                        <p className="text-base text-gray-900">{interviewData.experience_years} years</p>
+                                        <p className="text-base text-gray-900">{localInterviewData.experience_years} years</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -204,7 +193,7 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                 <div>
                                     <label className="text-sm font-medium text-gray-500 mb-2 block">Technical Skills</label>
                                     <div className="flex flex-wrap gap-2">
-                                        {interviewData.skills.map((skill, index) => (
+                                        {localInterviewData.skills.map((skill, index) => (
                                             <Badge key={index} variant="secondary" className="bg-blue-50 text-blue-700">
                                                 {skill}
                                             </Badge>
@@ -214,13 +203,13 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                 <Separator />
                                 <div>
                                     <label className="text-sm font-medium text-gray-500">Education</label>
-                                    <p className="text-base text-gray-900">{interviewData.education}</p>
+                                    <p className="text-base text-gray-900">{localInterviewData.education}</p>
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Interview Notes */}
-                        {interviewData.notes && (
+                        {localInterviewData.notes && (
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
@@ -229,7 +218,7 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-gray-700 leading-relaxed">{interviewData.notes}</p>
+                                    <p className="text-gray-700 leading-relaxed">{localInterviewData.notes}</p>
                                 </CardContent>
                             </Card>
                         )}
@@ -238,7 +227,7 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Interview Schedule */}
-                        {interviewData.interview_date && (
+                        {localInterviewData.interview_date && (
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
@@ -250,12 +239,12 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Date</label>
                                         <p className="text-base text-gray-900">
-                                            {format(new Date(interviewData.interview_date), 'EEEE, MMMM dd, yyyy')}
+                                            {format(new Date(localInterviewData.interview_date), 'EEEE, MMMM dd, yyyy')}
                                         </p>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Time</label>
-                                        <p className="text-base text-gray-900">{interviewData.interview_time} WIB</p>
+                                        <p className="text-base text-gray-900">{localInterviewData.interview_time} WIB</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -267,20 +256,20 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                 <CardTitle>Documents</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {interviewData.cv_url && (
+                                {localInterviewData.cv_url && (
                                     <div>
                                         <Button variant="outline" className="w-full justify-start" asChild>
-                                            <a href={interviewData.cv_url} target="_blank" rel="noopener noreferrer">
+                                            <a href={localInterviewData.cv_url} target="_blank" rel="noopener noreferrer">
                                                 <FileText className="h-4 w-4 mr-2" />
                                                 View CV/Resume
                                             </a>
                                         </Button>
                                     </div>
                                 )}
-                                {interviewData.portfolio_url && (
+                                {localInterviewData.portfolio_url && (
                                     <div>
                                         <Button variant="outline" className="w-full justify-start" asChild>
-                                            <a href={interviewData.portfolio_url} target="_blank" rel="noopener noreferrer">
+                                            <a href={localInterviewData.portfolio_url} target="_blank" rel="noopener noreferrer">
                                                 <Briefcase className="h-4 w-4 mr-2" />
                                                 View Portfolio
                                             </a>
@@ -290,34 +279,38 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                             </CardContent>
                         </Card>
 
-                        {/* Decision Actions */}
-                        {interviewData.status === 'pending' && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Make Decision</CardTitle>
-                                    <CardDescription>Approve or reject this candidate</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <Button
-                                        onClick={handleApprove}
-                                        className="w-full bg-green-600 hover:bg-green-700"
-                                        disabled={isLoading}
-                                    >
-                                        <CheckCircle className="h-4 w-4 mr-2" />
-                                        Approve Candidate
-                                    </Button>
-                                    <Button
-                                        onClick={handleReject}
-                                        variant="destructive"
-                                        className="w-full"
-                                        disabled={isLoading}
-                                    >
-                                        <XCircle className="h-4 w-4 mr-2" />
-                                        Reject Candidate
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        )}
+                        {/* Application Status */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Application Status</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="text-center py-4">
+                                    {getStatusBadge(localInterviewData.status)}
+                                </div>
+                                {(localInterviewData.status === 'pending' || localInterviewData.status === 'interview') && (
+                                    <div className="space-y-3 pt-4 border-t">
+                                        <Button
+                                            onClick={handleApprove}
+                                            className="w-full bg-green-600 hover:bg-green-700"
+                                            disabled={isLoading}
+                                        >
+                                            <CheckCircle className="h-4 w-4 mr-2" />
+                                            Approve Candidate
+                                        </Button>
+                                        <Button
+                                            onClick={handleReject}
+                                            variant="destructive"
+                                            className="w-full"
+                                            disabled={isLoading}
+                                        >
+                                            <XCircle className="h-4 w-4 mr-2" />
+                                            Reject Candidate
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>
@@ -341,12 +334,12 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                                     type="number"
                                     min="0"
                                     max="100"
-                                    value={interviewData.score || ''}
+                                    value={localInterviewData.score || ''}
                                     onChange={(e) => {
                                         let value = e.target.value;
                                         if (Number(value) > 100) value = '100';
                                         if (Number(value) < 0) value = '0';
-                                        setInterviewData({ ...interviewData, score: value });
+                                        setLocalInterviewData({ ...localInterviewData, score: value });
                                     }}
                                     className="text-4xl font-bold text-center text-gray-900 rounded px-4 py-2 w-32"
                                     placeholder="-"
@@ -359,8 +352,8 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
 
                                 <div className="space-y-2">
                                     <textarea
-                                        value={interviewData.notes_1 || ''}
-                                        onChange={(e) => setInterviewData({ ...interviewData, notes_1: e.target.value })}
+                                        value={localInterviewData.notes_1 || ''}
+                                        onChange={(e) => setLocalInterviewData({ ...localInterviewData, notes_1: e.target.value })}
                                         placeholder="Enter notes"
                                         className="w-full text-sm text-gray-700 border rounded px-3 py-2"
                                     />
@@ -391,7 +384,7 @@ export default function InterviewDetail({ userId }: InterviewDetailProps) {
                             Reject Candidate
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to reject <strong>{interviewData.name}</strong>? This action cannot be undone.
+                            Are you sure you want to reject <strong>{localInterviewData.name}</strong>? This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

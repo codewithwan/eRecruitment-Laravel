@@ -6,6 +6,8 @@ use App\Models\Company;
 use App\Models\Period;
 use App\Models\Vacancies;
 use App\Models\Application;
+use App\Models\ApplicationReport;
+use App\Models\Status;
 use App\Models\VacancyPeriods;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,16 +20,8 @@ class CompanyController extends Controller
      */
     public function administration(Request $request)
     {
-        $companyId = $request->query('companyId', 1);
+        $companyId = $request->query('company');
         $periodId = $request->query('period');
-        
-        // If periodId is provided, use it to get the correct company
-        if ($periodId) {
-            $period = Period::with('company')->find($periodId);
-            if ($period && $period->company) {
-                $companyId = $period->company->id;
-            }
-        }
         
         $company = Company::findOrFail($companyId);
         
@@ -64,7 +58,7 @@ class CompanyController extends Controller
                 'email' => $application->user->email,
                 'position' => $vacancy ? $vacancy->title : 'Unknown',
                 'period' => $period ? $period->name : 'Unknown',
-                'registration_date' => $application->applied_at->format('M d, Y'),
+                'registration_date' => $application->created_at->format('M d, Y'),
                 'cv' => [
                     'filename' => $application->user->name . '_cv.pdf',
                     'fileType' => 'pdf',
@@ -73,10 +67,10 @@ class CompanyController extends Controller
                 'periodId' => $period ? (string)$period->id : '1',
                 'vacancy' => $vacancy ? $vacancy->title : 'Unknown',
                 'admin_score' => $administration ? $administration->score : null,
-                'admin_status' => $administration ? $administration->status : 'pending',
+                'admin_status' => $administration && isset($administration->status) ? $administration->status : 'pending',
                 'admin_notes' => $administration ? $administration->notes : null,
-                'documents_checked' => $administration ? $administration->documents_checked : null,
-                'requirements_met' => $administration ? $administration->requirements_met : null,
+                'documents_checked' => $administration && isset($administration->documents_checked) ? $administration->documents_checked : null,
+                'requirements_met' => $administration && isset($administration->requirements_met) ? $administration->requirements_met : null,
                 'reviewed_by' => $administration && $administration->reviewer ? $administration->reviewer->name : null,
                 'reviewed_at' => $administration && $administration->reviewed_at ? $administration->reviewed_at->format('M d, Y H:i') : null,
             ];
@@ -100,16 +94,8 @@ class CompanyController extends Controller
      */
     public function assessment(Request $request)
     {
-        $companyId = $request->query('companyId', 1);
+        $companyId = $request->query('company');
         $periodId = $request->query('period');
-        
-        // If periodId is provided, use it to get the correct company
-        if ($periodId) {
-            $period = Period::with('company')->find($periodId);
-            if ($period && $period->company) {
-                $companyId = $period->company->id;
-            }
-        }
         
         // Get applications with assessment data
         $applicationsQuery = Application::with([
@@ -122,12 +108,14 @@ class CompanyController extends Controller
         ->whereHas('vacancyPeriod.vacancy', function($query) use ($companyId) {
             $query->where('company_id', $companyId);
         })
-        // Only get applications that have passed administration or are in assessment stage
+        // Only get applications that have passed administration or have assessment data
         ->where(function($query) {
             $query->whereHas('administration', function($adminQuery) {
-                $adminQuery->where('status', 'passed');
+                $adminQuery->whereHas('status', function($q) {
+                    $q->where('code', 'passed');
+                });
             })
-            ->orWhere('current_stage', 'assessment');
+            ->orWhereHas('assessment');
         });
         
         // Filter by period if specified
@@ -153,7 +141,7 @@ class CompanyController extends Controller
                 'period' => $period ? $period->name : 'Unknown',
                 'periodId' => $period ? (string)$period->id : '1',
                 'vacancy' => $vacancy ? $vacancy->title : 'Unknown',
-                'registration_date' => $application->applied_at->format('M d, Y'),
+                'registration_date' => $application->created_at->format('M d, Y'),
                 'test_date' => $assessment && $assessment->scheduled_at ? $assessment->scheduled_at->format('M d, Y') : null,
                 'test_time' => $assessment && $assessment->scheduled_at ? $assessment->scheduled_at->format('h:i A') : null,
                 'status' => $assessment ? $assessment->status : 'scheduled',
@@ -185,35 +173,29 @@ class CompanyController extends Controller
      */
     public function interview(Request $request)
     {
-        $companyId = $request->query('companyId', 1);
+        $companyId = $request->query('company');
         $periodId = $request->query('period');
-        
-        // If periodId is provided, use it to get the correct company
-        if ($periodId) {
-            $period = Period::with('company')->find($periodId);
-            if ($period && $period->company) {
-                $companyId = $period->company->id;
-            }
-        }
         
         // Get applications with interview data
         $applicationsQuery = Application::with([
             'user',
             'vacancyPeriod.vacancy.company',
             'vacancyPeriod.period',
-            'interview.interviewer',
-            'interview.scheduler',
+            'interview.reviewer',
+            'interview.status',
             'status'
         ])
         ->whereHas('vacancyPeriod.vacancy', function($query) use ($companyId) {
             $query->where('company_id', $companyId);
         })
-        // Only get applications that have passed assessment or are in interview stage
+        // Only get applications that have passed assessment or have interview data
         ->where(function($query) {
             $query->whereHas('assessment', function($assessmentQuery) {
-                $assessmentQuery->where('status', 'completed');
+                $assessmentQuery->whereHas('status', function($q) {
+                    $q->where('code', 'completed');
+                });
             })
-            ->orWhere('current_stage', 'interview');
+            ->orWhereHas('interview');
         });
         
         // Filter by period if specified
@@ -237,12 +219,12 @@ class CompanyController extends Controller
                 'email' => $application->user->email,
                 'position' => $vacancy ? $vacancy->title : 'Unknown',
                 'period' => $period ? $period->name : 'Unknown',
-                'registration_date' => $application->applied_at->format('M d, Y'),
-                'status' => $interview ? $interview->status : 'scheduled',
+                'registration_date' => $application->created_at->format('M d, Y'),
+                'status' => $interview && $interview->status ? $interview->status->name : 'scheduled',
                 'interview_date' => $interview && $interview->scheduled_at ? $interview->scheduled_at->format('M d, Y') : null,
                 'interview_time' => $interview && $interview->scheduled_at ? $interview->scheduled_at->format('h:i A') : null,
-                'interviewer' => $interview && $interview->interviewer ? $interview->interviewer->name : null,
-                'interview_type' => $interview ? $interview->interview_type : 'Technical Interview',
+                'interviewer' => $interview && $interview->reviewer ? $interview->reviewer->name : null,
+                'interview_type' => $interview && isset($interview->interview_type) ? $interview->interview_type : 'Technical Interview',
                 'score' => $interview ? $interview->score : null,
                 'notes' => $interview ? $interview->notes : null,
                 'feedback' => $interview ? $interview->feedback : null,
@@ -289,7 +271,6 @@ class CompanyController extends Controller
             'vacancyPeriod.vacancy.company',
             'vacancyPeriod.period',
             'report.decisionMaker',
-            'report.reportGenerator',
             'administration',
             'assessment',
             'interview',
@@ -298,11 +279,8 @@ class CompanyController extends Controller
         ->whereHas('vacancyPeriod.vacancy', function($query) use ($companyId) {
             $query->where('company_id', $companyId);
         })
-        // Only get applications that have completed all stages or have reports
-        ->where(function($query) {
-            $query->whereHas('report')
-            ->orWhere('current_stage', 'completed');
-        });
+        // Only get applications that have reports
+        ->whereHas('report');
         
         // Filter by period if specified
         if ($periodId) {
@@ -327,7 +305,7 @@ class CompanyController extends Controller
                 'name' => $application->user->name,
                 'email' => $application->user->email,
                 'position' => $vacancy ? $vacancy->title : 'Unknown',
-                'registration_date' => $application->applied_at->format('M d, Y'),
+                'registration_date' => $application->created_at->format('M d, Y'),
                 'period' => $period ? $period->name : 'Unknown',
                 'overall_score' => $report ? $report->overall_score : null,
                 'final_decision' => $report ? $report->final_decision : 'pending',
@@ -336,8 +314,6 @@ class CompanyController extends Controller
                 'recommendation' => $report ? $report->recommendation : null,
                 'decision_made_by' => $report && $report->decisionMaker ? $report->decisionMaker->name : null,
                 'decision_made_at' => $report && $report->decision_made_at ? $report->decision_made_at->format('M d, Y H:i') : null,
-                'report_generated_by' => $report && $report->reportGenerator ? $report->reportGenerator->name : null,
-                'report_generated_at' => $report && $report->report_generated_at ? $report->report_generated_at->format('M d, Y H:i') : null,
                 'administration_score' => $administration ? $administration->score : null,
                 'assessment_score' => $assessment ? $assessment->score : null,
                 'interview_score' => $interview ? $interview->score : null,
@@ -549,5 +525,115 @@ class CompanyController extends Controller
             'vacancies' => $vacancies,
             'filtering' => true,
         ]);
+    }
+
+    /**
+     * Show interview detail page for a candidate.
+     */
+    public function interviewDetail($userId)
+    {
+        // Fetch application and related data from database
+        $application = \App\Models\Application::with([
+            'user',
+            'vacancyPeriod.vacancy',
+            'vacancyPeriod.period',
+            'history.status',
+        ])->findOrFail($userId);
+
+        // Get interview history (status code: interview)
+        $interview = $application->history()->whereHas('status', function($q) {
+            $q->where('code', 'interview');
+        })->first();
+
+        $interviewData = [
+            'id' => $application->id,
+            'name' => $application->user->name,
+            'email' => $application->user->email,
+            'position' => $application->vacancyPeriod->vacancy->title ?? '-',
+            'registration_date' => $application->created_at->format('Y-m-d'),
+            'phone' => $application->user->phone ?? null,
+            'cv_url' => '/uploads/cv/' . $application->user->name . '_cv.pdf',
+            'interview_date' => $interview && $interview->scheduled_at ? $interview->scheduled_at->format('Y-m-d') : null,
+            'interview_time' => $interview && $interview->scheduled_at ? $interview->scheduled_at->format('H:i') : null,
+            'status' => $interview && $interview->status ? $interview->status->code : 'pending',
+            'notes' => $interview ? $interview->notes : null,
+            'skills' => $application->user->skills ? $application->user->skills->pluck('name')->toArray() : [],
+            'experience_years' => $application->user->experience_years ?? 0,
+            'education' => $application->user->education ?? null,
+            'portfolio_url' => $application->user->portfolio_url ?? null,
+            'score' => $interview ? $interview->score : null,
+            'company_id' => $application->vacancyPeriod->vacancy->company_id ?? null,
+            'period_id' => $application->vacancyPeriod->period_id ?? null,
+        ];
+
+        return Inertia::render('admin/company/interview-detail', [
+            'userId' => $userId,
+            'interviewData' => $interviewData,
+        ]);
+    }
+
+    public function approveInterview(Request $request, $id)
+    {
+        $application = Application::findOrFail($id);
+        
+        // Update interview history
+        $application->history()->updateOrCreate(
+            ['status_id' => Status::where('code', 'interview')->first()->id],
+            ['status_id' => Status::where('code', 'passed')->first()->id]
+        );
+
+        // Create or update application report
+        ApplicationReport::updateOrCreate(
+            ['application_id' => $application->id],
+            [
+                'final_decision' => 'accepted',
+                'final_notes' => $request->input('notes', 'Candidate accepted.'),
+                'overall_score' => $request->input('score', null),
+                'decision_made_by' => auth()->id(),
+                'decision_made_at' => now(),
+            ]
+        );
+
+        // Update application status to accepted
+        $application->status_id = Status::where('code', 'accepted')->first()->id;
+        $application->save();
+
+        $companyId = $application->vacancyPeriod->vacancy->company_id;
+        $periodId = $application->vacancyPeriod->period_id;
+
+        return redirect()->route('company.reports', ['company' => $companyId, 'period' => $periodId])
+            ->with('success', 'Candidate has been accepted.');
+    }
+
+    public function rejectInterview(Request $request, $id)
+    {
+        $application = Application::findOrFail($id);
+
+        // Update interview history
+        $application->history()->updateOrCreate(
+            ['status_id' => Status::where('code', 'interview')->first()->id],
+            ['status_id' => Status::where('code', 'failed')->first()->id]
+        );
+
+        // Create or update application report
+        ApplicationReport::updateOrCreate(
+            ['application_id' => $application->id],
+            [
+                'final_decision' => 'rejected',
+                'final_notes' => $request->input('notes', 'Candidate rejected after interview.'),
+                'decision_made_by' => auth()->id(),
+                'decision_made_at' => now(),
+            ]
+        );
+
+        // Update application status to rejected
+        $application->status_id = Status::where('code', 'rejected')->first()->id;
+        $application->save();
+
+        $companyId = $application->vacancyPeriod->vacancy->company_id;
+        $periodId = $application->vacancyPeriod->period_id;
+
+        return redirect()->route('company.interview', ['company' => $companyId, 'period' => $periodId])
+            ->with('success', 'Candidate has been rejected.');
     }
 }

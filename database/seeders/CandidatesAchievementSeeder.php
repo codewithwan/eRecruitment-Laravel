@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\CandidatesAchivement;
+use App\Models\CandidatesAchievement;
 use App\Models\User;
 use App\Enums\UserRole;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -86,7 +86,7 @@ class CandidatesAchievementSeeder extends Seeder
                     $month = $months[array_rand($months)];
                     $year = rand(2018, 2024);
                     
-                    CandidatesAchivement::create([
+                    CandidatesAchievement::create([
                         'user_id' => $user->id,
                         'title' => $achievement,
                         'level' => $level,

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Period extends Model
 {
@@ -32,6 +33,14 @@ class Period extends Model
     public function vacancies(): BelongsToMany
     {
         return $this->belongsToMany(Vacancies::class, 'vacancy_periods', 'period_id', 'vacancy_id');
+    }
+
+    /**
+     * Get the vacancy periods for this period.
+     */
+    public function vacancyPeriods(): HasMany
+    {
+        return $this->hasMany(VacancyPeriods::class);
     }
     
     /**

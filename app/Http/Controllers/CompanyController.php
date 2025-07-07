@@ -12,6 +12,7 @@ use App\Models\VacancyPeriods;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class CompanyController extends Controller
 {
@@ -589,7 +590,7 @@ class CompanyController extends Controller
                 'final_decision' => 'accepted',
                 'final_notes' => $request->input('notes', 'Candidate accepted.'),
                 'overall_score' => $request->input('score', null),
-                'decision_made_by' => auth()->id(),
+                'decision_made_by' => Auth::id(),
                 'decision_made_at' => now(),
             ]
         );
@@ -621,7 +622,7 @@ class CompanyController extends Controller
             [
                 'final_decision' => 'rejected',
                 'final_notes' => $request->input('notes', 'Candidate rejected after interview.'),
-                'decision_made_by' => auth()->id(),
+                'decision_made_by' => Auth::id(),
                 'decision_made_at' => now(),
             ]
         );

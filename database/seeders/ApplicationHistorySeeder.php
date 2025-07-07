@@ -6,8 +6,8 @@ use App\Models\Application;
 use App\Models\ApplicationHistory;
 use App\Models\Status;
 use App\Models\User;
-use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class ApplicationHistorySeeder extends Seeder
 {
@@ -16,97 +16,124 @@ class ApplicationHistorySeeder extends Seeder
      */
     public function run(): void
     {
-        $applications = Application::all();
-        $statuses = Status::all()->keyBy('code');
-        $hrUsers = User::where('role', 'hr')->get();
+        // Get all applications
+        $applications = Application::with(['user', 'status', 'vacancyPeriod.period'])->get();
+        
+        if ($applications->isEmpty()) {
+            $this->command->info('No applications found. Skipping application history seeding.');
+            return;
+        }
+
+        // Get admin users for reviewers
+        $adminUsers = User::whereIn('role', ['hr', 'head_hr', 'head_dev'])->get();
+        
+        if ($adminUsers->isEmpty()) {
+            $this->command->info('No admin users found. Skipping application history seeding.');
+            return;
+        }
+
+        // Get all status records
+        $statuses = Status::all();
+        $administrationStatus = $statuses->where('code', 'admin_selection')->first();
+        $assessmentStatus = $statuses->where('code', 'psychotest')->first();
+        $interviewStatus = $statuses->where('code', 'interview')->first();
+
+        if (!$administrationStatus || !$assessmentStatus || !$interviewStatus) {
+            $this->command->info('Required statuses not found. Skipping application history seeding.');
+            return;
+        }
+
+        $this->command->info('Creating application history records...');
 
         foreach ($applications as $application) {
-            // Create administration history
-            if ($statuses->has('admin_selection')) {
+            $baseDate = Carbon::parse($application->created_at);
+            $reviewer = $adminUsers->random();
+
+            // Create administration history for all applications
+            ApplicationHistory::create([
+                'application_id' => $application->id,
+                'status_id' => $administrationStatus->id,
+                'processed_at' => $baseDate,
+                'score' => null,
+                'notes' => $this->getRandomAdminNotes(),
+                'scheduled_at' => null,
+                'completed_at' => $baseDate->copy()->addDays(rand(1, 3)),
+                'reviewed_by' => $reviewer->id,
+                'reviewed_at' => $baseDate->copy()->addDays(rand(1, 3)),
+                'is_active' => $application->status_id === $administrationStatus->id,
+            ]);
+
+            // If application has progressed beyond administration
+            if (in_array($application->status_id, [$assessmentStatus->id, $interviewStatus->id])) {
+                $assessmentDate = $baseDate->copy()->addDays(5);
                 ApplicationHistory::create([
                     'application_id' => $application->id,
-                    'status_id' => $statuses['admin_selection']->id,
-                    'processed_at' => $application->created_at->addDays(rand(1, 3)),
-                    'score' => rand(70, 95),
-                    'notes' => $this->getAdministrationNotes(),
-                    'reviewed_by' => $hrUsers->random()->id,
-                    'reviewed_at' => $application->created_at->addDays(rand(1, 3)),
-                    'is_active' => true,
+                    'status_id' => $assessmentStatus->id,
+                    'processed_at' => $assessmentDate,
+                    'score' => rand(70, 100), // Random score between 70-100
+                    'notes' => $this->getRandomAssessmentNotes(),
+                    'scheduled_at' => $assessmentDate->copy()->addDays(2),
+                    'completed_at' => $assessmentDate->copy()->addDays(3),
+                    'reviewed_by' => $reviewer->id,
+                    'reviewed_at' => $assessmentDate->copy()->addDays(3),
+                    'is_active' => $application->status_id === $assessmentStatus->id,
                 ]);
             }
 
-            // Create psychotest history (if application passes administration)
-            if ($statuses->has('psychotest') && rand(1, 100) > 15) { // 85% pass rate
-                $scheduledAt = $application->created_at->addDays(rand(4, 7));
+            // If application has reached interview stage
+            if ($application->status_id === $interviewStatus->id) {
+                $interviewDate = $baseDate->copy()->addDays(10);
                 ApplicationHistory::create([
                     'application_id' => $application->id,
-                    'status_id' => $statuses['psychotest']->id,
-                    'processed_at' => $scheduledAt->copy()->addDays(1),
-                    'scheduled_at' => $scheduledAt,
-                    'completed_at' => $scheduledAt->copy()->addDays(1),
-                    'score' => rand(65, 90),
-                    'notes' => $this->getPsychotestNotes(),
-                    'reviewed_by' => $hrUsers->random()->id,
-                    'reviewed_at' => $scheduledAt->copy()->addDays(1),
-                    'is_active' => true,
-                ]);
-            }
-
-            // Create interview history (if application passes psychotest)
-            if ($statuses->has('interview') && rand(1, 100) > 25) { // 75% pass rate
-                $scheduledAt = $application->created_at->addDays(rand(8, 12));
-                ApplicationHistory::create([
-                    'application_id' => $application->id,
-                    'status_id' => $statuses['interview']->id,
-                    'processed_at' => $scheduledAt->copy()->addDays(1),
-                    'scheduled_at' => $scheduledAt,
-                    'completed_at' => $scheduledAt->copy()->addDays(1),
-                    'score' => rand(70, 95),
-                    'notes' => $this->getInterviewNotes(),
-                    'reviewed_by' => $hrUsers->random()->id,
-                    'reviewed_at' => $scheduledAt->copy()->addDays(1),
+                    'status_id' => $interviewStatus->id,
+                    'processed_at' => $interviewDate,
+                    'score' => null,
+                    'notes' => $this->getRandomInterviewNotes(),
+                    'scheduled_at' => $interviewDate->copy()->addDays(2),
+                    'completed_at' => null, // Interview not completed yet
+                    'reviewed_by' => $reviewer->id,
+                    'reviewed_at' => null,
                     'is_active' => true,
                 ]);
             }
         }
+
+        $this->command->info('Application history seeding completed successfully.');
     }
 
-    private function getAdministrationNotes(): string
+    private function getRandomAdminNotes(): string
     {
         $notes = [
-            'Dokumen lengkap dan sesuai persyaratan. Kandidat memenuhi kualifikasi minimum.',
-            'Background pendidikan sesuai. Pengalaman kerja yang relevan.',
-            'Skor IQ dalam range normal. Personality assessment menunjukkan kesesuaian.',
-            'Kandidat tidak menunjukkan minat atau pengetahuan yang memadai.',
-            'Setelah pertimbangan menyeluruh, perusahaan memilih kandidat lain.',
+            "Documents complete and verified. Ready for next stage.",
+            "All requirements met. Background check passed.",
+            "Education background matches requirements perfectly.",
+            "Experience matches job requirements. Strong potential.",
+            "CV and cover letter well-prepared and impressive.",
         ];
-
         return $notes[array_rand($notes)];
     }
 
-    private function getPsychotestNotes(): string
+    private function getRandomAssessmentNotes(): string
     {
         $notes = [
-            'Test results acceptable. Good for entry-level position.',
-            'Kemampuan tidak menunjukkan minat atau pengetahuan.',
-            'Candidate did not demonstrate sufficient interest or knowledge.',
-            'Setelah pertimbangan menyeluruh, perusahaan memilih.',
-            'Kualifikasi tidak memenuhi minimum requirement unit.',
+            "Strong analytical skills demonstrated in technical test.",
+            "Good problem-solving capabilities shown throughout assessment.",
+            "Excellent technical knowledge in required areas.",
+            "Passed all required tests with high scores.",
+            "Shows great potential for growth and learning.",
         ];
-
         return $notes[array_rand($notes)];
     }
 
-    private function getInterviewNotes(): string
+    private function getRandomInterviewNotes(): string
     {
         $notes = [
-            'Komunikasi baik dan menunjukkan antusiasme tinggi.',
-            'Pengalaman teknis memadai untuk posisi yang dilamar.',
-            'Kandidat menunjukkan potensi untuk berkembang.',
-            'Kurang pengalaman dalam bidang yang diperlukan.',
-            'Tidak menunjukkan komitmen jangka panjang.',
+            "Scheduled for technical interview with team lead.",
+            "HR interview scheduled - initial screening complete.",
+            "Final interview with department head pending.",
+            "Follow-up interview required to assess cultural fit.",
+            "Technical interview scheduled with senior engineer.",
         ];
-
         return $notes[array_rand($notes)];
     }
 } 

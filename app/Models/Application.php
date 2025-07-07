@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Application extends Model
 {
@@ -63,7 +64,14 @@ class Application extends Model
      */
     public function vacancy()
     {
-        return $this->vacancyPeriod ? $this->vacancyPeriod->vacancy : null;
+        return $this->hasOneThrough(
+            Vacancies::class,
+            VacancyPeriods::class,
+            'id', // Foreign key on VacancyPeriods table
+            'id', // Foreign key on Vacancies table
+            'vacancy_period_id', // Local key on Applications table
+            'vacancy_id' // Local key on VacancyPeriods table
+        );
     }
     
     /**
@@ -74,14 +82,19 @@ class Application extends Model
         return $this->belongsTo(Status::class);
     }
     
-
-    
     /**
      * Get the recruitment period for this application (through the vacancy_period relation)
      */
     public function period()
     {
-        return $this->vacancyPeriod ? $this->vacancyPeriod->period : null;
+        return $this->hasOneThrough(
+            Period::class,
+            VacancyPeriods::class,
+            'id', // Foreign key on VacancyPeriods table
+            'id', // Foreign key on Periods table
+            'vacancy_period_id', // Local key on Applications table
+            'period_id' // Local key on VacancyPeriods table
+        );
     }
     
     /**
@@ -130,14 +143,17 @@ class Application extends Model
         return $this->hasOne(ApplicationReport::class);
     }
     
-
-    
     /**
      * Get the admin who reviewed the application.
      */
     public function adminReviewer(): ?User
     {
-        return $this->administration()?->reviewer;
+        $adminHistory = $this->history()
+            ->whereHas('status', function($query) {
+                $query->where('code', 'administration');
+            })
+            ->first();
+        return $adminHistory?->reviewer;
     }
     
     /**
@@ -145,7 +161,12 @@ class Application extends Model
      */
     public function interviewer(): ?User
     {
-        return $this->interview()?->reviewer;
+        $interviewHistory = $this->history()
+            ->whereHas('status', function($query) {
+                $query->where('code', 'interview');
+            })
+            ->first();
+        return $interviewHistory?->reviewer;
     }
     
     /**
@@ -163,8 +184,6 @@ class Application extends Model
     {
         return $this->hasMany(UserAnswer::class, 'user_id', 'user_id');
     }
-    
-
     
     /**
      * Get overall score based on current stage
@@ -186,22 +205,30 @@ class Application extends Model
         $upcomingEvents = [];
         
         // Check assessment schedule
-        $assessment = $this->assessment();
-        if ($assessment && $assessment->scheduled_at && $assessment->scheduled_at->isFuture()) {
+        $assessmentHistory = $this->history()
+            ->whereHas('status', function($query) {
+                $query->where('code', 'assessment');
+            })
+            ->first();
+        if ($assessmentHistory && $assessmentHistory->scheduled_at && $assessmentHistory->scheduled_at->isFuture()) {
             $upcomingEvents[] = [
                 'type' => 'assessment',
-                'scheduled_at' => $assessment->scheduled_at,
-                'notes' => $assessment->notes,
+                'scheduled_at' => $assessmentHistory->scheduled_at,
+                'notes' => $assessmentHistory->notes,
             ];
         }
         
         // Check interview schedule
-        $interview = $this->interview();
-        if ($interview && $interview->scheduled_at && $interview->scheduled_at->isFuture()) {
+        $interviewHistory = $this->history()
+            ->whereHas('status', function($query) {
+                $query->where('code', 'interview');
+            })
+            ->first();
+        if ($interviewHistory && $interviewHistory->scheduled_at && $interviewHistory->scheduled_at->isFuture()) {
             $upcomingEvents[] = [
                 'type' => 'interview',
-                'scheduled_at' => $interview->scheduled_at,
-                'notes' => $interview->notes,
+                'scheduled_at' => $interviewHistory->scheduled_at,
+                'notes' => $interviewHistory->notes,
             ];
         }
         

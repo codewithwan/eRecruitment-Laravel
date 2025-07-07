@@ -20,8 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import axios from 'axios';
+import { Head, router } from '@inertiajs/react';
 import { Filter, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
@@ -48,14 +47,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 // Helper function to ensure array format
-const ensureArray = (value: any): string[] => {
+const ensureArray = (value: unknown): string[] => {
     if (Array.isArray(value)) return value;
     if (typeof value === 'string') return value.split('\n').filter(item => item.trim() !== '');
     return [];
 };
 
 // Helper function to get array as string for forms
-const getArrayAsString = (value: any): string => {
+const getArrayAsString = (value: unknown): string => {
     if (Array.isArray(value)) return value.join('\n');
     if (typeof value === 'string') return value;
     return '';
@@ -68,16 +67,6 @@ export default function Jobs(props: JobProps) {
     const majors = props.majors || [];
     const educationLevels = props.educationLevels || [];
     
-    // Debug data yang diterima
-    console.log('Props data:', {
-        jobs: jobs.length,
-        companies: companies.length,
-        departments: departments.length,
-        majors: majors.length,
-        educationLevels: educationLevels.length,
-        departments_sample: departments.slice(0, 3),
-        majors_sample: majors.slice(0, 3)
-    });
     const [jobsList, setJobsList] = useState<Job[]>(jobs);
     const [filteredJobs, setFilteredJobs] = useState<Job[]>(jobs);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -195,7 +184,7 @@ export default function Jobs(props: JobProps) {
 
         setIsLoading(true);
         try {
-            await axios.delete(`/dashboard/jobs/${jobIdToDelete}`);
+            await router.delete(`/dashboard/jobs/${jobIdToDelete}`);
             setJobsList((prevJobs) => prevJobs.filter((job) => job.id !== jobIdToDelete));
         } catch (error) {
             console.error('Error deleting job:', error);
@@ -265,9 +254,10 @@ export default function Jobs(props: JobProps) {
                 benefits: benefitsArray.length > 0 ? benefitsArray : null,
                 question_pack_id: questionPackId,
             };
+
+            await router.post('/dashboard/jobs', formattedData);
             
-            const response = await axios.post('/dashboard/jobs', formattedData);
-            setJobsList((prevJobs) => [...prevJobs, response.data.job]);
+            // Inertia will automatically refresh the page with new data
             setIsCreateDialogOpen(false);
             setNewJob({
                 title: '',
@@ -283,11 +273,6 @@ export default function Jobs(props: JobProps) {
             });
         } catch (error) {
             console.error('Error creating job:', error);
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as any;
-                console.error('Error response:', axiosError.response?.data);
-                console.error('Error status:', axiosError.response?.status);
-            }
         } finally {
             setIsLoading(false);
         }
@@ -339,18 +324,12 @@ export default function Jobs(props: JobProps) {
                 question_pack_id: questionPackId,
             };
 
-            const response = await axios.put(`/dashboard/jobs/${editJob.id}`, formattedData);
-            const updatedJob = response.data.job;
-
-            setJobsList((prevJobs) => prevJobs.map((job) => (job.id === editJob.id ? updatedJob : job)));
+            await router.put(`/dashboard/jobs/${editJob.id}`, formattedData);
+            
+            // Inertia will automatically refresh the page with new data
             setIsEditDialogOpen(false);
         } catch (error) {
             console.error('Error updating job:', error);
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as any;
-                console.error('Error response:', axiosError.response?.data);
-                console.error('Error status:', axiosError.response?.status);
-            }
         } finally {
             setIsLoading(false);
         }
@@ -367,7 +346,7 @@ export default function Jobs(props: JobProps) {
         if (!dateString) return '-';
         try {
             return format(parseISO(dateString), 'dd/MM/yyyy');
-        } catch (error) {
+        } catch  {
             return dateString; // Return original if parsing fails
         }
     };

@@ -1,38 +1,44 @@
-import { AssessmentTable, type AssessmentUser } from '@/components/company-table-administration';
-import { CompanyWizard } from '@/components/company-wizard';
-import { SearchBar } from '@/components/searchbar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { usePeriodCompanyInfo } from '@/hooks/usePeriodCompanyInfo';
+import { Head, router } from '@inertiajs/react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
-import { Filter, Search } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
+import { format } from 'date-fns';
+import { Pagination } from '@/components/ui/pagination';
 
-type Period = {
-    id: number;
-    name: string;
-};
 
-interface PaginationData {
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-}
-
-interface AdministrationProps {
-    users?: AssessmentUser[];
-    pagination?: PaginationData;
-    companyId?: number;
-    selectedPeriod?: {
-        id: string;
-        name: string;
+interface Props {
+    candidates: {
+        data: Array<{
+            id: number;
+            user: {
+                name: string;
+                email: string;
+            };
+            vacancy_period: {
+                vacancy: {
+                    title: string;
+                };
+            };
+            created_at: string;
+        }>;
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    filters?: {
         company?: string;
+        period?: string;
+    };
+    companyInfo?: {
+        name: string;
+    };
+    periodInfo?: {
+        name: string;
+        start_date: string;
+        end_date: string;
     };
 }
 
@@ -43,205 +49,204 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Administration',
-        href: '/dashboard/administration',
+        href: '/dashboard/company/administration',
     },
 ];
 
-export default function AdministrationDashboard({ 
-    users: initialUsers = [],
-    pagination: initialPagination,
-    companyId = 1,
-    selectedPeriod
-}: AdministrationProps) {
-    // State management
-    const [isLoading, setIsLoading] = useState(false);
-    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<AssessmentUser | null>(null);
+export default function Administration({ candidates, filters, companyInfo, periodInfo }: Props) {
+    console.log('Pagination Info:', {
+        currentPage: candidates.current_page,
+        lastPage: candidates.last_page,
+        total: candidates.total,
+        perPage: candidates.per_page
+    });
 
-    // Filter and search state
-    const [searchQuery, setSearchQuery] = useState('');
-    const [positionFilter, setPositionFilter] = useState('all');
-
-    const filteredUsers = useMemo(() => {
-        return initialUsers.filter(user =>
-            user.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-            (positionFilter === 'all' || user.position === positionFilter)
-        );
-    }, [initialUsers, searchQuery, positionFilter]);
-
-    // Redirect ke halaman detail administration
-    const handleViewUser = (userId: string) => {
-        router.visit(`/dashboard/administration/${userId}`);
-    };
-
-    const resetFilters = () => {
-        setSearchQuery('');
-        setPositionFilter('all');
-    };
-
-    // Pagination state
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
-
-    // Paginated users for current page
-    const paginatedUsers = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        return filteredUsers.slice(startIndex, endIndex);
-    }, [filteredUsers, currentPage, itemsPerPage]);
-
-    // Pagination data
-    const pagination = useMemo(() => ({
-        total: filteredUsers.length,
-        per_page: itemsPerPage,
-        current_page: currentPage,
-        last_page: Math.ceil(filteredUsers.length / itemsPerPage) || 1,
-    }), [filteredUsers.length, itemsPerPage, currentPage]);
-
-    // Get unique positions for filter
-    const uniquePositions = Array.from(new Set(initialUsers.map(user => user.position)));
-
-    // Get period info from URL parameters or props
-    const [periodInfo, setPeriodInfo] = useState<{
-        name: string;
-        company: string;
-    } | null>(null);
-
-    // Get period ID from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const periodId = urlParams.get('period');
-    const companyIdFromUrl = urlParams.get('company');
-    
-    // Use company ID from URL if available, otherwise use the one from props
-    const effectiveCompanyId = companyIdFromUrl || (companyId ? String(companyId) : null);
-    
-    // Fetch period and company info from the API
-    const { loading, error, periodInfo: fetchedPeriodInfo } = usePeriodCompanyInfo(periodId, effectiveCompanyId);
-    
-    // State for company and period names (either from API or fallback)
-    const [companyName, setCompanyName] = useState<string>("Loading...");
-    const [periodName, setPeriodName] = useState<string>("Loading...");
-    
-    // Update company and period names when periodInfo changes
-    useEffect(() => {
-        if (fetchedPeriodInfo) {
-            setCompanyName(fetchedPeriodInfo.company.name);
-            setPeriodName(fetchedPeriodInfo.period.name);
-        } else if (!loading && !error && !fetchedPeriodInfo) {
-            // Fallback if no period is selected
-            setCompanyName("Select a period");
-            setPeriodName("No period selected");
-        } else if (error) {
-            setCompanyName("Error loading data");
-            setPeriodName("Error loading data");
+    const formatDate = (date: string) => {
+        try {
+            return format(new Date(date), 'dd/MM/yyyy HH:mm');
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return '-';
         }
-    }, [fetchedPeriodInfo, loading, error]);
+    };
+
+    const handlePageChange = (page: number) => {
+        router.get(
+            '/dashboard/recruitment/administration',
+            {
+                ...(filters || {}),
+                page,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            }
+        );
+    };
+
+    const mappedCandidates = candidates.data.map(item => {
+        console.log('Raw candidate item:', item);
+        const mapped = {
+            id: item.id,
+            name: item.user?.name || 'N/A',
+            email: item.user?.email || 'N/A',
+            position: item.vacancy_period?.vacancy?.title || 'N/A',
+            applied_at: item.created_at
+        };
+        console.log('Mapped candidate:', mapped);
+        return mapped;
+    });
+
+    console.log('Total candidates:', candidates.total);
+    console.log('Current page:', candidates.current_page);
+    console.log('Per page:', candidates.per_page);
+    console.log('Last page:', candidates.last_page);
+    console.log('Mapped candidates length:', mappedCandidates.length);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Administration" />
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
-                <div>
-                    {/* Header with company name and period dates */}
-                    <div className="text-center mb-6">
-                        <h2 className="text-2xl font-semibold mb-2">
-                            {companyName !== "Loading..." ? companyName : "Administration"}
-                        </h2>
-                        {fetchedPeriodInfo?.period?.start_date && fetchedPeriodInfo?.period?.end_date && (
-                            <p className="text-sm text-gray-600">
-                                {new Date(fetchedPeriodInfo.period.start_date).toLocaleDateString()} - {new Date(fetchedPeriodInfo.period.end_date).toLocaleDateString()}
-                            </p>
-                        )}
-                    </div>
-                    
-                    {/* Centered wizard navigation for all screen sizes with highlight */}
-                    <div className="mb-6">
-                        <CompanyWizard currentStep="administration" className="!mb-0 !shadow-none !bg-transparent !border-0" />
-                    </div>
-                    
+            <div className="flex h-full flex-1 flex-col gap-6 p-4">
+                {/* Navigation Menu */}
+                <div className="flex w-full border-b">
+                    <button
+                        className="flex-1 border-b-2 border-primary px-4 py-2 text-sm font-medium text-primary"
+                        onClick={() => router.visit('/dashboard/recruitment/administration', { 
+                            data: filters || {},
+                            preserveState: true,
+                            preserveScroll: true
+                        })}
+                    >
+                        Administration
+                    </button>
+                    <button
+                        className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        onClick={() => router.visit('/dashboard/recruitment/assessment', { 
+                            data: filters || {},
+                            preserveState: true,
+                            preserveScroll: true
+                        })}
+                    >
+                        Assessment
+                    </button>
+                    <button
+                        className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        onClick={() => router.visit('/dashboard/recruitment/interview', { 
+                            data: filters || {},
+                            preserveState: true,
+                            preserveScroll: true
+                        })}
+                    >
+                        Interview
+                    </button>
+                    <button
+                        className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+                        onClick={() => router.visit('/dashboard/recruitment/reports', { 
+                            data: filters || {},
+                            preserveState: true,
+                            preserveScroll: true
+                        })}
+                    >
+                        Reports
+                    </button>
+                </div>
+
+                {/* Company and Period Info */}
+                {(companyInfo || periodInfo) && (
                     <Card>
-                        <CardHeader className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                            <div>
-                                <CardDescription>
-                                    {periodName && periodName !== "Loading..." && periodName !== "No period selected" ? (
-                                        `Manage candidates for ${periodName} recruitment period`
-                                    ) : (
-                                        'Manage all administration in the system'
-                                    )}
-                                </CardDescription>
+                        <CardContent className="pt-6">
+                            <div className="space-y-2">
+                                {companyInfo && (
+                                    <h2 className="text-2xl font-semibold text-gray-800">
+                                        {companyInfo.name}
+                                    </h2>
+                                )}
+                                {periodInfo && (
+                                    <div className="text-sm text-gray-600">
+                                        <p className="font-medium">{periodInfo.name}</p>
+                                        <p>
+                                            Period: {format(new Date(periodInfo.start_date), 'dd MMM yyyy')} 
+                                            {' - '} 
+                                            {format(new Date(periodInfo.end_date), 'dd MMM yyyy')}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
+                        </CardContent>
+                    </Card>
+                )}
 
-                            <div className="flex items-center gap-4">
-                                <SearchBar
-                                    icon={<Search className="h-4 w-4" />}
-                                    placeholder="Cari kandidat..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant={positionFilter !== 'all' ? 'default' : 'outline'} size="icon" className="relative">
-                                            <Filter className="h-4 w-4" />
-                                            {positionFilter !== 'all' && <span className="bg-primary absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="font-inter w-80">
-                                        <div className="space-y-4">
-                                            <h4 className="font-inter font-medium text-gray-900">Filters</h4>
-                                            
-                                            {/* Position Filter */}
-                                            <div className="space-y-2">
-                                                <Label htmlFor="position-filter" className="font-inter text-sm text-gray-700">
-                                                    Position
-                                                </Label>
-                                                <Select value={positionFilter} onValueChange={setPositionFilter}>
-                                                    <SelectTrigger id="position-filter" className="font-inter">
-                                                        <SelectValue placeholder="Filter by position" className="font-inter" />
-                                                    </SelectTrigger>
-                                                    <SelectContent className="font-inter">
-                                                        <SelectItem
-                                                            value="all"
-                                                            className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                        >
-                                                            All Positions
-                                                        </SelectItem>
-                                                        {uniquePositions.map((position) => (
-                                                            <SelectItem
-                                                                key={position}
-                                                                value={position.toLowerCase()}
-                                                                className="font-inter cursor-pointer text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600"
-                                                            >
-                                                                {position}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            
-                                            <div className="flex justify-end">
-                                                <Button variant="outline" size="sm" onClick={resetFilters} className="font-inter text-xs">
-                                                    Reset Filters
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                {/* Main Content */}
+                <div>
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-2xl font-semibold">Administration Stage</h2>
+                        <div className="text-sm text-muted-foreground">
+                            Total: {candidates.total} candidates
+                        </div>
+                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Candidates List</CardTitle>
+                            <CardDescription>View and manage candidates in administration stage</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <AssessmentTable
-                                users={paginatedUsers}
-                                pagination={pagination}
-                                onView={handleViewUser}
-                                onPageChange={setCurrentPage}
-                                onPerPageChange={setItemsPerPage}
-                                isLoading={isLoading}
-                            />
+                            <div className="relative overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-muted text-muted-foreground">
+                                        <tr>
+                                            <th className="p-4 font-medium">No</th>
+                                            <th className="p-4 font-medium">Name</th>
+                                            <th className="p-4 font-medium">Email</th>
+                                            <th className="p-4 font-medium">Position</th>
+                                            <th className="p-4 font-medium">Applied Date</th>
+                                            <th className="p-4 font-medium">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {mappedCandidates.length > 0 ? (
+                                            mappedCandidates.map((candidate, index) => (
+                                                <tr key={candidate.id} className="border-b">
+                                                    <td className="p-4">{(candidates.current_page - 1) * candidates.per_page + index + 1}</td>
+                                                    <td className="p-4">{candidate.name}</td>
+                                                    <td className="p-4">{candidate.email}</td>
+                                                    <td className="p-4">{candidate.position}</td>
+                                                    <td className="p-4">{formatDate(candidate.applied_at)}</td>
+                                                    <td className="p-4">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            onClick={() => {
+                                                                router.get(`/dashboard/recruitment/administration/${candidate.id}`);
+                                                            }}
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                                                    No candidates found in administration stage
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {candidates.last_page > 1 && (
+                                <div className="mt-4 flex justify-center">
+                                    <Pagination
+                                        currentPage={candidates.current_page}
+                                        totalPages={candidates.last_page}
+                                        onPageChange={handlePageChange}
+                                    />
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
             </div>
         </AppLayout>
     );
-}
+} 

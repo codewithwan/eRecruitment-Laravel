@@ -13,7 +13,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Pencil, Trash2, Building2, GraduationCap, BookOpen, Users, AlertTriangle } from 'lucide-react';
-import axios from 'axios';
 
 interface Department {
     id: number;
@@ -69,7 +68,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function DepartmentStageManagement({ departments, educationLevels, majors, applicationStatuses }: PageProps) {
+export default function DepartmentStageManagement({ departments, educationLevels, majors }: PageProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [departmentDialogOpen, setDepartmentDialogOpen] = useState(false);
     const [educationLevelDialogOpen, setEducationLevelDialogOpen] = useState(false);
@@ -113,18 +112,18 @@ export default function DepartmentStageManagement({ departments, educationLevels
 
         try {
             if (editingDepartment) {
-                await axios.put(`/dashboard/management/departments/${editingDepartment.id}`, departmentForm);
+                await router.put(`/dashboard/management/departments/${editingDepartment.id}`, departmentForm);
                 toast.success('Department updated successfully');
             } else {
-                await axios.post('/dashboard/management/departments', departmentForm);
+                await router.post('/dashboard/management/departments', departmentForm);
                 toast.success('Department created successfully');
             }
             
             setDepartmentDialogOpen(false);
             resetDepartmentForm();
-            router.reload();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'An error occurred');
+        } catch (error) {
+            toast.error('An error occurred');
+            console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
@@ -133,11 +132,11 @@ export default function DepartmentStageManagement({ departments, educationLevels
     const handleDeleteDepartment = async (id: number) => {
         setIsLoading(true);
         try {
-            await axios.delete(`/dashboard/management/departments/${id}`);
+            await router.delete(`/dashboard/management/departments/${id}`);
             toast.success('Department deleted successfully');
-            router.reload();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'An error occurred');
+        } catch (error) {
+            toast.error('An error occurred');
+            console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
@@ -156,18 +155,18 @@ export default function DepartmentStageManagement({ departments, educationLevels
 
         try {
             if (editingEducationLevel) {
-                await axios.put(`/dashboard/management/education-levels/${editingEducationLevel.id}`, educationLevelForm);
+                await router.put(`/dashboard/management/education-levels/${editingEducationLevel.id}`, educationLevelForm);
                 toast.success('Education level updated successfully');
             } else {
-                await axios.post('/dashboard/management/education-levels', educationLevelForm);
+                await router.post('/dashboard/management/education-levels', educationLevelForm);
                 toast.success('Education level created successfully');
             }
             
             setEducationLevelDialogOpen(false);
             resetEducationLevelForm();
-            router.reload();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'An error occurred');
+        } catch (error) {
+            toast.error('An error occurred');
+            console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
@@ -176,11 +175,11 @@ export default function DepartmentStageManagement({ departments, educationLevels
     const handleDeleteEducationLevel = async (id: number) => {
         setIsLoading(true);
         try {
-            await axios.delete(`/dashboard/management/education-levels/${id}`);
+            await router.delete(`/dashboard/management/education-levels/${id}`);
             toast.success('Education level deleted successfully');
-            router.reload();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'An error occurred');
+        } catch (error) {
+            toast.error('An error occurred');
+            console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
@@ -199,18 +198,18 @@ export default function DepartmentStageManagement({ departments, educationLevels
 
         try {
             if (editingMajor) {
-                await axios.put(`/dashboard/management/majors/${editingMajor.id}`, majorForm);
+                await router.put(`/dashboard/management/majors/${editingMajor.id}`, majorForm);
                 toast.success('Major updated successfully');
             } else {
-                await axios.post('/dashboard/management/majors', majorForm);
+                await router.post('/dashboard/management/majors', majorForm);
                 toast.success('Major created successfully');
             }
             
             setMajorDialogOpen(false);
             resetMajorForm();
-            router.reload();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'An error occurred');
+        } catch (error) {
+            toast.error('An error occurred');
+            console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
@@ -219,11 +218,11 @@ export default function DepartmentStageManagement({ departments, educationLevels
     const handleDeleteMajor = async (id: number) => {
         setIsLoading(true);
         try {
-            await axios.delete(`/dashboard/management/majors/${id}`);
+            await router.delete(`/dashboard/management/majors/${id}`);
             toast.success('Major deleted successfully');
-            router.reload();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'An error occurred');
+        } catch (error) {
+            toast.error('An error occurred');
+            console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }

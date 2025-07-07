@@ -64,51 +64,50 @@ export interface PeriodInfo {
 }
 
 export interface ApplicationInfo {
-    id: string;
+    id: number;
     user: {
-        id: string;
+        id: number;
         name: string;
         email: string;
+        profile?: {
+            full_name: string;
+            phone: string;
+            address: string;
+            birth_place: string;
+            birth_date: string;
+            gender: string;
+        };
     };
     vacancy_period: {
         vacancy: {
             title: string;
+            company?: {
+                id: number;
+                name: string;
+            };
         };
     };
-    created_at: string;
-    position: string;
     stages?: {
-        administrative_selection?: {
-            status: AdministrativeStatus;
-            notes?: string;
-            reviewed_by?: string;
-            updated_at?: string;
-        };
         psychological_test?: {
-            status: AssessmentStatus;
             score?: number;
-            completed_at?: string;
-            notes?: string;
-            reviewed_by?: string;
         };
         interview?: {
-            status: InterviewStatus;
             scheduled_at?: string;
             completed_at?: string;
+            score?: number;
             interviewer?: {
                 name: string;
                 email: string;
             };
-            notes?: string;
-            score?: number;
         };
     };
-    status?: string;
-    score?: number;
-    scheduled_at?: string;
-    interviewer?: {
-        name: string;
-        email: string;
-    };
+    history?: Array<{
+        processed_at: string;
+        completed_at?: string;
+        score?: number;
+        notes?: string;
+        reviewed_by?: string;
+    }>;
+    created_at: string;
 }
 

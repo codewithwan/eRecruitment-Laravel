@@ -1,12 +1,14 @@
-import { Head, router } from '@inertiajs/react';
+import { useState } from 'react';
+import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import StageActionDialog from '@/components/stage-action-dialog';
 
 interface CandidateProfile {
     full_name: string;
@@ -153,6 +155,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function AdministrationDetail({ candidate }: Props) {
+    const [actionDialog, setActionDialog] = useState<{
+        isOpen: boolean;
+        action: 'accept' | 'reject';
+    } | null>(null);
+
     const formatDate = (date: string) => {
         return format(new Date(date), 'dd MMMM yyyy');
     };
@@ -168,7 +175,8 @@ export default function AdministrationDetail({ candidate }: Props) {
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => router.get('/dashboard/recruitment/administration')}
+                            // onClick={() => router.get('/dashboard/recruitment/administration')}
+                            onClick={() => window.history.back()}
                         >
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
@@ -191,6 +199,25 @@ export default function AdministrationDetail({ candidate }: Props) {
                             </Button>
                         )}
                     </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-4">
+                    <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => setActionDialog({ isOpen: true, action: 'reject' })}
+                    >
+                        <ThumbsDown className="h-4 w-4" />
+                        Reject
+                    </Button>
+                    <Button
+                        className="gap-2"
+                        onClick={() => setActionDialog({ isOpen: true, action: 'accept' })}
+                    >
+                        <ThumbsUp className="h-4 w-4" />
+                        Accept & Continue
+                    </Button>
                 </div>
 
                 <div className="space-y-6">
@@ -468,6 +495,23 @@ export default function AdministrationDetail({ candidate }: Props) {
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Stage Action Dialog */}
+                {actionDialog && (
+                    <StageActionDialog
+                        isOpen={actionDialog.isOpen}
+                        onClose={() => setActionDialog(null)}
+                        applicationId={candidate.id}
+                        stage="administration"
+                        action={actionDialog.action}
+                        title={actionDialog.action === 'accept' ? 'Accept & Continue to Assessment' : 'Reject Application'}
+                        description={
+                            actionDialog.action === 'accept'
+                                ? 'Please evaluate the candidate data and provide a score (10-99). You may add optional notes.'
+                                : 'The candidate will be rejected from the recruitment process. Please provide a reason for rejection.'
+                        }
+                    />
+                )}
             </div>
         </AppLayout>
     );

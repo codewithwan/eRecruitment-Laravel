@@ -41,8 +41,7 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
             Route::prefix('assessment')->name('assessment.')->group(function () {
                 Route::get('/', [ApplicationStageController::class, 'assessment'])->name('index');
                 Route::get('/{id}', [ApplicationStageController::class, 'assessmentDetail'])->name('detail');
-                Route::post('/{id}/approve', [ApplicationStageController::class, 'approve'])->name('approve');
-                Route::post('/{id}/reject', [ApplicationStageController::class, 'reject'])->name('reject');
+                Route::post('/{application}/update', [ApplicationStageController::class, 'update'])->name('update');
             });
 
             // Interview Stage
@@ -122,4 +121,12 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
             Route::put('/majors/{id}', [DepartmentController::class, 'updateMajor'])->name('majors.update');
             Route::delete('/majors/{id}', [DepartmentController::class, 'destroyMajor'])->name('majors.destroy');
         });
+
+        // Reports Routes
+        Route::get('/recruitment/reports', [ApplicationStageController::class, 'reports'])
+            ->name('recruitment.reports');
+        Route::get('/recruitment/reports/{id}', [ApplicationStageController::class, 'reportDetail'])
+            ->name('recruitment.reports.detail');
+        Route::post('/recruitment/reports/{id}/action', [ApplicationStageController::class, 'reportAction'])
+            ->name('recruitment.reports.action');
     });

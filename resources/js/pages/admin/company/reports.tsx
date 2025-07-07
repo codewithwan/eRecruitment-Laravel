@@ -2,9 +2,48 @@ import { Head, router } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Eye, ThumbsUp, ThumbsDown, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
+import { Pagination } from '@/components/ui/pagination';
+import { useState } from 'react';
+import StageActionDialog from '@/components/stage-action-dialog';
 
 interface Props {
+    candidates: {
+        data: Array<{
+            id: number;
+            user: {
+                name: string;
+                email: string;
+            };
+            scores: {
+                administration: number | null;
+                assessment: number | null;
+                interview: number | null;
+                average: number | null;
+            };
+            status: {
+                name: string;
+                code: string;
+            };
+            vacancy_period: {
+                vacancy: {
+                    title: string;
+                };
+            };
+        }>;
+        current_page: number;
+        per_page: number;
+        last_page: number;
+        total: number;
+    };
+    filters?: {
+        company?: string;
+        period?: string;
+        sort?: string;
+        order?: 'asc' | 'desc';
+    };
     companyInfo?: {
         name: string;
     };
@@ -13,46 +52,48 @@ interface Props {
         start_date: string;
         end_date: string;
     };
-    statistics: {
-        total_applicants: number;
-        stages: {
-            administration: {
-                total: number;
-                passed: number;
-                failed: number;
-                pending: number;
-            };
-            assessment: {
-                total: number;
-                completed: number;
-                in_progress: number;
-                pending: number;
-                average_score: number;
-            };
-            interview: {
-                total: number;
-                completed: number;
-                scheduled: number;
-                pending: number;
-                passed: number;
-                failed: number;
-            };
-        };
-    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-    },
-    {
-        title: 'Reports',
-        href: '/dashboard/recruitment/reports',
-    },
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Reports', href: '/dashboard/recruitment/reports' },
 ];
 
-export default function Reports({ companyInfo, periodInfo, statistics }: Props) {
+export default function Reports({ candidates, filters, companyInfo, periodInfo }: Props) {
+    const [actionDialog, setActionDialog] = useState<{
+        isOpen: boolean;
+        action: 'accept' | 'reject';
+        candidateId: number;
+    } | null>(null);
+
+    const handleSort = (column: string) => {
+        const newOrder = filters?.sort === column && filters.order === 'asc' ? 'desc' : 'asc';
+        router.visit('/dashboard/recruitment/reports', {
+            data: { 
+                ...(filters || {}), 
+                sort: column,
+                order: newOrder
+            },
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handlePageChange = (page: number) => {
+        router.visit('/dashboard/recruitment/reports', {
+            data: { ...(filters || {}), page },
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const getSortIcon = (column: string) => {
+        if (filters?.sort !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+        return filters.order === 'asc' ? 
+            <ArrowUpDown className="ml-2 h-4 w-4 text-primary" /> : 
+            <ArrowUpDown className="ml-2 h-4 w-4 text-primary rotate-180" />;
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Reports" />
@@ -61,25 +102,25 @@ export default function Reports({ companyInfo, periodInfo, statistics }: Props) 
                 <div className="flex w-full border-b">
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.get('/dashboard/recruitment/administration')}
+                        onClick={() => router.visit('/dashboard/recruitment/administration')}
                     >
                         Administration
                     </button>
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.get('/dashboard/recruitment/assessment')}
+                        onClick={() => router.visit('/dashboard/recruitment/assessment')}
                     >
                         Assessment
                     </button>
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.get('/dashboard/recruitment/interview')}
+                        onClick={() => router.visit('/dashboard/recruitment/interview')}
                     >
                         Interview
                     </button>
                     <button
                         className="flex-1 border-b-2 border-primary px-4 py-2 text-sm font-medium text-primary"
-                        onClick={() => router.get('/dashboard/recruitment/reports')}
+                        onClick={() => router.visit('/dashboard/recruitment/reports')}
                     >
                         Reports
                     </button>
@@ -115,108 +156,167 @@ export default function Reports({ companyInfo, periodInfo, statistics }: Props) 
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">Recruitment Reports</h2>
                         <div className="text-sm text-muted-foreground">
-                            Total Applicants: {statistics.total_applicants}
+                            Total: {candidates.total} candidates
                         </div>
                     </div>
-
-                    <div className="grid gap-6 md:grid-cols-3">
-                        {/* Administration Stats */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Administration</CardTitle>
-                                <CardDescription>Administrative selection statistics</CardDescription>
+                            <CardTitle>Candidates Report</CardTitle>
+                            <CardDescription>View and manage candidates final reports</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <dl className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Total</dt>
-                                        <dd className="text-sm font-medium">{statistics.stages.administration.total}</dd>
+                            <div className="relative overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-muted text-muted-foreground">
+                                        <tr>
+                                            <th className="p-4 font-medium">No</th>
+                                            <th className="p-4 font-medium">
+                                                <button 
+                                                    className="flex items-center"
+                                                    onClick={() => handleSort('name')}
+                                                >
+                                                    Name {getSortIcon('name')}
+                                                </button>
+                                            </th>
+                                            <th className="p-4 font-medium">Email</th>
+                                            <th className="p-4 font-medium">Position</th>
+                                            <th className="p-4 font-medium">
+                                                <button 
+                                                    className="flex items-center"
+                                                    onClick={() => handleSort('administration_score')}
+                                                >
+                                                    Administration {getSortIcon('administration_score')}
+                                                </button>
+                                            </th>
+                                            <th className="p-4 font-medium">
+                                                <button 
+                                                    className="flex items-center"
+                                                    onClick={() => handleSort('assessment_score')}
+                                                >
+                                                    Assessment {getSortIcon('assessment_score')}
+                                                </button>
+                                            </th>
+                                            <th className="p-4 font-medium">
+                                                <button 
+                                                    className="flex items-center"
+                                                    onClick={() => handleSort('interview_score')}
+                                                >
+                                                    Interview {getSortIcon('interview_score')}
+                                                </button>
+                                            </th>
+                                            <th className="p-4 font-medium">
+                                                <button 
+                                                    className="flex items-center"
+                                                    onClick={() => handleSort('average_score')}
+                                                >
+                                                    Average {getSortIcon('average_score')}
+                                                </button>
+                                            </th>
+                                            <th className="p-4 font-medium">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {candidates.data.length > 0 ? (
+                                            candidates.data.map((candidate, index) => (
+                                                <tr key={candidate.id} className="border-b">
+                                                    <td className="p-4">
+                                                        {(candidates.current_page - 1) * candidates.per_page + index + 1}
+                                                    </td>
+                                                    <td className="p-4">{candidate.user.name}</td>
+                                                    <td className="p-4">{candidate.user.email}</td>
+                                                    <td className="p-4">{candidate.vacancy_period.vacancy.title}</td>
+                                                    <td className="p-4">
+                                                        {candidate.scores.administration !== null ? 
+                                                            candidate.scores.administration.toFixed(2) : '-'}
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {candidate.scores.assessment !== null ? 
+                                                            candidate.scores.assessment.toFixed(2) : '-'}
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {candidate.scores.interview !== null ? 
+                                                            candidate.scores.interview.toFixed(2) : '-'}
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {candidate.scores.average !== null ? 
+                                                            candidate.scores.average.toFixed(2) : '-'}
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => {
+                                                                    router.get(`/dashboard/recruitment/reports/${candidate.id}`);
+                                                                }}
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => setActionDialog({
+                                                                    isOpen: true,
+                                                                    action: 'reject',
+                                                                    candidateId: candidate.id
+                                                                })}
+                                                            >
+                                                                <ThumbsDown className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => setActionDialog({
+                                                                    isOpen: true,
+                                                                    action: 'accept',
+                                                                    candidateId: candidate.id
+                                                                })}
+                                                            >
+                                                                <ThumbsUp className="h-4 w-4" />
+                                                            </Button>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Passed</dt>
-                                        <dd className="text-sm font-medium text-green-600">{statistics.stages.administration.passed}</dd>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={9} className="p-4 text-center text-muted-foreground">
+                                                    No candidates found
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Failed</dt>
-                                        <dd className="text-sm font-medium text-red-600">{statistics.stages.administration.failed}</dd>
+                            {candidates.last_page > 1 && (
+                                <div className="mt-4 flex justify-center">
+                                    <Pagination
+                                        currentPage={candidates.current_page}
+                                        totalPages={candidates.last_page}
+                                        onPageChange={handlePageChange}
+                                    />
                                     </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Pending</dt>
-                                        <dd className="text-sm font-medium text-yellow-600">{statistics.stages.administration.pending}</dd>
-                                    </div>
-                                </dl>
+                            )}
                             </CardContent>
                         </Card>
-
-                        {/* Assessment Stats */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Assessment</CardTitle>
-                                <CardDescription>Psychological test statistics</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <dl className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Total</dt>
-                                        <dd className="text-sm font-medium">{statistics.stages.assessment.total}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Completed</dt>
-                                        <dd className="text-sm font-medium text-green-600">{statistics.stages.assessment.completed}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">In Progress</dt>
-                                        <dd className="text-sm font-medium text-yellow-600">{statistics.stages.assessment.in_progress}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Pending</dt>
-                                        <dd className="text-sm font-medium text-gray-600">{statistics.stages.assessment.pending}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Average Score</dt>
-                                        <dd className="text-sm font-medium text-blue-600">{statistics.stages.assessment.average_score}%</dd>
-                                    </div>
-                                </dl>
-                            </CardContent>
-                        </Card>
-
-                        {/* Interview Stats */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Interview</CardTitle>
-                                <CardDescription>Interview process statistics</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <dl className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Total</dt>
-                                        <dd className="text-sm font-medium">{statistics.stages.interview.total}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Completed</dt>
-                                        <dd className="text-sm font-medium text-green-600">{statistics.stages.interview.completed}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Scheduled</dt>
-                                        <dd className="text-sm font-medium text-blue-600">{statistics.stages.interview.scheduled}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Pending</dt>
-                                        <dd className="text-sm font-medium text-gray-600">{statistics.stages.interview.pending}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Passed</dt>
-                                        <dd className="text-sm font-medium text-green-600">{statistics.stages.interview.passed}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-sm text-gray-600">Failed</dt>
-                                        <dd className="text-sm font-medium text-red-600">{statistics.stages.interview.failed}</dd>
-                                    </div>
-                                </dl>
-                            </CardContent>
-                        </Card>
-                    </div>
                 </div>
+
+                {/* Stage Action Dialog */}
+                {actionDialog && (
+                    <StageActionDialog
+                        isOpen={actionDialog.isOpen}
+                        onClose={() => setActionDialog(null)}
+                        applicationId={actionDialog.candidateId}
+                        stage="final"
+                        action={actionDialog.action}
+                        title={actionDialog.action === 'accept' ? 'Accept Candidate' : 'Reject Application'}
+                        description={
+                            actionDialog.action === 'accept'
+                                ? 'Are you sure you want to accept this candidate? This will mark them as hired.'
+                                : 'The candidate will be rejected from the recruitment process. Please provide a reason for rejection.'
+                        }
+                    />
+                )}
             </div>
         </AppLayout>
     );

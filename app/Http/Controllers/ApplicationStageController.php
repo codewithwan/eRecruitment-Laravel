@@ -12,6 +12,7 @@ use App\Models\VacancyPeriods;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -273,13 +274,18 @@ class ApplicationStageController extends Controller
      */
     public function update(Request $request, Application $application, string $stage)
     {
-        $validated = $request->validate([
+        // Define validation rules based on stage and status
+        $rules = [
             'status' => 'required|string',
-            'notes' => 'nullable|string',
-            'score' => 'nullable|numeric|min:0|max:100',
+            'notes' => $request->input('status') === 'rejected' ? 'required|string' : 'nullable|string',
+            'score' => ($stage === 'administration' || $stage === 'interview') && $request->input('status') === 'passed' 
+                ? 'required|numeric|min:10|max:99' 
+                : 'nullable|numeric',
             'scheduled_at' => 'nullable|date',
             'interviewer_id' => 'nullable|exists:users,id',
-        ]);
+        ];
+
+        $validated = $request->validate($rules);
 
         // Get the status for this stage
         $status = Status::where('stage', $stage)
@@ -298,7 +304,12 @@ class ApplicationStageController extends Controller
         $history = $application->history()->create([
             'status_id' => $status->id,
             'notes' => $validated['notes'] ?? null,
-            'score' => $validated['score'] ?? null,
+            'score' => match($stage) {
+                'administration' => $validated['score'] ?? null,
+                'interview' => $validated['score'] ?? null,
+                'psychological_test' => $application->userAnswers->avg(fn($answer) => $answer->choice->is_correct ? 100 : 0),
+                default => null
+            },
             'scheduled_at' => $validated['scheduled_at'] ?? null,
             'processed_at' => now(),
             'reviewed_by' => $validated['interviewer_id'] ?? Auth::id(),
@@ -729,6 +740,7 @@ class ApplicationStageController extends Controller
             'history' => function($query) use ($assessmentStatus) {
                 $query->where('status_id', $assessmentStatus->id)
                     ->where('is_active', true)
+                    ->select('id', 'application_id', 'status_id', 'processed_at', 'completed_at', 'score', 'notes', 'reviewed_by')
                     ->with(['status', 'reviewer'])
                     ->latest();
             }
@@ -775,13 +787,18 @@ class ApplicationStageController extends Controller
                     ]
                 ],
                 'created_at' => $application->created_at,
+                'history' => $application->history->map(function($history) {
+                    return [
+                        'processed_at' => $history->processed_at,
+                        'completed_at' => $history->completed_at,
+                        'score' => $history->score,
+                        'notes' => $history->notes,
+                        'reviewed_by' => $history->reviewer?->name,
+                    ];
+                }),
                 'stages' => [
                     'psychological_test' => [
-                        'status' => $currentHistory?->status->code ?? 'pending',
                         'score' => $currentHistory?->score,
-                        'completed_at' => $currentHistory?->completed_at,
-                        'notes' => $currentHistory?->notes,
-                        'reviewed_by' => $currentHistory?->reviewer?->name,
                     ]
                 ],
                 'assessment' => [
@@ -1014,5 +1031,547 @@ class ApplicationStageController extends Controller
                 'description' => $interviewStatus->description,
             ],
         ]);
+    }
+
+    public function interviewDetail($id): Response
+    {
+        $application = Application::with([
+            'user.candidatesProfile',
+            'vacancyPeriod.vacancy.company',
+            'vacancyPeriod.period',
+            'history' => function($query) {
+                $query->whereHas('status', function($q) {
+                    $q->where('stage', 'interview');
+                })
+                ->where('is_active', true)
+                ->with(['status', 'reviewer'])
+                ->latest();
+            },
+            'userAnswers' => function($query) {
+                $query->with(['question', 'choice']);
+            }
+        ])->findOrFail($id);
+
+        $currentHistory = $application->history->first();
+
+        // Calculate assessment result
+        $assessmentScore = $application->userAnswers->avg(function($answer) {
+            return $answer->choice->is_correct ? 100 : 0;
+        });
+
+        $lastAssessmentHistory = ApplicationHistory::where('application_id', $id)
+            ->whereHas('status', function($q) {
+                $q->where('stage', 'psychological_test');
+            })
+            ->where('is_active', true)
+            ->first();
+
+        return Inertia::render('admin/company/interview-detail', [
+            'candidate' => [
+                'id' => $application->id,
+                'user' => [
+                    'id' => $application->user->id,
+                    'name' => $application->user->name,
+                    'email' => $application->user->email,
+                    'profile' => $application->user->candidatesProfile ? [
+                        'full_name' => $application->user->candidatesProfile->full_name,
+                        'phone' => $application->user->candidatesProfile->phone,
+                        'address' => $application->user->candidatesProfile->address,
+                        'birth_place' => $application->user->candidatesProfile->birth_place,
+                        'birth_date' => $application->user->candidatesProfile->birth_date,
+                        'gender' => $application->user->candidatesProfile->gender,
+                    ] : null,
+                ],
+                'vacancy' => [
+                    'id' => $application->vacancyPeriod->vacancy->id,
+                    'title' => $application->vacancyPeriod->vacancy->title,
+                    'company' => [
+                        'id' => $application->vacancyPeriod->vacancy->company->id,
+                        'name' => $application->vacancyPeriod->vacancy->company->name,
+                    ],
+                    'period' => [
+                        'id' => $application->vacancyPeriod->period->id,
+                        'name' => $application->vacancyPeriod->period->name,
+                        'start_time' => $application->vacancyPeriod->period->start_time,
+                        'end_time' => $application->vacancyPeriod->period->end_time,
+                    ],
+                ],
+                'stages' => [
+                    'interview' => [
+                        'scheduled_at' => $currentHistory?->scheduled_at,
+                        'completed_at' => $currentHistory?->completed_at,
+                        'score' => $currentHistory?->score,
+                        'notes' => $currentHistory?->notes,
+                        'interviewer' => $currentHistory?->reviewer ? [
+                            'name' => $currentHistory->reviewer->name,
+                            'email' => $currentHistory->reviewer->email,
+                        ] : null,
+                    ],
+                ],
+                'assessment_result' => $lastAssessmentHistory ? [
+                    'total_score' => $assessmentScore,
+                    'completed_at' => $lastAssessmentHistory->completed_at,
+                ] : null,
+            ],
+        ]);
+    }
+
+    public function assessmentDetail($id): Response
+    {
+        $application = Application::with([
+            'user.candidatesProfile',
+            'vacancyPeriod.vacancy.company',
+            'vacancyPeriod.period',
+            'history' => function($query) {
+                $query->whereHas('status', function($q) {
+                    $q->where('stage', 'psychological_test');
+                })
+                ->where('is_active', true)
+                ->with(['status', 'reviewer'])
+                ->latest();
+            },
+            'userAnswers' => function($query) {
+                $query->with(['question', 'choice']);
+            }
+        ])->findOrFail($id);
+
+        $currentHistory = $application->history->first();
+
+        // Calculate assessment score
+        $assessmentScore = $application->userAnswers->avg(function($answer) {
+            return $answer->choice->is_correct ? 100 : 0;
+        });
+
+        return Inertia::render('admin/company/assessment-detail', [
+            'candidate' => [
+                'id' => $application->id,
+                'user' => [
+                    'id' => $application->user->id,
+                    'name' => $application->user->name,
+                    'email' => $application->user->email,
+                    'profile' => $application->user->candidatesProfile ? [
+                        'full_name' => $application->user->candidatesProfile->full_name,
+                        'phone' => $application->user->candidatesProfile->phone,
+                        'address' => $application->user->candidatesProfile->address,
+                        'birth_place' => $application->user->candidatesProfile->birth_place,
+                        'birth_date' => $application->user->candidatesProfile->birth_date,
+                        'gender' => $application->user->candidatesProfile->gender,
+                    ] : null,
+                ],
+                'vacancy' => [
+                    'id' => $application->vacancyPeriod->vacancy->id,
+                    'title' => $application->vacancyPeriod->vacancy->title,
+                    'company' => [
+                        'id' => $application->vacancyPeriod->vacancy->company->id,
+                        'name' => $application->vacancyPeriod->vacancy->company->name,
+                    ],
+                    'period' => [
+                        'id' => $application->vacancyPeriod->period->id,
+                        'name' => $application->vacancyPeriod->period->name,
+                        'start_time' => $application->vacancyPeriod->period->start_time,
+                        'end_time' => $application->vacancyPeriod->period->end_time,
+                    ],
+                ],
+                'stages' => [
+                    'psychological_test' => [
+                        'status' => $currentHistory?->status->code ?? 'pending',
+                        'started_at' => $currentHistory?->processed_at,
+                        'completed_at' => $currentHistory?->completed_at,
+                        'score' => $assessmentScore,
+                        'answers' => $application->userAnswers->map(fn($answer) => [
+                            'question' => [
+                                'text' => $answer->question->question_text,
+                                'choices' => $answer->question->choices->map(fn($choice) => [
+                                    'text' => $choice->choice_text,
+                                    'is_correct' => $choice->is_correct,
+                                ]),
+                            ],
+                            'selected_answer' => [
+                                'text' => $answer->choice->choice_text,
+                                'is_correct' => $answer->choice->is_correct,
+                            ],
+                        ]),
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function reports(Request $request): Response
+    {
+        // Build the base query
+        $query = Application::with([
+            'user:id,name,email',
+            'vacancyPeriod.vacancy.company',
+            'history' => function($query) {
+                $query->with(['status', 'reviewer'])
+                    ->where('is_active', true)
+                    ->latest();
+            },
+            'userAnswers' => function($query) {
+                $query->with(['question', 'choice']);
+            }
+        ]);
+
+        // Filter by company if provided
+        if ($request->has('company')) {
+            $query->whereHas('vacancyPeriod.vacancy', function($q) use ($request) {
+                $q->where('company_id', $request->company);
+            });
+        }
+
+        // Filter by period if provided
+        if ($request->has('period')) {
+            $query->whereHas('vacancyPeriod', function($q) use ($request) {
+                $q->where('period_id', $request->period);
+            });
+        }
+
+        // Handle sorting
+        $sortColumn = $request->input('sort', 'created_at');
+        $sortOrder = $request->input('order', 'desc');
+
+        switch ($sortColumn) {
+            case 'name':
+                $query->join('users', 'applications.user_id', '=', 'users.id')
+                    ->orderBy('users.name', $sortOrder)
+                    ->select('applications.*'); // Ensure we only select from applications table
+                break;
+            case 'administration_score':
+                $query->leftJoin('application_histories as admin_history', function($join) {
+                    $join->on('applications.id', '=', 'admin_history.application_id')
+                        ->where('admin_history.is_active', '=', true)
+                        ->whereExists(function($query) {
+                            $query->from('statuses')
+                                ->whereRaw('admin_history.status_id = statuses.id')
+                                ->where('statuses.stage', '=', 'administrative_selection');
+                        });
+                })
+                ->orderBy('admin_history.score', $sortOrder)
+                ->select('applications.*');
+                break;
+            case 'assessment_score':
+                $query->leftJoin('application_histories as assessment_history', function($join) {
+                    $join->on('applications.id', '=', 'assessment_history.application_id')
+                        ->where('assessment_history.is_active', '=', true)
+                        ->whereExists(function($query) {
+                            $query->from('statuses')
+                                ->whereRaw('assessment_history.status_id = statuses.id')
+                                ->where('statuses.stage', '=', 'psychological_test');
+                        });
+                })
+                ->orderBy('assessment_history.score', $sortOrder)
+                ->select('applications.*');
+                break;
+            case 'interview_score':
+                $query->leftJoin('application_histories as interview_history', function($join) {
+                    $join->on('applications.id', '=', 'interview_history.application_id')
+                        ->where('interview_history.is_active', '=', true)
+                        ->whereExists(function($query) {
+                            $query->from('statuses')
+                                ->whereRaw('interview_history.status_id = statuses.id')
+                                ->where('statuses.stage', '=', 'interview');
+                        });
+                })
+                ->orderBy('interview_history.score', $sortOrder)
+                ->select('applications.*');
+                break;
+            case 'average_score':
+                $query->leftJoin('application_histories as avg_history', function($join) {
+                    $join->on('applications.id', '=', 'avg_history.application_id')
+                        ->where('avg_history.is_active', '=', true);
+                })
+                ->groupBy('applications.id')
+                ->orderBy(\DB::raw('AVG(avg_history.score)'), $sortOrder)
+                ->select('applications.*');
+                break;
+            default:
+                $query->orderBy('applications.created_at', $sortOrder);
+        }
+
+        // Get paginated results
+        $applications = $query->paginate(10)->withQueryString();
+
+        // Transform the data
+        $transformedData = $applications->through(function ($application) {
+            $administrationHistory = collect($application->history)->first(function($history) {
+                return $history->status->stage === 'administrative_selection';
+            });
+
+            $assessmentHistory = collect($application->history)->first(function($history) {
+                return $history->status->stage === 'psychological_test';
+            });
+
+            $interviewHistory = collect($application->history)->first(function($history) {
+                return $history->status->stage === 'interview';
+            });
+
+            // Calculate assessment score from answers if available
+            $assessmentScore = null;
+            if ($application->userAnswers->isNotEmpty()) {
+                $assessmentScore = $application->userAnswers->avg(function($answer) {
+                    return $answer->choice->is_correct ? 100 : 0;
+                });
+            }
+
+            // Calculate average score
+            $scores = array_filter([
+                $administrationHistory?->score,
+                $assessmentScore,
+                $interviewHistory?->score
+            ], function($score) {
+                return !is_null($score);
+            });
+
+            $averageScore = count($scores) > 0 ? array_sum($scores) / count($scores) : null;
+
+            return [
+                'id' => $application->id,
+                'user' => [
+                    'name' => $application->user->name,
+                    'email' => $application->user->email,
+                ],
+                'vacancy_period' => [
+                    'vacancy' => [
+                        'title' => $application->vacancyPeriod->vacancy->title
+                    ]
+                ],
+                'scores' => [
+                    'administration' => $administrationHistory?->score,
+                    'assessment' => $assessmentScore,
+                    'interview' => $interviewHistory?->score,
+                    'average' => $averageScore
+                ],
+                'status' => [
+                    'name' => $application->status->name,
+                    'code' => $application->status->code,
+                ]
+            ];
+        });
+
+        // Get period and company info if filters are provided
+        $periodInfo = null;
+        $companyInfo = null;
+
+        if ($request->has('period') || $request->has('company')) {
+            $vacancyPeriodQuery = VacancyPeriods::query()
+                ->with(['vacancy.company', 'period']);
+
+            if ($request->has('period')) {
+                $vacancyPeriodQuery->where('period_id', $request->query('period'));
+            }
+
+            if ($request->has('company')) {
+                $vacancyPeriodQuery->whereHas('vacancy', function($q) use ($request) {
+                    $q->where('company_id', $request->query('company'));
+                });
+            }
+
+            $vacancyPeriod = $vacancyPeriodQuery->first();
+
+            if ($vacancyPeriod) {
+                if ($request->has('period')) {
+                    $periodInfo = [
+                        'name' => $vacancyPeriod->period->name,
+                        'start_date' => $vacancyPeriod->period->start_time,
+                        'end_date' => $vacancyPeriod->period->end_time,
+                    ];
+                }
+
+                if ($request->has('company')) {
+                    $companyInfo = [
+                        'name' => $vacancyPeriod->vacancy->company->name,
+                    ];
+                }
+            }
+        }
+
+        return Inertia::render('admin/company/reports', [
+            'candidates' => [
+                'data' => $transformedData,
+                'current_page' => $applications->currentPage(),
+                'per_page' => $applications->perPage(),
+                'last_page' => $applications->lastPage(),
+                'total' => $applications->total(),
+            ],
+            'filters' => [
+                'company' => $request->query('company'),
+                'period' => $request->query('period'),
+                'sort' => $sortColumn,
+                'order' => $sortOrder,
+            ],
+            'periodInfo' => $periodInfo,
+            'companyInfo' => $companyInfo,
+        ]);
+    }
+
+    public function reportDetail($id): Response
+    {
+        $application = Application::with([
+            'user.candidatesProfile',
+            'vacancyPeriod.vacancy.company',
+            'vacancyPeriod.period',
+            'status',
+            'history' => function($query) {
+                $query->with(['status', 'reviewer'])
+                    ->where('is_active', true)
+                    ->latest();
+            },
+            'userAnswers' => function($query) {
+                $query->with(['question.choices', 'choice']);
+            }
+        ])->findOrFail($id);
+
+        // Get stage-specific histories
+        $administrationHistory = collect($application->history)->first(function($history) {
+            return $history->status->stage === 'administrative_selection';
+        });
+
+        $assessmentHistory = collect($application->history)->first(function($history) {
+            return $history->status->stage === 'psychological_test';
+        });
+
+        $interviewHistory = collect($application->history)->first(function($history) {
+            return $history->status->stage === 'interview';
+        });
+
+        // Calculate assessment score
+        $assessmentScore = $application->userAnswers->avg(function($answer) {
+            return $answer->choice->is_correct ? 100 : 0;
+        });
+
+        // Calculate average score
+        $scores = array_filter([
+            $administrationHistory?->score,
+            $assessmentScore,
+            $interviewHistory?->score
+        ], function($score) {
+            return !is_null($score);
+        });
+
+        $averageScore = count($scores) > 0 ? array_sum($scores) / count($scores) : null;
+
+        return Inertia::render('admin/company/reports-detail', [
+            'candidate' => [
+                'id' => $application->id,
+                'user' => [
+                    'id' => $application->user->id,
+                    'name' => $application->user->name,
+                    'email' => $application->user->email,
+                    'profile' => $application->user->candidatesProfile ? [
+                        'full_name' => $application->user->candidatesProfile->full_name,
+                        'phone' => $application->user->candidatesProfile->phone,
+                        'address' => $application->user->candidatesProfile->address,
+                        'birth_place' => $application->user->candidatesProfile->birth_place,
+                        'birth_date' => $application->user->candidatesProfile->birth_date,
+                        'gender' => $application->user->candidatesProfile->gender,
+                    ] : null,
+                    'cv' => $application->user->candidatesCV ? [
+                        'path' => $application->user->candidatesCV->path,
+                        'uploaded_at' => $application->user->candidatesCV->created_at,
+                    ] : null,
+                ],
+                'vacancy' => [
+                    'title' => $application->vacancyPeriod->vacancy->title,
+                    'company' => [
+                        'name' => $application->vacancyPeriod->vacancy->company->name,
+                    ],
+                    'period' => [
+                        'name' => $application->vacancyPeriod->period->name,
+                        'start_time' => $application->vacancyPeriod->period->start_time,
+                        'end_time' => $application->vacancyPeriod->period->end_time,
+                    ],
+                ],
+                'stages' => [
+                    'administration' => [
+                        'status' => $administrationHistory?->status->code ?? 'pending',
+                        'score' => $administrationHistory?->score,
+                        'notes' => $administrationHistory?->notes,
+                        'processed_at' => $administrationHistory?->processed_at,
+                        'reviewed_by' => $administrationHistory?->reviewer?->name,
+                    ],
+                    'assessment' => [
+                        'status' => $assessmentHistory?->status->code ?? 'pending',
+                        'score' => $assessmentScore,
+                        'started_at' => $assessmentHistory?->processed_at,
+                        'completed_at' => $assessmentHistory?->completed_at,
+                        'answers' => $application->userAnswers->map(fn($answer) => [
+                            'question' => [
+                                'text' => $answer->question->question_text,
+                                'choices' => $answer->question->choices->map(fn($choice) => [
+                                    'text' => $choice->choice_text,
+                                    'is_correct' => $choice->is_correct,
+                                ]),
+                            ],
+                            'selected_answer' => [
+                                'text' => $answer->choice->choice_text,
+                                'is_correct' => $answer->choice->is_correct,
+                            ],
+                        ]),
+                    ],
+                    'interview' => [
+                        'status' => $interviewHistory?->status->code ?? 'pending',
+                        'score' => $interviewHistory?->score,
+                        'notes' => $interviewHistory?->notes,
+                        'scheduled_at' => $interviewHistory?->scheduled_at,
+                        'completed_at' => $interviewHistory?->completed_at,
+                        'interviewer' => $interviewHistory?->reviewer ? [
+                            'name' => $interviewHistory->reviewer->name,
+                            'email' => $interviewHistory->reviewer->email,
+                        ] : null,
+                    ],
+                ],
+                'average_score' => $averageScore,
+                'status' => [
+                    'name' => $application->status->name,
+                    'code' => $application->status->code,
+                ],
+                'history' => $application->history->map(fn($history) => [
+                    'stage' => $history->status->stage,
+                    'status' => [
+                        'name' => $history->status->name,
+                        'code' => $history->status->code,
+                    ],
+                    'notes' => $history->notes,
+                    'score' => $history->score,
+                    'processed_at' => $history->processed_at,
+                    'scheduled_at' => $history->scheduled_at,
+                    'completed_at' => $history->completed_at,
+                    'reviewer' => $history->reviewer ? [
+                        'name' => $history->reviewer->name,
+                        'email' => $history->reviewer->email,
+                    ] : null,
+                ]),
+            ],
+        ]);
+    }
+
+    public function reportAction(Request $request, $id)
+    {
+        $application = Application::findOrFail($id);
+        $action = $request->input('action');
+        $notes = $request->input('notes');
+
+        // Get the appropriate status
+        $status = Status::where('code', $action === 'accept' ? 'hired' : 'rejected')
+            ->first();
+
+        if (!$status) {
+            return back()->with('error', 'Invalid action');
+        }
+
+        // Update application status
+        $application->update(['status_id' => $status->id]);
+
+        // Create history record
+        $application->history()->create([
+            'status_id' => $status->id,
+            'notes' => $notes,
+            'processed_at' => now(),
+            'reviewed_by' => Auth::id(),
+            'is_active' => true,
+        ]);
+
+        return back()->with('success', 'Application ' . ($action === 'accept' ? 'accepted' : 'rejected') . ' successfully');
     }
 } 

@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type ApplicationInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceStrict } from 'date-fns';
 import { Pagination } from '@/components/ui/pagination';
 
 interface Props {
@@ -144,45 +144,53 @@ export default function Assessment({ candidates, filters, companyInfo, periodInf
                                             <th className="p-4 font-medium">Name</th>
                                             <th className="p-4 font-medium">Email</th>
                                             <th className="p-4 font-medium">Position</th>
+                                            <th className="p-4 font-medium">Started At</th>
+                                            <th className="p-4 font-medium">Completed At</th>
+                                            <th className="p-4 font-medium">Duration</th>
                                             <th className="p-4 font-medium">Score</th>
-                                            <th className="p-4 font-medium">Status</th>
                                             <th className="p-4 font-medium">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {candidates.data.length > 0 ? (
-                                            candidates.data.map((candidate, index) => (
-                                                <tr key={candidate.id} className="border-b">
-                                                    <td className="p-4">{(candidates.current_page - 1) * candidates.per_page + index + 1}</td>
-                                                    <td className="p-4">{candidate.user.name}</td>
-                                                    <td className="p-4">{candidate.user.email}</td>
-                                                    <td className="p-4">{candidate.vacancy_period.vacancy.title}</td>
-                                                    <td className="p-4">{candidate.stages?.psychological_test?.score || '-'}</td>
-                                                    <td className="p-4">
-                                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                                            candidate.stages?.psychological_test?.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                            candidate.stages?.psychological_test?.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                        }`}>
-                                                            {candidate.stages?.psychological_test?.status || 'Pending'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            onClick={() => {
-                                                                router.get(`/dashboard/recruitment/assessment/${candidate.id}`);
-                                                            }}
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                            candidates.data.map((candidate, index) => {
+                                                const startedAt = candidate.history?.[0]?.processed_at;
+                                                const completedAt = candidate.history?.[0]?.completed_at;
+                                                const duration = startedAt && completedAt ? 
+                                                    formatDistanceStrict(new Date(completedAt), new Date(startedAt)) : 
+                                                    '-';
+                                                
+                                                return (
+                                                    <tr key={candidate.id} className="border-b">
+                                                        <td className="p-4">{(candidates.current_page - 1) * candidates.per_page + index + 1}</td>
+                                                        <td className="p-4">{candidate.user.name}</td>
+                                                        <td className="p-4">{candidate.user.email}</td>
+                                                        <td className="p-4">{candidate.vacancy_period.vacancy.title}</td>
+                                                        <td className="p-4">
+                                                            {startedAt ? format(new Date(startedAt), 'dd MMM yyyy HH:mm') : '-'}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            {completedAt ? format(new Date(completedAt), 'dd MMM yyyy HH:mm') : '-'}
+                                                        </td>
+                                                        <td className="p-4">{duration}</td>
+                                                        <td className="p-4">{candidate.stages?.psychological_test?.score || '-'}</td>
+                                                        <td className="p-4">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => {
+                                                                    router.get(`/dashboard/recruitment/assessment/${candidate.id}`);
+                                                                }}
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
                                         ) : (
                                             <tr>
-                                                <td colSpan={7} className="p-4 text-center text-muted-foreground">
+                                                <td colSpan={9} className="p-4 text-center text-muted-foreground">
                                                     No candidates found in assessment stage
                                                 </td>
                                             </tr>

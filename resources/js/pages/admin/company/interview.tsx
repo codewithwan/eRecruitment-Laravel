@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type ApplicationInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceStrict } from 'date-fns';
 import { Pagination } from '@/components/ui/pagination';
 
 interface Props {
@@ -41,16 +41,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Interview({ candidates, filters, companyInfo, periodInfo }: Props) {
-    const formatDate = (date: string | undefined) => {
-        if (!date) return '-';
-        try {
-            return format(new Date(date), 'dd/MM/yyyy HH:mm');
-        } catch (error) {
-            console.error('Error formatting date:', error);
-            return '-';
-        }
-    };
-
     const handlePageChange = (page: number) => {
         router.visit('/dashboard/recruitment/interview', {
             data: { ...(filters || {}), page },
@@ -154,47 +144,57 @@ export default function Interview({ candidates, filters, companyInfo, periodInfo
                                             <th className="p-4 font-medium">Name</th>
                                             <th className="p-4 font-medium">Email</th>
                                             <th className="p-4 font-medium">Position</th>
-                                            <th className="p-4 font-medium">Schedule</th>
+                                            <th className="p-4 font-medium">Scheduled At</th>
+                                            <th className="p-4 font-medium">Completed At</th>
+                                            <th className="p-4 font-medium">Duration</th>
                                             <th className="p-4 font-medium">Interviewer</th>
-                                            <th className="p-4 font-medium">Status</th>
+                                            <th className="p-4 font-medium">Score</th>
                                             <th className="p-4 font-medium">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {candidates.data.length > 0 ? (
-                                            candidates.data.map((candidate, index) => (
-                                                <tr key={candidate.id} className="border-b">
-                                                    <td className="p-4">{(candidates.current_page - 1) * candidates.per_page + index + 1}</td>
-                                                    <td className="p-4">{candidate.user.name}</td>
-                                                    <td className="p-4">{candidate.user.email}</td>
-                                                    <td className="p-4">{candidate.vacancy_period.vacancy.title}</td>
-                                                    <td className="p-4">{formatDate(candidate.stages?.interview?.scheduled_at)}</td>
-                                                    <td className="p-4">{candidate.stages?.interview?.interviewer?.name || '-'}</td>
-                                                    <td className="p-4">
-                                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                                            candidate.stages?.interview?.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                            candidate.stages?.interview?.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                        }`}>
-                                                            {candidate.stages?.interview?.status || 'Pending'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            onClick={() => {
-                                                                router.get(`/dashboard/recruitment/interview/${candidate.id}`);
-                                                            }}
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                            candidates.data.map((candidate, index) => {
+                                                const scheduledAt = candidate.stages?.interview?.scheduled_at;
+                                                const completedAt = candidate.stages?.interview?.completed_at;
+                                                const duration = scheduledAt && completedAt ? 
+                                                    formatDistanceStrict(new Date(completedAt), new Date(scheduledAt)) : 
+                                                    '-';
+                                                
+                                                return (
+                                                    <tr key={candidate.id} className="border-b">
+                                                        <td className="p-4">{(candidates.current_page - 1) * candidates.per_page + index + 1}</td>
+                                                        <td className="p-4">{candidate.user.name}</td>
+                                                        <td className="p-4">{candidate.user.email}</td>
+                                                        <td className="p-4">{candidate.vacancy_period.vacancy.title}</td>
+                                                        <td className="p-4">
+                                                            {scheduledAt ? format(new Date(scheduledAt), 'dd MMM yyyy HH:mm') : '-'}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            {completedAt ? format(new Date(completedAt), 'dd MMM yyyy HH:mm') : '-'}
+                                                        </td>
+                                                        <td className="p-4">{duration}</td>
+                                                        <td className="p-4">
+                                                            {candidate.stages?.interview?.interviewer?.name || '-'}
+                                                        </td>
+                                                        <td className="p-4">{candidate.stages?.interview?.score || '-'}</td>
+                                                        <td className="p-4">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => {
+                                                                    router.get(`/dashboard/recruitment/interview/${candidate.id}`);
+                                                                }}
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
                                         ) : (
                                             <tr>
-                                                <td colSpan={8} className="p-4 text-center text-muted-foreground">
+                                                <td colSpan={10} className="p-4 text-center text-muted-foreground">
                                                     No candidates found in interview stage
                                                 </td>
                                             </tr>

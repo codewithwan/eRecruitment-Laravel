@@ -32,3 +32,82 @@ export interface SharedData {
     [key: string]: unknown;
 }
 
+export type RecruitmentStage = 'administrative_selection' | 'psychological_test' | 'interview';
+
+export type AdministrativeStatus = 'pending' | 'passed' | 'failed';
+
+export type AssessmentStatus = 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'passed' | 'failed';
+
+export type InterviewStatus = 'scheduled' | 'completed' | 'passed' | 'failed';
+
+export type ApplicationStatus = 'pending' | 'accepted' | 'rejected';
+
+export interface RecruitmentStageInfo {
+  stage: RecruitmentStage;
+  status: AdministrativeStatus | AssessmentStatus | InterviewStatus;
+  updatedAt?: string;
+  reviewedBy?: string;
+  notes?: string;
+  score?: number;
+  scheduledAt?: string;
+  location?: string;
+}
+
+export interface CompanyInfo {
+    name: string;
+}
+
+export interface PeriodInfo {
+    name: string;
+    start_date: string;
+    end_date: string;
+}
+
+export interface ApplicationInfo {
+    id: number;
+    user: {
+        id: number;
+        name: string;
+        email: string;
+        profile?: {
+            full_name: string;
+            phone: string;
+            address: string;
+            birth_place: string;
+            birth_date: string;
+            gender: string;
+        };
+    };
+    vacancy_period: {
+        vacancy: {
+            title: string;
+            company?: {
+                id: number;
+                name: string;
+            };
+        };
+    };
+    stages?: {
+        psychological_test?: {
+            score?: number;
+        };
+        interview?: {
+            scheduled_at?: string;
+            completed_at?: string;
+            score?: number;
+            interviewer?: {
+                name: string;
+                email: string;
+            };
+        };
+    };
+    history?: Array<{
+        processed_at: string;
+        completed_at?: string;
+        score?: number;
+        notes?: string;
+        reviewed_by?: string;
+    }>;
+    created_at: string;
+}
+

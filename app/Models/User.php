@@ -96,11 +96,6 @@ class User extends Authenticatable
         return $this->hasMany(CandidatesCertification::class);
     }
 
-    public function candidatesEnglishCertifications()
-    {
-        return $this->hasMany(CandidatesEnglishCertification::class);
-    }
-
     public function candidatesOrganizations()
     {
         return $this->hasMany(CandidatesOrganization::class);

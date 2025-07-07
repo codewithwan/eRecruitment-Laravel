@@ -23,6 +23,22 @@ class UserSeeder extends Seeder
             'role' => UserRole::HR,
         ]);
 
+        // Create Head HR user
+        User::factory()->create([
+            'name' => 'Head HR',
+            'email' => 'head.hr@gmail.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::HEAD_HR,
+        ]);
+
+        // Create Head Dev user
+        User::factory()->create([
+            'name' => 'Head Dev',
+            'email' => 'head.dev@gmail.com',
+            'password' => Hash::make('password'),
+            'role' => UserRole::HEAD_DEV,
+        ]);
+
         // Create custom Candidate user
         User::factory()->create([
             'name' => 'Candidate User',

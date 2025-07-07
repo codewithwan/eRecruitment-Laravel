@@ -6,17 +6,23 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Application;
 use App\Models\Status;
+use App\Models\ApplicationHistory;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class AdministrationController extends Controller
 {
     public function show($id)
     {
         // Fetch application and related data from database
-        $application = \App\Models\Application::with([
+        $application = Application::with([
             'user',
             'vacancyPeriod.vacancy',
             'vacancyPeriod.period',
             'history.status',
+            'administration',
+            'assessment',
+            'interview'
         ])->findOrFail($id);
 
         $user = [
@@ -39,6 +45,27 @@ class AdministrationController extends Controller
             'experience' => $application->user->experience ?? null,
             'skills' => $application->user->skills ? $application->user->skills->pluck('name')->toArray() : [],
             'status' => $application->status->code ?? 'pending',
+            'stages' => [
+                'administrative_selection' => [
+                    'status' => $application->administration?->status ?? 'pending',
+                    'notes' => $application->administration?->notes,
+                    'score' => $application->administration?->score,
+                    'processed_at' => $application->administration?->processed_at?->format('Y-m-d H:i:s'),
+                ],
+                'psychological_test' => [
+                    'status' => $application->assessment?->status ?? null,
+                    'scheduled_at' => $application->assessment?->scheduled_at?->format('Y-m-d H:i:s'),
+                    'completed_at' => $application->assessment?->completed_at?->format('Y-m-d H:i:s'),
+                    'score' => $application->assessment?->score,
+                    'notes' => $application->assessment?->notes,
+                ],
+                'interview' => [
+                    'status' => $application->interview?->status ?? null,
+                    'scheduled_at' => $application->interview?->scheduled_at?->format('Y-m-d H:i:s'),
+                    'completed_at' => $application->interview?->completed_at?->format('Y-m-d H:i:s'),
+                    'notes' => $application->interview?->notes,
+                ],
+            ],
         ];
 
         $periodName = $application->vacancyPeriod->period->name ?? '-';
@@ -51,52 +78,90 @@ class AdministrationController extends Controller
 
     public function approve(Request $request, $id)
     {
-        $application = Application::findOrFail($id);
+        try {
+            DB::beginTransaction();
 
-        // Update or create administration history
-        $application->history()->updateOrCreate(
-            ['status_id' => Status::where('code', 'administration')->firstOrFail()->id],
-            [
+            $application = Application::findOrFail($id);
+            $adminStatus = Status::where('code', 'administration')->firstOrFail();
+            $passedStatus = Status::where('code', 'passed')->firstOrFail();
+            $assessmentStatus = Status::where('code', 'assessment')->firstOrFail();
+
+            // Update or create administration history with passed status
+            $history = $application->history()->updateOrCreate(
+                ['status_id' => $adminStatus->id],
+                [
+                    'processed_at' => now(),
+                    'notes' => $request->input('notes', 'Passed administration stage.'),
+                    'score' => $request->input('score'),
+                    'status_id' => $passedStatus->id,
+                    'reviewed_by' => Auth::id(),
+                    'reviewed_at' => now(),
+                ]
+            );
+
+            // Create assessment history entry with pending status
+            $application->history()->create([
+                'status_id' => $assessmentStatus->id,
                 'processed_at' => now(),
-                'notes' => $request->input('notes', 'Passed administration stage.'),
-                'score' => $request->input('score'),
-                'status_id' => Status::where('code', 'passed')->first()->id, // Status passed
-            ]
-        );
+                'notes' => 'Pending assessment stage.',
+                'is_active' => true,
+            ]);
 
-        // Update application status to assessment
-        $application->status_id = Status::where('code', 'assessment')->first()->id;
-        $application->save();
+            // Update application status to assessment
+            $application->status_id = $assessmentStatus->id;
+            $application->save();
 
-        $companyId = $application->vacancyPeriod->vacancy->company_id;
-        $periodId = $application->vacancyPeriod->period_id;
+            DB::commit();
 
-        return redirect()->route('company.administration', ['company' => $companyId, 'period' => $periodId])
-            ->with('success', 'Candidate approved and moved to assessment phase.');
+            $companyId = $application->vacancyPeriod->vacancy->company_id;
+            $periodId = $application->vacancyPeriod->period_id;
+
+            return redirect()->route('company.administration', ['company' => $companyId, 'period' => $periodId])
+                ->with('success', 'Candidate approved and moved to assessment phase.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to approve candidate. Please try again.');
+        }
     }
 
     public function reject(Request $request, $id)
     {
-        $application = Application::findOrFail($id);
+        try {
+            DB::beginTransaction();
 
-        // Update or create administration history
-        $application->history()->updateOrCreate(
-            ['status_id' => Status::where('code', 'administration')->firstOrFail()->id],
-            [
-                'processed_at' => now(),
-                'notes' => $request->input('notes', 'Rejected at administration stage.'),
-                'status_id' => Status::where('code', 'failed')->first()->id, // Status failed
-            ]
-        );
-        
-        // Update application status to rejected
-        $application->status_id = Status::where('code', 'rejected')->first()->id;
-        $application->save();
+            $application = Application::findOrFail($id);
+            $adminStatus = Status::where('code', 'administration')->firstOrFail();
+            $failedStatus = Status::where('code', 'failed')->firstOrFail();
+            $rejectedStatus = Status::where('code', 'rejected')->firstOrFail();
 
-        $companyId = $application->vacancyPeriod->vacancy->company_id;
-        $periodId = $application->vacancyPeriod->period_id;
+            // Update or create administration history with failed status
+            $history = $application->history()->updateOrCreate(
+                ['status_id' => $adminStatus->id],
+                [
+                    'processed_at' => now(),
+                    'notes' => $request->input('notes', 'Rejected at administration stage.'),
+                    'status_id' => $failedStatus->id,
+                    'reviewed_by' => Auth::id(),
+                    'reviewed_at' => now(),
+                ]
+            );
 
-        return redirect()->route('company.administration', ['company' => $companyId, 'period' => $periodId])
-            ->with('success', 'Candidate application has been rejected.');
+            // Update application status to rejected
+            $application->status_id = $rejectedStatus->id;
+            $application->save();
+
+            DB::commit();
+
+            $companyId = $application->vacancyPeriod->vacancy->company_id;
+            $periodId = $application->vacancyPeriod->period_id;
+
+            return redirect()->route('company.administration', ['company' => $companyId, 'period' => $periodId])
+                ->with('success', 'Candidate application has been rejected.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to reject candidate. Please try again.');
+        }
     }
 }

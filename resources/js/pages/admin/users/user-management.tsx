@@ -19,8 +19,7 @@ import { UserTable } from '@/components/user-table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { User } from '@/types/user';
-import { Head } from '@inertiajs/react';
-import axios from 'axios';
+import { Head, router } from '@inertiajs/react';
 import { Filter, Search } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -88,19 +87,24 @@ export default function UserManagement(props: UserManagementProps) {
             setIsLoading(true);
             try {
                 updateUrlParams(page, perPage);
-
-                const response = await axios.get('/dashboard/users/list', {
-                    params: {
-                        page,
-                        per_page: perPage,
+                router.get('/dashboard/users/list', {
+                    page: page.toString(),
+                    per_page: perPage.toString()
+                }, {
+                    preserveState: true,
+                    preserveScroll: true,
+                    onSuccess: (page) => {
+                        const response = page.props as UserManagementProps;
+                        if (response.users && response.pagination) {
+                            setUsers(response.users);
+                            setFilteredUsers(response.users);
+                            setPagination(response.pagination);
+                        }
                     },
+                    onFinish: () => setIsLoading(false)
                 });
-                setUsers(response.data.users);
-                setFilteredUsers(response.data.users);
-                setPagination(response.data.pagination);
             } catch (error) {
                 console.error('Error fetching users:', error);
-            } finally {
                 setIsLoading(false);
             }
         },
@@ -200,8 +204,7 @@ export default function UserManagement(props: UserManagementProps) {
 
         setIsLoading(true);
         try {
-            await axios.put(`/dashboard/users/${editUser.id}`, editUser);
-            fetchUsers(pagination.current_page, pagination.per_page);
+            await router.put(`/dashboard/users/${editUser.id}`, editUser);
             setIsEditDialogOpen(false);
         } catch (error) {
             console.error('Error updating user:', error);
@@ -219,8 +222,7 @@ export default function UserManagement(props: UserManagementProps) {
         if (userIdToDelete === null) return;
 
         try {
-            await axios.delete(`/dashboard/users/${userIdToDelete}`);
-            fetchUsers(pagination.current_page, pagination.per_page);
+            await router.delete(`/dashboard/users/${userIdToDelete}`);
         } catch (error) {
             console.error('Error deleting user:', error);
         } finally {
@@ -241,9 +243,7 @@ export default function UserManagement(props: UserManagementProps) {
     const handleCreateUser = async () => {
         setIsLoading(true);
         try {
-            await axios.post('/dashboard/users', newUser);
-            // After creating a user, refresh the current page
-            fetchUsers(pagination.current_page, pagination.per_page);
+            await router.post('/dashboard/users', newUser);
             setIsCreateDialogOpen(false);
             setNewUser({ name: '', email: '', password: '', role: '' });
         } catch (error) {

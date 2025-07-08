@@ -43,11 +43,7 @@ export default function CompaniesIndex({ companies }: Props) {
     const [isFilterActive, setIsFilterActive] = useState(false);
 
     const handleViewPeriods = (company: Company) => {
-        // Debug untuk melihat apakah route sudah benar
-        console.log('Navigating to periods for company:', company);
-        console.log('Route will be:', route('companies.periods', company.id));
         
-        // Gunakan router.get untuk GET request
         router.get(route('companies.periods', company.id));
     };
 

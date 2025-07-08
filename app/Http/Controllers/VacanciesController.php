@@ -229,4 +229,26 @@ class VacanciesController extends Controller
             return $vacancy;
         });
     }
+
+    /**
+     * Get list of vacancies for display
+     */
+    public function getVacanciesList()
+    {
+        $vacancies = Vacancies::with(['company', 'departement'])
+            ->select('id', 'title', 'department_id', 'company_id')
+            ->get()
+            ->map(function ($vacancy) {
+                return [
+                    'id' => $vacancy->id,
+                    'title' => $vacancy->title,
+                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                    'company' => $vacancy->company ? $vacancy->company->name : null,
+                ];
+            });
+
+        return Inertia::render('admin/periods/index', [
+            'vacancies' => $vacancies
+        ]);
+    }
 }

@@ -2,101 +2,88 @@
 
 namespace Database\Seeders;
 
-use App\Enums\ApplicationStatus;
 use App\Models\Application;
-use App\Models\ApplicationReport;
 use App\Models\Status;
 use App\Models\User;
 use App\Models\VacancyPeriods;
-use App\Models\QuestionPack;
-use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class ApplicationSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $users = User::where('role', 'candidate')->get();
-        $vacancyPeriods = VacancyPeriods::all();
+        // Get all vacancy periods
+        $vacancyPeriods = VacancyPeriods::with('vacancy')->get();
+        
+        // Get all users with role 'candidate'
+        $candidates = User::where('role', 'candidate')->get();
+        
+        if ($vacancyPeriods->isEmpty() || $candidates->isEmpty()) {
+            $this->command->info('No vacancy periods or candidates found. Skipping application seeding.');
+            return;
+        }
+
+        // Get all status records
         $statuses = Status::all();
+        $administrationStatus = $statuses->where('code', 'admin_selection')->first();
+        $assessmentStatus = $statuses->where('code', 'psychotest')->first();
+        $interviewStatus = $statuses->where('code', 'interview')->first();
 
-        // Check if we have required data
-        if ($users->isEmpty()) {
-            $this->command->error('No candidate users found. Please run UserSeeder first.');
+        if (!$administrationStatus || !$assessmentStatus || !$interviewStatus) {
+            $this->command->info('Required statuses not found. Skipping application seeding.');
             return;
         }
 
-        if ($vacancyPeriods->isEmpty()) {
-            $this->command->error('No vacancy periods found. Please run VacanciesSeeder and PeriodSeeder first.');
-            return;
-        }
+        $this->command->info('Creating applications for each vacancy period...');
 
-        if ($statuses->isEmpty()) {
-            $this->command->error('No statuses found. Please create some status records first.');
-            return;
-        }
-        
-        // Get status IDs for common statuses
-        $statusCodes = ['admin_selection', 'psychotest', 'interview', 'accepted', 'rejected'];
-        $statusMap = [];
-        
-        foreach ($statusCodes as $code) {
-            $status = $statuses->where('code', $code)->first();
-            if ($status) {
-                $statusMap[$code] = $status->id;
-            }
-        }
+        // Create applications for each vacancy period
+        foreach ($vacancyPeriods as $vacancyPeriod) {
+            // Get the period's start date
+            $periodStartDate = Carbon::parse($vacancyPeriod->period->start_time);
+            
+            // Randomly select 5-10 candidates for each vacancy period
+            $selectedCandidates = $candidates->random(rand(5, 10));
 
-        $totalApplications = 0;
-
-        // Create realistic applications
-        foreach ($users as $user) {
-            // Each user applies to 1-3 random vacancy periods
-            $applicationCount = min(rand(1, 3), $vacancyPeriods->count());
-            $selectedVacancyPeriods = $vacancyPeriods->random($applicationCount);
-
-            foreach ($selectedVacancyPeriods as $vacancyPeriod) {
-                $totalApplications++;
+            foreach ($selectedCandidates as $candidate) {
+                // Calculate a random application date within the period
+                $applicationDate = $periodStartDate->copy()->addDays(rand(1, 30));
                 
+                // Determine random status for this application with weighted probabilities
+                $statusId = $this->getRandomWeightedStatus([
+                    $administrationStatus->id => 50,  // 50% in administration
+                    $assessmentStatus->id => 30,      // 30% in assessment
+                    $interviewStatus->id => 20        // 20% in interview
+                ]);
+
                 // Create the application
-                $appliedAt = fake()->dateTimeBetween('-60 days', '-30 days');
-                
-                // Randomly assign status based on realistic distribution
-                $randomStatus = $this->getRandomStatus($statusMap);
-                
-                $application = Application::create([
-                    'user_id' => $user->id,
+                Application::create([
+                    'user_id' => $candidate->id,
                     'vacancy_period_id' => $vacancyPeriod->id,
-                    'status_id' => $randomStatus,
-                    'resume_path' => 'resumes/user_' . $user->id . '_resume.pdf',
-                    'cover_letter_path' => 'cover_letters/user_' . $user->id . '_cover.pdf',
-                    'created_at' => $appliedAt,
-                    'updated_at' => $appliedAt,
+                    'status_id' => $statusId,
+                    'resume_path' => 'resumes/dummy-resume-' . $candidate->id . '.pdf',
+                    'cover_letter_path' => 'cover-letters/dummy-cover-letter-' . $candidate->id . '.pdf',
+                    'created_at' => $applicationDate,
+                    'updated_at' => $applicationDate,
                 ]);
             }
         }
 
-        $this->command->info("Created {$totalApplications} applications");
+        $this->command->info('Application seeding completed successfully.');
     }
 
-    private function getRandomStatus($statusMap): int
+    private function getRandomWeightedStatus(array $weights): int
     {
-        // Distribution: 30% admin_selection, 25% psychotest, 20% interview, 15% accepted, 10% rejected
         $rand = rand(1, 100);
-        
-        if ($rand <= 30 && isset($statusMap['admin_selection'])) {
-            return $statusMap['admin_selection'];
-        } elseif ($rand <= 55 && isset($statusMap['psychotest'])) {
-            return $statusMap['psychotest'];
-        } elseif ($rand <= 75 && isset($statusMap['interview'])) {
-            return $statusMap['interview'];
-        } elseif ($rand <= 90 && isset($statusMap['accepted'])) {
-            return $statusMap['accepted'];
-        } else {
-            return $statusMap['rejected'] ?? $statusMap['admin_selection'];
+        $total = 0;
+
+        foreach ($weights as $statusId => $weight) {
+            $total += $weight;
+            if ($rand <= $total) {
+                return $statusId;
+            }
         }
+
+        return array_key_first($weights);
     }
 } 

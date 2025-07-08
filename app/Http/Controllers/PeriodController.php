@@ -8,8 +8,8 @@ use App\Models\Vacancies;
 use App\Models\Application;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class PeriodController extends Controller
 {
@@ -196,6 +196,7 @@ class PeriodController extends Controller
             'end_time' => 'required|date|after:start_time',
         ]);
 
+        try {
         // Create new period
         $period = Period::create([
             'name' => $validated['name'],
@@ -207,45 +208,12 @@ class PeriodController extends Controller
         // Attach vacancies to this period
         $period->vacancies()->attach($validated['vacancies_ids']);
         
-        // Get the period with its associated vacancies for the response
-        $period->load('vacancies.company', 'vacancies.questionPack', 'vacancies.departement');
-        
-        // Get current date for status checking
-        $now = Carbon::now();
-        
-        $periodData = [
-            'id' => $period->id,
-            'name' => $period->name,
-            'description' => $period->description,
-            'start_date' => Carbon::parse($period->start_time)->format('d/m/Y'),
-            'end_date' => Carbon::parse($period->end_time)->format('d/m/Y'),
-            'status' => $now->lt(Carbon::parse($period->start_time)) ? 'Upcoming' : 
-                      ($now->gt(Carbon::parse($period->end_time)) ? 'Closed' : 'Open'),
-            'vacancies' => $period->vacancies->map(function ($vacancy) {
-                return [
-                    'id' => $vacancy->id,
-                    'title' => $vacancy->title,
-                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
-                    'company' => $vacancy->company ? $vacancy->company->name : null,
-                ];
-            })
-        ];
-
-        // Redirect back with company filter if it was provided
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'message' => 'Period created successfully',
-                'period' => $periodData
-            ]);
+            return redirect()->back()->with('success', 'Period created successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Failed to create period')
+                ->withErrors(['error' => 'An error occurred while creating the period']);
         }
-
-        if ($request->has('companyId')) {
-            return redirect()->route('admin.periods.index', ['companyId' => $request->companyId])
-                ->with('success', 'Period created successfully');
-        }
-
-        return redirect()->route('admin.periods.index')
-            ->with('success', 'Period created successfully');
     }
 
     public function show(Period $period)
@@ -304,30 +272,119 @@ class PeriodController extends Controller
 
     public function edit(Period $period)
     {
-        $period->load('vacancies');
+        $period->load(['vacancies.company', 'vacancies.departement']);
         
-        $vacancies = Vacancies::with(['company', 'departement'])
-            ->select('id', 'title', 'department_id', 'company_id')
+        $periodData = [
+            'id' => $period->id,
+            'name' => $period->name,
+            'description' => $period->description,
+            'start_time' => $period->start_time,
+            'end_time' => $period->end_time,
+            'vacancies_ids' => $period->vacancies->pluck('id')->map(fn($id) => (string)$id)->toArray()
+        ];
+
+        // Get the company ID from the first vacancy
+        $companyId = $period->vacancies->first()->company->id ?? null;
+        $company = $companyId ? Company::find($companyId) : null;
+
+        // Get real periods associated with this company through vacancies
+        $periodsQuery = Period::with([
+            'vacancies.company', 
+            'vacancies.questionPack',
+            'vacancies.departement'
+        ])
+        ->whereHas('vacancies', function ($query) use ($companyId) {
+            $query->where('company_id', $companyId);
+        });
+        
+        $periods = $periodsQuery->get();
+        
+        // Get current date for status checking
+        $now = Carbon::now();
+        
+        // Format the data for the frontend
+        $periodsData = $periods->map(function ($period) use ($company, $now) {
+            // Calculate status based on current date
+            $status = 'Not Set';
+            if ($period->start_time && $period->end_time) {
+                $startTime = Carbon::parse($period->start_time);
+                $endTime = Carbon::parse($period->end_time);
+                
+                if ($now->lt($startTime)) {
+                    $status = 'Upcoming';
+                } elseif ($now->gt($endTime)) {
+                    $status = 'Closed';
+                } else {
+                    $status = 'Open';
+                }
+            }
+            
+            // Get vacancies for this company in this period
+            $companyVacancies = $period->vacancies->where('company_id', $company->id);
+            
+            // Count applications for this company in this period
+            $applicantsCount = Application::whereHas('vacancyPeriod', function($query) use ($period) {
+                $query->where('period_id', $period->id);
+            })
+            ->whereHas('vacancyPeriod.vacancy', function($query) use ($company) {
+                $query->where('company_id', $company->id);
+            })->count();
+            
+            return [
+                'id' => $period->id,
+                'name' => $period->name,
+                'description' => $period->description,
+                'start_date' => $period->start_time ? Carbon::parse($period->start_time)->format('d/m/Y') : null,
+                'end_date' => $period->end_time ? Carbon::parse($period->end_time)->format('d/m/Y') : null,
+                'status' => $status,
+                'applicants_count' => $applicantsCount,
+                'vacancies_list' => $companyVacancies->map(function ($vacancy) {
+                    return [
+                        'id' => $vacancy->id,
+                        'title' => $vacancy->title,
+                        'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                    ];
+                })->toArray(),
+                'title' => $companyVacancies->first() ? $companyVacancies->first()->title : null,
+                'department' => $companyVacancies->first() && $companyVacancies->first()->departement ? $companyVacancies->first()->departement->name : null,
+                'question_pack' => $companyVacancies->first() && $companyVacancies->first()->questionPack ? $companyVacancies->first()->questionPack->pack_name : null,
+                'companies' => [
+                    [
+                        'id' => $company->id,
+                        'name' => $company->name
+                    ]
+                ]
+            ];
+        });
+
+        // Get available vacancies for this company
+        $vacancies = Vacancies::where('company_id', $companyId)
+            ->with('departement')
+            ->select('id', 'title', 'department_id')
             ->get()
             ->map(function ($vacancy) {
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
                     'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
-                    'company' => $vacancy->company ? $vacancy->company->name : null
                 ];
             });
-            
-        return Inertia::render('admin/periods/edit', [
-            'period' => [
-                'id' => $period->id,
-                'name' => $period->name,
-                'description' => $period->description,
-                'vacancies_ids' => $period->vacancies->pluck('id'),
-                'start_time' => $period->start_time,
-                'end_time' => $period->end_time,
+
+        return Inertia::render('admin/periods/index', [
+            'editingPeriod' => $periodData,
+            'periods' => $periodsData->toArray(),
+            'pagination' => [
+                'total' => $periodsData->count(),
+                'per_page' => 10,
+                'current_page' => 1,
+                'last_page' => 1,
             ],
-            'vacancies' => $vacancies
+            'company' => $company ? [
+                'id' => (int) $company->id,
+                'name' => $company->name,
+            ] : null,
+            'vacancies' => $vacancies,
+            'filtering' => true,
         ]);
     }
 
@@ -338,77 +395,48 @@ class PeriodController extends Controller
             'description' => 'nullable|string',
             'vacancies_ids' => 'required|array',
             'vacancies_ids.*' => 'exists:vacancies,id',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
+            'start_time' => 'required|date_format:Y-m-d',
+            'end_time' => 'required|date_format:Y-m-d|after:start_time',
         ]);
 
-        // Update period details
-        $period->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-        ]);
-        
-        // Sync vacancies to this period
-        $period->vacancies()->sync($validated['vacancies_ids']);
+        try {
+            // Parse dates to ensure correct format
+            $startTime = Carbon::parse($validated['start_time'])->startOfDay();
+            $endTime = Carbon::parse($validated['end_time'])->endOfDay();
 
-        // Get the period with its associated vacancies for the response
-        $period->load('vacancies.company', 'vacancies.questionPack', 'vacancies.departement');
-        
-        // Get current date for status checking
-        $now = Carbon::now();
-        
-        $periodData = [
-            'id' => $period->id,
-            'name' => $period->name,
-            'description' => $period->description,
-            'start_date' => Carbon::parse($period->start_time)->format('d/m/Y'),
-            'end_date' => Carbon::parse($period->end_time)->format('d/m/Y'),
-            'status' => $now->lt(Carbon::parse($period->start_time)) ? 'Upcoming' : 
-                      ($now->gt(Carbon::parse($period->end_time)) ? 'Closed' : 'Open'),
-            'vacancies' => $period->vacancies->map(function ($vacancy) {
-                return [
-                    'id' => $vacancy->id,
-                    'title' => $vacancy->title,
-                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
-                ];
-            })
-        ];
-
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'message' => 'Period updated successfully',
-                'period' => $periodData
+            $period->update([
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'start_time' => $startTime,
+                'end_time' => $endTime,
             ]);
-        }
+            
+            // Sync vacancies
+            $period->vacancies()->sync($validated['vacancies_ids']);
 
-        return redirect()->route('admin.periods.index')
-            ->with('success', 'Period updated successfully');
+            return response()->json([
+                'success' => true,
+                'message' => 'Period updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to update period: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update period'
+            ], 500);
+        }
     }
 
-    public function destroy(Request $request, Period $period)
+    public function destroy(Period $period)
     {
-        // Delete all applicants related to this period first
-        $vacancyPeriodIds = \App\Models\VacancyPeriods::where('period_id', $period->id)->pluck('id');
-                        Application::whereIn('vacancy_period_id', $vacancyPeriodIds)->delete();
-        
-        // Detach all vacancies from this period
-        $period->vacancies()->detach();
-        
-        // Delete the period
+        try {
         $period->delete();
-
-        // Handle JSON/AJAX requests
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'message' => 'Period deleted successfully',
-                'success' => true
-            ]);
+            return redirect()->back()->with('success', 'Period deleted successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Failed to delete period')
+                ->withErrors(['error' => 'An error occurred while deleting the period']);
         }
-
-        return redirect()->route('admin.periods.index')
-            ->with('success', 'Period deleted successfully');
     }
     
     /**

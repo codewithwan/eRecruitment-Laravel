@@ -52,7 +52,7 @@ export default function EditQuestionPacks({ questionPack, allQuestions = [] }: P
   const [packName, setPackName] = useState(questionPack.pack_name);
   const [description, setDescription] = useState(questionPack.description);
   const [testType, setTestType] = useState(questionPack.test_type);
-  
+
   // Parse duration from minutes to hours, minutes, seconds
   const [duration, setDuration] = useState(() => {
     const totalMinutes = questionPack.duration;
@@ -60,11 +60,11 @@ export default function EditQuestionPacks({ questionPack, allQuestions = [] }: P
     const minutes = (totalMinutes % 60).toString().padStart(2, '0');
     return { hours, minutes, seconds: '00' };
   });
-  
+
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>(
     questionPack.questions.map(q => q.id)
   );
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -73,14 +73,14 @@ export default function EditQuestionPacks({ questionPack, allQuestions = [] }: P
   useEffect(() => {
     const originalQuestionIds = questionPack.questions.map(q => q.id).sort();
     const currentQuestionIds = [...selectedQuestionIds].sort();
-    
-    const durationChanged = 
+
+    const durationChanged =
       parseInt(duration.hours) * 60 + parseInt(duration.minutes) !== questionPack.duration;
-    
-    const questionsChanged = 
+
+    const questionsChanged =
       originalQuestionIds.length !== currentQuestionIds.length ||
       originalQuestionIds.some((id, index) => id !== currentQuestionIds[index]);
-    
+
     setHasChanges(
       packName !== questionPack.pack_name ||
       description !== questionPack.description ||
@@ -97,9 +97,9 @@ export default function EditQuestionPacks({ questionPack, allQuestions = [] }: P
   const confirmSave = () => {
     setIsSubmitting(true);
     setShowConfirmDialog(false);
-    
-    const durationInMinutes = 
-      parseInt(duration.hours || '0') * 60 + 
+
+    const durationInMinutes =
+      parseInt(duration.hours || '0') * 60 +
       parseInt(duration.minutes || '0');
 
     router.put(`/dashboard/questionpacks/${questionPack.id}`, {
@@ -114,7 +114,7 @@ export default function EditQuestionPacks({ questionPack, allQuestions = [] }: P
   };
 
   const toggleQuestionSelection = (questionId: number) => {
-    setSelectedQuestionIds(prev => 
+    setSelectedQuestionIds(prev =>
       prev.includes(questionId)
         ? prev.filter(id => id !== questionId)
         : [...prev, questionId]

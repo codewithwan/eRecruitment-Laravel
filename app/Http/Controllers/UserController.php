@@ -9,26 +9,176 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = User::where('role', UserRole::CANDIDATE)->get();
-        $traffic = $users->groupBy(function ($user) {
-            return $user->created_at->format('Y-m-d');
-        })->map(function ($users) {
-            return $users->count();
-        });
+        // Get total candidates (users who have applied)
+        $totalCandidates = User::whereHas('applications')->count();
 
-        $job_applications = Application::all();
-        $job_applied = $job_applications->groupBy(function ($job_applications) {
-            return $job_applications->created_at->format('Y-m-d');
-        })->map(function ($job_applications) {
-            return $job_applications->count();
-        });
+        // Get applications per company
+        $companyStats = Application::join('vacancy_periods', 'applications.vacancy_period_id', '=', 'vacancy_periods.id')
+            ->join('vacancies', 'vacancy_periods.vacancy_id', '=', 'vacancies.id')
+            ->join('companies', 'vacancies.company_id', '=', 'companies.id')
+            ->select('companies.name', DB::raw('count(*) as applications'))
+            ->groupBy('companies.id', 'companies.name')
+            ->get()
+            ->map(fn($company) => [
+                'name' => $company->name,
+                'applications' => $company->applications
+            ])
+            ->toArray();
 
-        return Inertia::render('admin/dashboard', ['users' => $users, 'traffic' => $traffic, 'job_applied' => $job_applied]);
+        // Get total applications
+        $totalApplications = Application::count();
+
+        // Get applications by stage
+        $stageStats = Application::join('application_history', 'applications.id', '=', 'application_history.application_id')
+            ->join('statuses', 'application_history.status_id', '=', 'statuses.id')
+            ->where('application_history.is_active', true)
+            ->select('statuses.stage', DB::raw('count(*) as count'))
+            ->groupBy('statuses.stage')
+            ->get()
+            ->mapWithKeys(fn($stat) => [$stat->stage => $stat->count]);
+
+        // Get weekly application data
+        $weeklyData = Application::join('application_history', 'applications.id', '=', 'application_history.application_id')
+            ->join('statuses', 'application_history.status_id', '=', 'statuses.id')
+            ->where('application_history.is_active', true)
+            ->where('applications.created_at', '>=', now()->subDays(7))
+            ->select(
+                DB::raw('DATE(applications.created_at) as date'),
+                'statuses.stage',
+                DB::raw('count(*) as count')
+            )
+            ->groupBy('date', 'statuses.stage')
+            ->get()
+            ->groupBy('date')
+            ->map(function($dayStats) {
+                return [
+                    'day' => now()->parse($dayStats->first()->date)->format('D'),
+                    'admin' => $dayStats->firstWhere('stage', 'administrative_selection')?->count ?? 0,
+                    'assessment' => $dayStats->firstWhere('stage', 'psychological_test')?->count ?? 0,
+                    'interview' => $dayStats->firstWhere('stage', 'interview')?->count ?? 0,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        // Get top positions by applications
+        $topPositions = Application::join('vacancy_periods', 'applications.vacancy_period_id', '=', 'vacancy_periods.id')
+            ->join('vacancies', 'vacancy_periods.vacancy_id', '=', 'vacancies.id')
+            ->join('companies', 'vacancies.company_id', '=', 'companies.id')
+            ->select(
+                'vacancies.title',
+                'companies.name as subsidiary',
+                DB::raw('count(*) as applications')
+            )
+            ->groupBy('vacancies.id', 'vacancies.title', 'companies.name')
+            ->orderByDesc('applications')
+            ->limit(5)
+            ->get()
+            ->map(fn($position) => [
+                'title' => $position->title,
+                'applications' => $position->applications,
+                'subsidiary' => $position->subsidiary
+            ])
+            ->toArray();
+
+        // Get recent activities
+        $recentActivities = Application::join('application_history', 'applications.id', '=', 'application_history.application_id')
+            ->join('statuses', 'application_history.status_id', '=', 'statuses.id')
+            ->join('users', 'applications.user_id', '=', 'users.id')
+            ->join('vacancy_periods', 'applications.vacancy_period_id', '=', 'vacancy_periods.id')
+            ->join('vacancies', 'vacancy_periods.vacancy_id', '=', 'vacancies.id')
+            ->where('application_history.is_active', true)
+            ->select(
+                'application_history.id',
+                'statuses.stage',
+                'statuses.code',
+                'users.name as user_name',
+                'vacancies.title',
+                'application_history.created_at'
+            )
+            ->latest('application_history.created_at')
+            ->limit(5)
+            ->get()
+            ->map(function($activity) {
+                $type = match($activity->stage) {
+                    'administrative_selection' => 'admin',
+                    'psychological_test' => 'assessment',
+                    'interview' => 'interview',
+                    default => 'other'
+                };
+
+                $status = match($activity->code) {
+                    'pending' => 'new',
+                    'scheduled' => 'scheduled',
+                    'completed', 'passed' => 'completed',
+                    'approved' => 'approved',
+                    default => 'other'
+                };
+
+                $message = match($type) {
+                    'admin' => "New application submitted for {$activity->title}",
+                    'assessment' => "Assessment {$activity->code} by {$activity->user_name}",
+                    'interview' => "Interview {$activity->code} for {$activity->user_name}",
+                    default => "Status updated for {$activity->user_name}"
+                };
+
+                return [
+                    'id' => $activity->id,
+                    'type' => $type,
+                    'message' => $message,
+                    'time' => $activity->created_at->diffForHumans(),
+                    'status' => $status
+                ];
+            })
+            ->toArray();
+
+        // Get pending actions count
+        $pendingActions = Application::join('application_history', 'applications.id', '=', 'application_history.application_id')
+            ->join('statuses', 'application_history.status_id', '=', 'statuses.id')
+            ->where('application_history.is_active', true)
+            ->where('statuses.code', 'pending')
+            ->count();
+
+        // Prepare recruitment stage data for pie chart
+        $recruitmentStageData = [
+            [
+                'name' => 'Administration',
+                'value' => $stageStats['administrative_selection'] ?? 0,
+                'color' => '#3B82F6'
+            ],
+            [
+                'name' => 'Assessment',
+                'value' => $stageStats['psychological_test'] ?? 0,
+                'color' => '#1D4ED8'
+            ],
+            [
+                'name' => 'Interview',
+                'value' => $stageStats['interview'] ?? 0,
+                'color' => '#1E3A8A'
+            ]
+        ];
+
+        return Inertia::render('admin/dashboard', [
+            'dashboardStats' => [
+                'totalCandidates' => $totalCandidates,
+                'companyStats' => $companyStats,
+                'totalApplications' => $totalApplications,
+                'adminReview' => $stageStats['administrative_selection'] ?? 0,
+                'assessmentStage' => $stageStats['psychological_test'] ?? 0,
+                'interviewStage' => $stageStats['interview'] ?? 0,
+                'pendingActions' => $pendingActions
+            ],
+            'recruitmentStageData' => $recruitmentStageData,
+            'weeklyData' => $weeklyData,
+            'recentActivities' => $recentActivities,
+            'topPositions' => $topPositions
+        ]);
     }
 
     public function store(Request $request)

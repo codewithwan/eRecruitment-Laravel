@@ -1238,7 +1238,7 @@ class ApplicationStageController extends Controller
                     ->select('applications.*'); // Ensure we only select from applications table
                 break;
             case 'administration_score':
-                $query->leftJoin('application_histories as admin_history', function($join) {
+                $query->leftJoin('application_history as admin_history', function($join) {
                     $join->on('applications.id', '=', 'admin_history.application_id')
                         ->where('admin_history.is_active', '=', true)
                         ->whereExists(function($query) {
@@ -1251,7 +1251,7 @@ class ApplicationStageController extends Controller
                 ->select('applications.*');
                 break;
             case 'assessment_score':
-                $query->leftJoin('application_histories as assessment_history', function($join) {
+                $query->leftJoin('application_history as assessment_history', function($join) {
                     $join->on('applications.id', '=', 'assessment_history.application_id')
                         ->where('assessment_history.is_active', '=', true)
                         ->whereExists(function($query) {
@@ -1264,7 +1264,7 @@ class ApplicationStageController extends Controller
                 ->select('applications.*');
                 break;
             case 'interview_score':
-                $query->leftJoin('application_histories as interview_history', function($join) {
+                $query->leftJoin('application_history as interview_history', function($join) {
                     $join->on('applications.id', '=', 'interview_history.application_id')
                         ->where('interview_history.is_active', '=', true)
                         ->whereExists(function($query) {
@@ -1277,12 +1277,12 @@ class ApplicationStageController extends Controller
                 ->select('applications.*');
                 break;
             case 'average_score':
-                $query->leftJoin('application_histories as avg_history', function($join) {
+                $query->leftJoin('application_history as avg_history', function($join) {
                     $join->on('applications.id', '=', 'avg_history.application_id')
                         ->where('avg_history.is_active', '=', true);
                 })
                 ->groupBy('applications.id')
-                ->orderBy(\DB::raw('AVG(avg_history.score)'), $sortOrder)
+                ->orderBy(DB::raw('AVG(avg_history.score)'), $sortOrder)
                 ->select('applications.*');
                 break;
             default:

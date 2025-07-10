@@ -49,52 +49,66 @@ class ApplicationHistorySeeder extends Seeder
             $baseDate = Carbon::parse($application->created_at);
             $reviewer = $adminUsers->random();
 
-            // Create administration history for all applications
+            // Randomly decide how far this candidate has progressed
+            $progress = rand(1, 4); // 1: admin only, 2: +assessment, 3: +interview incomplete, 4: all complete
+
+            // Create administration history for all applications with score
             ApplicationHistory::create([
                 'application_id' => $application->id,
                 'status_id' => $administrationStatus->id,
                 'processed_at' => $baseDate,
-                'score' => null,
+                'score' => rand(65, 95), // All candidates have admin score
                 'notes' => $this->getRandomAdminNotes(),
                 'scheduled_at' => null,
                 'completed_at' => $baseDate->copy()->addDays(rand(1, 3)),
                 'reviewed_by' => $reviewer->id,
                 'reviewed_at' => $baseDate->copy()->addDays(rand(1, 3)),
-                'is_active' => $application->status_id === $administrationStatus->id,
+                'is_active' => true,
             ]);
 
-            // If application has progressed beyond administration
-            if (in_array($application->status_id, [$assessmentStatus->id, $interviewStatus->id])) {
+            // If progressed beyond administration (progress >= 2)
+            if ($progress >= 2) {
                 $assessmentDate = $baseDate->copy()->addDays(5);
                 ApplicationHistory::create([
                     'application_id' => $application->id,
                     'status_id' => $assessmentStatus->id,
                     'processed_at' => $assessmentDate,
-                    'score' => rand(70, 100), // Random score between 70-100
+                    'score' => rand(70, 95), // All who took assessment have score
                     'notes' => $this->getRandomAssessmentNotes(),
                     'scheduled_at' => $assessmentDate->copy()->addDays(2),
                     'completed_at' => $assessmentDate->copy()->addDays(3),
                     'reviewed_by' => $reviewer->id,
                     'reviewed_at' => $assessmentDate->copy()->addDays(3),
-                    'is_active' => $application->status_id === $assessmentStatus->id,
+                    'is_active' => true,
                 ]);
             }
 
-            // If application has reached interview stage
-            if ($application->status_id === $interviewStatus->id) {
+            // If reached interview stage (progress >= 3)
+            if ($progress >= 3) {
                 $interviewDate = $baseDate->copy()->addDays(10);
                 ApplicationHistory::create([
                     'application_id' => $application->id,
                     'status_id' => $interviewStatus->id,
                     'processed_at' => $interviewDate,
-                    'score' => null,
+                    'score' => $progress === 4 ? rand(70, 95) : null, // Score only if completed (progress = 4)
                     'notes' => $this->getRandomInterviewNotes(),
                     'scheduled_at' => $interviewDate->copy()->addDays(2),
-                    'completed_at' => null, // Interview not completed yet
+                    'completed_at' => $progress === 4 ? $interviewDate->copy()->addDays(3) : null,
                     'reviewed_by' => $reviewer->id,
-                    'reviewed_at' => null,
+                    'reviewed_at' => $progress === 4 ? $interviewDate->copy()->addDays(3) : null,
                     'is_active' => true,
                 ]);
+
+                // Update application status to interview
+                $application->update(['status_id' => $interviewStatus->id]);
+            }
+            // If only reached assessment (progress = 2)
+            else if ($progress === 2) {
+                $application->update(['status_id' => $assessmentStatus->id]);
+            }
+            // If only at administration (progress = 1)
+            else {
+                $application->update(['status_id' => $administrationStatus->id]);
             }
         }
 
@@ -128,11 +142,11 @@ class ApplicationHistorySeeder extends Seeder
     private function getRandomInterviewNotes(): string
     {
         $notes = [
-            "Scheduled for technical interview with team lead.",
-            "HR interview scheduled - initial screening complete.",
-            "Final interview with department head pending.",
-            "Follow-up interview required to assess cultural fit.",
-            "Technical interview scheduled with senior engineer.",
+            "Technical interview completed - demonstrated strong problem-solving skills.",
+            "HR interview completed - excellent communication and cultural fit.",
+            "Final interview completed - shows great leadership potential.",
+            "All interviews completed successfully - recommended for hiring.",
+            "Technical and HR interviews completed - strong candidate overall.",
         ];
         return $notes[array_rand($notes)];
     }

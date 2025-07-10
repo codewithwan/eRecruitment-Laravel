@@ -102,25 +102,33 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                 <div className="flex w-full border-b">
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/administration')}
+                        onClick={() => router.visit('/dashboard/recruitment/administration', {
+                            data: { company: filters?.company, period: filters?.period }
+                        })}
                     >
                         Administration
                     </button>
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/assessment')}
+                        onClick={() => router.visit('/dashboard/recruitment/assessment', {
+                            data: { company: filters?.company, period: filters?.period }
+                        })}
                     >
                         Assessment
                     </button>
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/interview')}
+                        onClick={() => router.visit('/dashboard/recruitment/interview', {
+                            data: { company: filters?.company, period: filters?.period }
+                        })}
                     >
                         Interview
                     </button>
                     <button
                         className="flex-1 border-b-2 border-primary px-4 py-2 text-sm font-medium text-primary"
-                        onClick={() => router.visit('/dashboard/recruitment/reports')}
+                        onClick={() => router.visit('/dashboard/recruitment/reports', {
+                            data: { company: filters?.company, period: filters?.period }
+                        })}
                     >
                         Reports
                     </button>

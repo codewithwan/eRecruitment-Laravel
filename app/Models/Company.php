@@ -34,4 +34,9 @@ class Company extends Model
     {
         return $this->hasMany(Period::class);
     }
+
+    public function aboutUs()
+    {
+        return $this->hasOne(AboutUs::class);
+    }
 }

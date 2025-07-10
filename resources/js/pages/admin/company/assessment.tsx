@@ -57,40 +57,32 @@ export default function Assessment({ candidates, filters, companyInfo, periodInf
                 <div className="flex w-full border-b">
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/administration', { 
-                            data: filters || {},
-                            preserveState: true,
-                            preserveScroll: true
+                        onClick={() => router.visit('/dashboard/recruitment/administration', {
+                            data: { company: filters?.company, period: filters?.period }
                         })}
                     >
                         Administration
                     </button>
                     <button
                         className="flex-1 border-b-2 border-primary px-4 py-2 text-sm font-medium text-primary"
-                        onClick={() => router.visit('/dashboard/recruitment/assessment', { 
-                            data: filters || {},
-                            preserveState: true,
-                            preserveScroll: true
+                        onClick={() => router.visit('/dashboard/recruitment/assessment', {
+                            data: { company: filters?.company, period: filters?.period }
                         })}
                     >
                         Assessment
                     </button>
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/interview', { 
-                            data: filters || {},
-                            preserveState: true,
-                            preserveScroll: true
+                        onClick={() => router.visit('/dashboard/recruitment/interview', {
+                            data: { company: filters?.company, period: filters?.period }
                         })}
                     >
                         Interview
                     </button>
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/reports', { 
-                            data: filters || {},
-                            preserveState: true,
-                            preserveScroll: true
+                        onClick={() => router.visit('/dashboard/recruitment/reports', {
+                            data: { company: filters?.company, period: filters?.period }
                         })}
                     >
                         Reports
@@ -173,7 +165,7 @@ export default function Assessment({ candidates, filters, companyInfo, periodInf
                                                             {completedAt ? format(new Date(completedAt), 'dd MMM yyyy HH:mm') : '-'}
                                                         </td>
                                                         <td className="p-4">{duration}</td>
-                                                        <td className="p-4">{candidate.stages?.psychological_test?.score || '-'}</td>
+                                                        <td className="p-4">{candidate.assessment?.total_score?.toFixed(2) || '-'}</td>
                                                         <td className="p-4">
                                                             <Button
                                                                 variant="outline"

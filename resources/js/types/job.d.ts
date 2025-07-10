@@ -18,7 +18,7 @@ export interface Job {
         id: number;
         name: string;
     };
-    departement?: {
+    department?: {
         id: number;
         name: string;
     };

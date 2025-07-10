@@ -7,7 +7,7 @@ use App\Models\Company;
 use App\Models\User;
 use App\Models\Vacancies;
 use App\Models\QuestionPack;
-use App\Models\Departement;
+use App\Models\Department;
 use App\Models\MasterMajor;
 use App\Models\VacancyType;
 use App\Models\EducationLevel;
@@ -24,7 +24,7 @@ class VacanciesSeeder extends Seeder
         $user = User::where('role', UserRole::HR->value)->first() ?? User::factory()->create(['role' => UserRole::HR->value]);
         $companies = Company::all();
         $questionPacks = QuestionPack::all();
-        $departments = Departement::all();
+        $departments = Department::all();
         $majors = MasterMajor::all();
         $vacancyTypes = VacancyType::all();
         $educationLevels = EducationLevel::all();
@@ -43,9 +43,9 @@ class VacanciesSeeder extends Seeder
         }
 
         if ($departments->isEmpty()) {
-            $this->command->info('No departments found. Running DepartementSeeder first.');
-            $this->call(DepartementSeeder::class);
-            $departments = Departement::all();
+            $this->command->info('No departments found. Running DepartmentSeeder first.');
+            $this->call(DepartmentSeeder::class);
+            $departments = Department::all();
         }
 
         if ($majors->isEmpty()) {

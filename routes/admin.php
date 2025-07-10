@@ -64,10 +64,13 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
 
         // Job Management
         Route::prefix('jobs')->name('jobs.')->group(function () {
-            Route::get('/', [VacanciesController::class, 'store'])->name('info');
-            Route::post('/', [VacanciesController::class, 'create'])->name('create');
-            Route::put('/{job}', [VacanciesController::class, 'update'])->name('update');
-            Route::delete('/{job}', [VacanciesController::class, 'destroy'])->name('delete');
+            Route::get('/', [VacanciesController::class, 'store'])->name('index');
+            Route::get('/create', [VacanciesController::class, 'createForm'])->name('create');
+            Route::post('/', [VacanciesController::class, 'create'])->name('store');
+            Route::get('/{id}', [VacanciesController::class, 'show'])->name('view');
+            Route::get('/{id}/edit', [VacanciesController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [VacanciesController::class, 'update'])->name('update');
+            Route::delete('/{id}', [VacanciesController::class, 'destroy'])->name('destroy');
         });
 
         // Question Management

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Departement;
+use App\Models\Department;
 use App\Models\Status;
 use App\Models\EducationLevel;
 use App\Models\MasterMajor;
@@ -17,7 +17,7 @@ class DepartmentController extends Controller
      */
     public function index()
     {
-        $departments = Departement::withCount('vacancies')->get();
+        $departments = Department::withCount('vacancies')->get();
         $recruitmentStages = Status::whereIn('code', ['admin_selection', 'psychotest', 'interview'])->get();
         $applicationStatuses = Status::whereIn('code', ['accepted', 'rejected'])->get();
         $educationLevels = EducationLevel::withCount('vacancies')->orderBy('name')->get();
@@ -39,10 +39,10 @@ class DepartmentController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:departements,name',
+                'name' => 'required|string|max:255|unique:departments,name',
             ]);
 
-            $department = Departement::create($validated);
+            $department = Department::create($validated);
 
             return response()->json([
                 'message' => 'Department created successfully',
@@ -68,10 +68,10 @@ class DepartmentController extends Controller
     public function updateDepartment(Request $request, $id)
     {
         try {
-            $department = Departement::findOrFail($id);
+            $department = Department::findOrFail($id);
             
             $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:departements,name,' . $id,
+                'name' => 'required|string|max:255|unique:departments,name,' . $id,
             ]);
 
             $department->update($validated);
@@ -100,7 +100,7 @@ class DepartmentController extends Controller
     public function destroyDepartment($id)
     {
         try {
-            $department = Departement::findOrFail($id);
+            $department = Department::findOrFail($id);
             
             // Check if department has any vacancies
             if ($department->vacancies()->count() > 0) {

@@ -103,7 +103,7 @@ class User extends Authenticatable
 
     public function candidatesAchievements()
     {
-        return $this->hasMany(CandidatesAchivement::class);
+        return $this->hasMany(CandidatesAchievement::class);
     }
 
     public function candidatesSocialMedia()

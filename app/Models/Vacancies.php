@@ -14,22 +14,25 @@ class Vacancies extends Model
     
     protected $fillable = [
         'user_id',
-        'company_id',
         'title',
         'department_id',
         'major_id',
-        'vacancy_type_id',
         'location',
         'salary',
+        'company_id',
         'requirements',
         'benefits',
         'question_pack_id',
-        'education_level_id'
+        'education_level_id',
+        'vacancy_type_id',
+        'job_description'
     ];
     
     protected $casts = [
         'requirements' => 'array',
         'benefits' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
     
     /**
@@ -82,9 +85,9 @@ class Vacancies extends Model
     /**
      * Get the department associated with this vacancy.
      */
-    public function departement()
+    public function department()
     {
-        return $this->belongsTo(Departement::class, 'department_id');
+        return $this->belongsTo(Department::class, 'department_id');
     }
     
     /**

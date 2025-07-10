@@ -19,16 +19,18 @@ class DatabaseSeeder extends Seeder
             // 2. Master Data (No Dependencies)
             CompanySeeder::class,
             MasterMajorSeeder::class,
+            DepartmentSeeder::class,
             VacancyTypeSeeder::class,
-            DepartementSeeder::class,
             EducationLevelSeeder::class,
+            ContactSeeder::class,
+            ContactMessageSeeder::class,
             
             
             // 3. Question System (QuestionPack depends on Question)
             QuestionSeeder::class,
             QuestionPackSeeder::class,
             
-            // 4. Vacancy System (Depends on: Company, Departement, MasterMajor, VacancyType, User, QuestionPack)
+            // 4. Vacancy System (Depends on: Company, Department, MasterMajor, VacancyType, User, QuestionPack)
             VacanciesSeeder::class,
             
             // 5. Period System (Depends on: Vacancies)

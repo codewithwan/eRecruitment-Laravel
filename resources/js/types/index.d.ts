@@ -101,6 +101,15 @@ export interface ApplicationInfo {
             };
         };
     };
+    assessment?: {
+        answers?: Array<{
+            question: string;
+            answer: string;
+            is_correct: boolean;
+            score: number;
+        }>;
+        total_score?: number;
+    };
     history?: Array<{
         processed_at: string;
         completed_at?: string;

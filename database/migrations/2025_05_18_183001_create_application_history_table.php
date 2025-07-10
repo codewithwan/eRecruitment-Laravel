@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('processed_at')->nullable();
             $table->decimal('score', 5, 2)->nullable();
             $table->text('notes')->nullable();
+            $table->text('resource_url')->nullable();
             $table->timestamp('scheduled_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->foreignId('reviewed_by')->nullable()->constrained('users')->onDelete('set null');

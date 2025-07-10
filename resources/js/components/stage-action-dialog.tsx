@@ -24,6 +24,8 @@ export default function StageActionDialog({ isOpen, onClose, applicationId, stag
     const [notes, setNotes] = useState<string>('');
     const [error, setError] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [zoomUrl, setZoomUrl] = useState<string>('');
+    const [scheduledAt, setScheduledAt] = useState<string>('');
 
     // Reset form when dialog opens
     useEffect(() => {
@@ -32,6 +34,8 @@ export default function StageActionDialog({ isOpen, onClose, applicationId, stag
             setNotes('');
             setError('');
             setIsSubmitting(false);
+            setZoomUrl('');
+            setScheduledAt('');
         }
     }, [isOpen]);
 
@@ -76,6 +80,7 @@ export default function StageActionDialog({ isOpen, onClose, applicationId, stag
     const handleSubmit = () => {
         if (isSubmitting) return;
 
+        // Score is required for administration and interview stages (but not for final stage)
         if (action === 'accept' && (stage === 'administration' || stage === 'interview')) {
             if (!score || parseInt(score) < 10 || parseInt(score) > 99) {
                 setError('Please enter a valid score between 10 and 99');
@@ -88,22 +93,37 @@ export default function StageActionDialog({ isOpen, onClose, applicationId, stag
             return;
         }
 
+        // Validate Zoom URL and schedule for assessment stage passing to interview
+        if (stage === 'psychological_test' && action === 'accept') {
+            if (!zoomUrl) {
+                setError('Zoom URL is required for interview scheduling');
+                return;
+            }
+            if (!scheduledAt) {
+                setError('Interview schedule is required');
+                return;
+            }
+        }
+
         setIsSubmitting(true);
 
-        router.post(`/applications/${applicationId}/${stage}`, {
+        router.post(`/dashboard/applications/${applicationId}/${stage}`, {
             status: action === 'accept' ? 'passed' : 'rejected',
-            score: action === 'accept' ? parseInt(score) : null,
+            score: (action === 'accept' && (stage === 'administration' || stage === 'interview')) ? parseInt(score) : null,
             notes: notes || null,
+            zoom_url: stage === 'psychological_test' && action === 'accept' ? zoomUrl : null,
+            scheduled_at: stage === 'psychological_test' && action === 'accept' ? scheduledAt : null,
         }, {
+            preserveState: false,
+            preserveScroll: false,
             onSuccess: () => {
                 setIsSubmitting(false);
                 onClose();
-                // Redirect back to the previous page
-                window.history.back();
             },
-            onError: () => {
+            onError: (errors) => {
                 setIsSubmitting(false);
                 setError('Failed to process the application. Please try again.');
+                console.error('Stage action error:', errors);
             }
         });
     };
@@ -116,7 +136,35 @@ export default function StageActionDialog({ isOpen, onClose, applicationId, stag
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                    {((stage === 'administration' || stage === 'interview') && action === 'accept') && (
+                    {/* Interview Schedule Fields */}
+                    {stage === 'psychological_test' && action === 'accept' && (
+                        <>
+                            <div className="grid gap-2">
+                                <Label htmlFor="zoom_url">Zoom Meeting URL (Required)</Label>
+                                <Input
+                                    id="zoom_url"
+                                    type="url"
+                                    value={zoomUrl}
+                                    onChange={(e) => setZoomUrl(e.target.value)}
+                                    placeholder="https://zoom.us/j/..."
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="scheduled_at">Interview Schedule (Required)</Label>
+                                <Input
+                                    id="scheduled_at"
+                                    type="datetime-local"
+                                    value={scheduledAt}
+                                    onChange={(e) => setScheduledAt(e.target.value)}
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    {/* Score Input */}
+                    {(stage !== 'final' && (stage === 'administration' || stage === 'interview') && action === 'accept') && (
                         <div className="grid gap-2">
                             <Label htmlFor="score">Score (10-99)</Label>
                             <div className="flex justify-center items-center gap-2">
@@ -156,6 +204,8 @@ export default function StageActionDialog({ isOpen, onClose, applicationId, stag
                             {error && <p className="text-sm text-destructive text-center">{error}</p>}
                         </div>
                     )}
+
+                    {/* Notes Input */}
                     <div className="grid gap-2">
                         <Label htmlFor="notes">
                             {action === 'reject' ? 'Rejection Reason (Required)' : 'Notes (Optional)'}

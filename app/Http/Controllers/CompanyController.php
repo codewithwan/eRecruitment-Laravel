@@ -377,12 +377,27 @@ class CompanyController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'vision' => 'nullable|string',
+            'mission' => 'nullable|string',
         ]);
 
-        Company::create($request->all());
+        $company = Company::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'address' => $request->address,
+        ]);
 
-        return redirect()->route('company-management.index')
-            ->with('success', 'Company created successfully.');
+        // Create About Us record if vision or mission is provided
+        if ($request->vision || $request->mission) {
+            $company->aboutUs()->create([
+                'vision' => $request->vision,
+                'mission' => $request->mission,
+            ]);
+        }
+
+        return redirect()->route('company-management.index');
     }
 
     public function show(Company $company)
@@ -394,6 +409,7 @@ class CompanyController extends Controller
 
     public function edit(Company $company)
     {
+        $company->load('aboutUs');
         return Inertia::render('admin/companies/edit', [
             'company' => $company
         ]);
@@ -407,12 +423,30 @@ class CompanyController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'vision' => 'nullable|string',
+            'mission' => 'nullable|string',
         ]);
 
-        $company->update($request->all());
+        $company->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'address' => $request->address,
+        ]);
 
-        return redirect()->route('company-management.index')
-            ->with('success', 'Company updated successfully.');
+        // Update or create About Us record
+        if ($request->vision || $request->mission) {
+            $company->aboutUs()->updateOrCreate(
+                ['company_id' => $company->id],
+                [
+                    'vision' => $request->vision,
+                    'mission' => $request->mission,
+                ]
+            );
+        }
+
+        return redirect()->route('company-management.index');
     }
 
     public function destroy(Company $company)
@@ -432,7 +466,7 @@ class CompanyController extends Controller
         $periodsQuery = Period::with([
             'vacancies.company', 
             'vacancies.questionPack',
-            'vacancies.departement'
+            'vacancies.department'
         ])
         ->whereHas('vacancies', function ($query) use ($company) {
             $query->where('company_id', $company->id);
@@ -483,11 +517,11 @@ class CompanyController extends Controller
                     return [
                         'id' => $vacancy->id,
                         'title' => $vacancy->title,
-                        'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                        'department' => $vacancy->department ? $vacancy->department->name : 'Unknown',
                     ];
                 })->toArray(),
                 'title' => $companyVacancies->first() ? $companyVacancies->first()->title : null,
-                'department' => $companyVacancies->first() && $companyVacancies->first()->departement ? $companyVacancies->first()->departement->name : null,
+                'department' => $companyVacancies->first() && $companyVacancies->first()->department ? $companyVacancies->first()->department->name : null,
                 'question_pack' => $companyVacancies->first() && $companyVacancies->first()->questionPack ? $companyVacancies->first()->questionPack->pack_name : null,
                 'companies' => [
                     [
@@ -500,14 +534,14 @@ class CompanyController extends Controller
         
         // Get available vacancies for this company
         $vacancies = Vacancies::where('company_id', $company->id)
-            ->with('departement')
+            ->with('department')
             ->select('id', 'title', 'department_id')
             ->get()
             ->map(function ($vacancy) {
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                    'department' => $vacancy->department ? $vacancy->department->name : 'Unknown',
                 ];
             });
         

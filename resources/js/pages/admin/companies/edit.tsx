@@ -8,7 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Building2, Globe, Mail, MapPin, Phone, Save } from 'lucide-react';
+import { ArrowLeft, Building2, Globe, Mail, MapPin, Phone, Save, BookOpen } from 'lucide-react';
+
+interface AboutUs {
+    id: number;
+    vision?: string;
+    mission?: string;
+}
 
 interface Company {
     id: number;
@@ -18,6 +24,7 @@ interface Company {
     phone?: string;
     address?: string;
     created_at: string;
+    about_us?: AboutUs;
 }
 
 interface Props {
@@ -57,6 +64,8 @@ export default function EditCompany({ company }: Props) {
         email: company.email || '',
         phone: company.phone || '',
         address: company.address || '',
+        vision: company.about_us?.vision || '',
+        mission: company.about_us?.mission || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -82,117 +91,164 @@ export default function EditCompany({ company }: Props) {
                     </div>
 
                     <div className="grid gap-6 lg:grid-cols-2">
-                        {/* Edit Company Form - Kiri */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <Building2 className="h-5 w-5 text-blue-600" />
-                                    <CardTitle>Edit Subsidiary Company</CardTitle>
-                                </div>
-                                <CardDescription>Update the details for {company.name}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">Company Name *</Label>
-                                        <Input
-                                            id="name"
-                                            value={data.name}
-                                            onChange={(e) => setData('name', e.target.value)}
-                                            placeholder="Enter subsidiary company name"
-                                            className={errors.name ? 'border-red-500' : ''}
-                                        />
-                                        {errors.name && (
-                                            <p className="text-sm text-red-500">{errors.name}</p>
-                                        )}
+                        {/* Left Column */}
+                        <div className="space-y-6">
+                            {/* Edit Company Form */}
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center gap-2">
+                                        <Building2 className="h-5 w-5 text-blue-600" />
+                                        <CardTitle>Edit Subsidiary Company</CardTitle>
                                     </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="description">Description</Label>
-                                        <Textarea
-                                            id="description"
-                                            value={data.description}
-                                            onChange={(e) => setData('description', e.target.value)}
-                                            placeholder="Enter subsidiary company description"
-                                            className={errors.description ? 'border-red-500' : ''}
-                                            rows={3}
-                                        />
-                                        {errors.description && (
-                                            <p className="text-sm text-red-500">{errors.description}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="grid gap-4 md:grid-cols-2">
+                                    <CardDescription>Update the details for {company.name}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form onSubmit={handleSubmit} className="space-y-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="email">Email</Label>
+                                            <Label htmlFor="name">Company Name *</Label>
                                             <Input
-                                                id="email"
-                                                type="email"
-                                                value={data.email}
-                                                onChange={(e) => setData('email', e.target.value)}
-                                                placeholder="company@example.com"
-                                                className={errors.email ? 'border-red-500' : ''}
+                                                id="name"
+                                                value={data.name}
+                                                onChange={(e) => setData('name', e.target.value)}
+                                                placeholder="Enter subsidiary company name"
+                                                className={errors.name ? 'border-red-500' : ''}
                                             />
-                                            {errors.email && (
-                                                <p className="text-sm text-red-500">{errors.email}</p>
+                                            {errors.name && (
+                                                <p className="text-sm text-red-500">{errors.name}</p>
                                             )}
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="phone">Phone</Label>
-                                            <Input
-                                                id="phone"
-                                                value={data.phone}
-                                                onChange={(e) => setData('phone', e.target.value)}
-                                                placeholder="+62 21 1234 5678"
-                                                className={errors.phone ? 'border-red-500' : ''}
+                                            <Label htmlFor="description">Description</Label>
+                                            <Textarea
+                                                id="description"
+                                                value={data.description}
+                                                onChange={(e) => setData('description', e.target.value)}
+                                                placeholder="Enter subsidiary company description"
+                                                className={errors.description ? 'border-red-500' : ''}
+                                                rows={3}
                                             />
-                                            {errors.phone && (
-                                                <p className="text-sm text-red-500">{errors.phone}</p>
+                                            {errors.description && (
+                                                <p className="text-sm text-red-500">{errors.description}</p>
                                             )}
                                         </div>
-                                    </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="address">Address</Label>
-                                        <Textarea
-                                            id="address"
-                                            value={data.address}
-                                            onChange={(e) => setData('address', e.target.value)}
-                                            placeholder="Complete company address"
-                                            className={errors.address ? 'border-red-500' : ''}
-                                            rows={3}
-                                        />
-                                        {errors.address && (
-                                            <p className="text-sm text-red-500">{errors.address}</p>
-                                        )}
-                                    </div>
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="email">Email</Label>
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    value={data.email}
+                                                    onChange={(e) => setData('email', e.target.value)}
+                                                    placeholder="company@example.com"
+                                                    className={errors.email ? 'border-red-500' : ''}
+                                                />
+                                                {errors.email && (
+                                                    <p className="text-sm text-red-500">{errors.email}</p>
+                                                )}
+                                            </div>
 
-                                    <div className="flex justify-end items-center space-x-2 pt-6">
-                                        <Link href={route('company-management.index')}>
-                                            <Button type="button" variant="outline">
-                                                Cancel
+                                            <div className="space-y-2">
+                                                <Label htmlFor="phone">Phone</Label>
+                                                <Input
+                                                    id="phone"
+                                                    value={data.phone}
+                                                    onChange={(e) => setData('phone', e.target.value)}
+                                                    placeholder="+62 21 1234 5678"
+                                                    className={errors.phone ? 'border-red-500' : ''}
+                                                />
+                                                {errors.phone && (
+                                                    <p className="text-sm text-red-500">{errors.phone}</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="address">Address</Label>
+                                            <Textarea
+                                                id="address"
+                                                value={data.address}
+                                                onChange={(e) => setData('address', e.target.value)}
+                                                placeholder="Complete company address"
+                                                className={errors.address ? 'border-red-500' : ''}
+                                                rows={3}
+                                            />
+                                            {errors.address && (
+                                                <p className="text-sm text-red-500">{errors.address}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="flex justify-end items-center space-x-2 pt-6">
+                                            <Link href={route('company-management.index')}>
+                                                <Button type="button" variant="outline">
+                                                    Cancel
+                                                </Button>
+                                            </Link>
+                                            <Button type="submit" disabled={processing}>
+                                                {processing ? (
+                                                    <>
+                                                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-white"></div>
+                                                        Updating...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Save className="mr-2 h-4 w-4" />
+                                                        Update Company
+                                                    </>
+                                                )}
                                             </Button>
-                                        </Link>
-                                        <Button type="submit" disabled={processing}>
-                                            {processing ? (
-                                                <>
-                                                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-white"></div>
-                                                    Updating...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Save className="mr-2 h-4 w-4" />
-                                                    Update Company
-                                                </>
-                                            )}
-                                        </Button>
-                                    </div>
-                                </form>
-                            </CardContent>
-                        </Card>
+                                        </div>
+                                    </form>
+                                </CardContent>
+                            </Card>
 
-                        {/* Parent Company Information Card - Kanan */}
+                            {/* About Us Section */}
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center gap-2">
+                                        <BookOpen className="h-5 w-5 text-blue-600" />
+                                        <CardTitle>About Us</CardTitle>
+                                    </div>
+                                    <CardDescription>Update your company's vision and mission</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="vision">Vision</Label>
+                                            <Textarea
+                                                id="vision"
+                                                value={data.vision}
+                                                onChange={(e) => setData('vision', e.target.value)}
+                                                placeholder="Enter company vision"
+                                                className={errors.vision ? 'border-red-500' : ''}
+                                                rows={3}
+                                            />
+                                            {errors.vision && (
+                                                <p className="text-sm text-red-500">{errors.vision}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="mission">Mission</Label>
+                                            <Textarea
+                                                id="mission"
+                                                value={data.mission}
+                                                onChange={(e) => setData('mission', e.target.value)}
+                                                placeholder="Enter company mission"
+                                                className={errors.mission ? 'border-red-500' : ''}
+                                                rows={3}
+                                            />
+                                            {errors.mission && (
+                                                <p className="text-sm text-red-500">{errors.mission}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Parent Company Information Card - Right Column */}
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center gap-2">

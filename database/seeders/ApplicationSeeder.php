@@ -51,9 +51,9 @@ class ApplicationSeeder extends Seeder
                 
                 // Determine random status for this application with weighted probabilities
                 $statusId = $this->getRandomWeightedStatus([
-                    $administrationStatus->id => 50,  // 50% in administration
+                    $administrationStatus->id => 30,  // 30% in administration
                     $assessmentStatus->id => 30,      // 30% in assessment
-                    $interviewStatus->id => 20        // 20% in interview
+                    $interviewStatus->id => 40        // 40% in interview
                 ]);
 
                 // Create the application

@@ -27,7 +27,7 @@ class PeriodController extends Controller
         $periodsQuery = Period::with([
             'vacancies.company', 
             'vacancies.questionPack',
-            'vacancies.departement',
+            'vacancies.department',
             'applications.user',
             'applications.vacancyPeriod'
         ]);
@@ -79,7 +79,7 @@ class PeriodController extends Controller
                     // Still include the first vacancy for backward compatibility
                     $firstVacancy = $relevantVacancies->first();
                     $data['title'] = $firstVacancy->title ?? null;
-                    $data['department'] = $firstVacancy->departement ? $firstVacancy->departement->name : null;
+                    $data['department'] = $firstVacancy->department ? $firstVacancy->department->name : null;
                     $data['question_pack'] = $firstVacancy->questionPack ? $firstVacancy->questionPack->pack_name : null;
                     
                     // Add all vacancies as a separate array with company information
@@ -87,7 +87,7 @@ class PeriodController extends Controller
                         return [
                             'id' => $vacancy->id,
                             'title' => $vacancy->title,
-                            'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                            'department' => $vacancy->department ? $vacancy->department->name : 'Unknown',
                             'company' => $vacancy->company ? [
                                 'id' => $vacancy->company->id,
                                 'name' => $vacancy->company->name
@@ -140,7 +140,7 @@ class PeriodController extends Controller
         });
 
         // Get available vacancies for the period dropdown
-        $vacancies = Vacancies::with('departement')
+        $vacancies = Vacancies::with('department')
             ->select('id', 'title', 'department_id')
             ->when($companyId, function($query) use ($companyId) {
                 return $query->where('company_id', $companyId);
@@ -150,7 +150,7 @@ class PeriodController extends Controller
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                    'department' => $vacancy->department ? $vacancy->department->name : 'Unknown',
                 ];
             });
 
@@ -168,14 +168,14 @@ class PeriodController extends Controller
 
     public function create()
     {
-        $vacancies = Vacancies::with(['company', 'departement'])
+        $vacancies = Vacancies::with(['company', 'department'])
             ->select('id', 'title', 'department_id', 'company_id')
             ->get()
             ->map(function ($vacancy) {
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                    'department' => $vacancy->department ? $vacancy->department->name : 'Unknown',
                     'company' => $vacancy->company ? $vacancy->company->name : null
                 ];
             });
@@ -218,7 +218,7 @@ class PeriodController extends Controller
 
     public function show(Period $period)
     {
-        $period->load('vacancies.company', 'vacancies.departement', 'applications.user', 'applications.vacancy', 'applications.status');
+        $period->load('vacancies.company', 'vacancies.department', 'applications.user', 'applications.vacancy', 'applications.status');
         
         // Get current date for status checking
         $now = Carbon::now();
@@ -260,7 +260,7 @@ class PeriodController extends Controller
                     return [
                         'id' => $vacancy->id,
                         'title' => $vacancy->title,
-                        'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                        'department' => $vacancy->department ? $vacancy->department->name : 'Unknown',
                         'company' => $vacancy->company ? $vacancy->company->name : null,
                     ];
                 }),
@@ -272,7 +272,7 @@ class PeriodController extends Controller
 
     public function edit(Period $period)
     {
-        $period->load(['vacancies.company', 'vacancies.departement']);
+        $period->load(['vacancies.company', 'vacancies.department']);
         
         $periodData = [
             'id' => $period->id,
@@ -291,7 +291,7 @@ class PeriodController extends Controller
         $periodsQuery = Period::with([
             'vacancies.company', 
             'vacancies.questionPack',
-            'vacancies.departement'
+            'vacancies.department'
         ])
         ->whereHas('vacancies', function ($query) use ($companyId) {
             $query->where('company_id', $companyId);
@@ -342,11 +342,11 @@ class PeriodController extends Controller
                     return [
                         'id' => $vacancy->id,
                         'title' => $vacancy->title,
-                        'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                        'department' => $vacancy->department ? $vacancy->department->name : 'Unknown',
                     ];
                 })->toArray(),
                 'title' => $companyVacancies->first() ? $companyVacancies->first()->title : null,
-                'department' => $companyVacancies->first() && $companyVacancies->first()->departement ? $companyVacancies->first()->departement->name : null,
+                'department' => $companyVacancies->first() && $companyVacancies->first()->department ? $companyVacancies->first()->department->name : null,
                 'question_pack' => $companyVacancies->first() && $companyVacancies->first()->questionPack ? $companyVacancies->first()->questionPack->pack_name : null,
                 'companies' => [
                     [
@@ -359,14 +359,14 @@ class PeriodController extends Controller
 
         // Get available vacancies for this company
         $vacancies = Vacancies::where('company_id', $companyId)
-            ->with('departement')
+            ->with('department')
             ->select('id', 'title', 'department_id')
             ->get()
             ->map(function ($vacancy) {
                 return [
                     'id' => $vacancy->id,
                     'title' => $vacancy->title,
-                    'department' => $vacancy->departement ? $vacancy->departement->name : 'Unknown',
+                    'department' => $vacancy->department ? $vacancy->department->name : 'Unknown',
                 ];
             });
 

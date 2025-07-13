@@ -234,17 +234,6 @@ class ApplicationStageController extends Controller
                     ];
                 }
             }
-
-            // Log the info we found
-            logger('Found VacancyPeriod Info:', [
-                'vacancy_period' => $vacancyPeriod ? [
-                    'id' => $vacancyPeriod->id,
-                    'vacancy_id' => $vacancyPeriod->vacancy_id,
-                    'period_id' => $vacancyPeriod->period_id,
-                    'period_name' => $vacancyPeriod->period->name ?? null,
-                    'company_name' => $vacancyPeriod->vacancy->company->name ?? null,
-                ] : null
-            ]);
         }
 
         // Map stage to page name
@@ -388,10 +377,7 @@ class ApplicationStageController extends Controller
     {
         // Get the administration status
         $administrationStatus = Status::where('code', 'admin_selection')
-            ->where('stage', 'administrative_selection')
             ->first();
-        
-        logger('Administration Status:', ['status' => $administrationStatus]);
         
         if (!$administrationStatus) {
             return Inertia::render('admin/company/administration', [
@@ -416,52 +402,24 @@ class ApplicationStageController extends Controller
         ])
         ->where('status_id', $administrationStatus->id);
 
-        // Log initial query count
-        logger('Initial Query Count:', [
-            'count' => $query->count(),
-            'sql' => $query->toSql(),
-            'bindings' => $query->getBindings()
-        ]);
-
         // Filter by company if provided
         if ($request->has('company')) {
             $companyId = $request->query('company');
-            logger('Filtering by company:', ['company_id' => $companyId]);
             $query->whereHas('vacancyPeriod.vacancy', function($q) use ($companyId) {
                 $q->where('company_id', $companyId);
             });
-            
-            // Log count after company filter
-            logger('After Company Filter Count:', [
-                'count' => $query->count()
-            ]);
         }
 
         // Filter by period if provided
         if ($request->has('period')) {
             $periodId = $request->query('period');
-            logger('Filtering by period:', ['period_id' => $periodId]);
             $query->whereHas('vacancyPeriod', function($q) use ($periodId) {
                 $q->where('period_id', $periodId);
             });
-            
-            // Log count after period filter
-            logger('After Period Filter Count:', [
-                'count' => $query->count()
-            ]);
         }
 
         // Get paginated results
         $applications = $query->orderBy('created_at', 'desc')->paginate(50)->withQueryString();
-        
-        // Debug log for raw data count
-        logger('Final Applications Count:', [
-            'total' => $applications->total(),
-            'current_page' => $applications->currentPage(),
-            'per_page' => $applications->perPage(),
-            'last_page' => $applications->lastPage(),
-            'items_in_current_page' => count($applications->items())
-        ]);
 
         // Transform the data to include position
         $transformedData = collect($applications->items())->map(function ($application) {
@@ -479,11 +437,8 @@ class ApplicationStageController extends Controller
                 ],
                 'created_at' => $application->created_at,
             ];
-            logger('Transformed Item:', $data);
             return $data;
         })->all();
-
-        logger('Total Transformed Items:', ['count' => count($transformedData)]);
 
         // Get period and company info if filters are provided
         $periodInfo = null;
@@ -521,17 +476,6 @@ class ApplicationStageController extends Controller
                     ];
                 }
             }
-
-            // Log the info we found
-            logger('Found VacancyPeriod Info:', [
-                'vacancy_period' => $vacancyPeriod ? [
-                    'id' => $vacancyPeriod->id,
-                    'vacancy_id' => $vacancyPeriod->vacancy_id,
-                    'period_id' => $vacancyPeriod->period_id,
-                    'period_name' => $vacancyPeriod->period->name ?? null,
-                    'company_name' => $vacancyPeriod->vacancy->company->name ?? null,
-                ] : null
-            ]);
         }
 
         return Inertia::render('admin/company/administration', [
@@ -705,8 +649,6 @@ class ApplicationStageController extends Controller
             ->where('stage', 'psychological_test')
             ->first();
         
-        logger('Assessment Status:', ['status' => $assessmentStatus]);
-        
         if (!$assessmentStatus) {
             return Inertia::render('admin/company/assessment', [
                 'candidates' => [
@@ -745,6 +687,8 @@ class ApplicationStageController extends Controller
                     ->latest();
             }
         ])
+        // Only show applications that are currently in assessment stage
+        ->where('status_id', $assessmentStatus->id)
         ->whereHas('history', function($query) use ($assessmentStatus) {
             $query->where('status_id', $assessmentStatus->id)
                 ->where('is_active', true);
@@ -753,7 +697,6 @@ class ApplicationStageController extends Controller
         // Filter by company if provided
         if ($request->has('company')) {
             $companyId = $request->query('company');
-            logger('Filtering by company:', ['company_id' => $companyId]);
             $query->whereHas('vacancyPeriod.vacancy', function($q) use ($companyId) {
                 $q->where('company_id', $companyId);
             });
@@ -762,7 +705,6 @@ class ApplicationStageController extends Controller
         // Filter by period if provided
         if ($request->has('period')) {
             $periodId = $request->query('period');
-            logger('Filtering by period:', ['period_id' => $periodId]);
             $query->whereHas('vacancyPeriod', function($q) use ($periodId) {
                 $q->where('period_id', $periodId);
             });
@@ -882,8 +824,6 @@ class ApplicationStageController extends Controller
             ->where('stage', 'interview')
             ->first();
         
-        logger('Interview Status:', ['status' => $interviewStatus]);
-        
         if (!$interviewStatus) {
             return Inertia::render('admin/company/interview', [
                 'candidates' => [
@@ -915,6 +855,8 @@ class ApplicationStageController extends Controller
                     ->latest();
             }
         ])
+        // Only show applications that are currently in interview stage
+        ->where('status_id', $interviewStatus->id)
         ->whereHas('history', function($query) use ($interviewStatus) {
             $query->where('status_id', $interviewStatus->id)
                 ->where('is_active', true);
@@ -923,7 +865,6 @@ class ApplicationStageController extends Controller
         // Filter by company if provided
         if ($request->has('company')) {
             $companyId = $request->query('company');
-            logger('Filtering by company:', ['company_id' => $companyId]);
             $query->whereHas('vacancyPeriod.vacancy', function($q) use ($companyId) {
                 $q->where('company_id', $companyId);
             });
@@ -932,7 +873,6 @@ class ApplicationStageController extends Controller
         // Filter by period if provided
         if ($request->has('period')) {
             $periodId = $request->query('period');
-            logger('Filtering by period:', ['period_id' => $periodId]);
             $query->whereHas('vacancyPeriod', function($q) use ($periodId) {
                 $q->where('period_id', $periodId);
             });
@@ -944,6 +884,7 @@ class ApplicationStageController extends Controller
         // Transform the data
         $transformedData = collect($applications->items())->map(function ($application) {
             $currentHistory = $application->history->first();
+            
             return [
                 'id' => $application->id,
                 'user' => [
@@ -963,7 +904,10 @@ class ApplicationStageController extends Controller
                         'scheduled_at' => $currentHistory?->scheduled_at,
                         'completed_at' => $currentHistory?->completed_at,
                         'notes' => $currentHistory?->notes,
-                        'score' => $currentHistory?->score,
+                        // Only show interview score if interview has been completed
+                        'score' => ($currentHistory && $currentHistory->completed_at && $currentHistory->score) 
+                            ? number_format($currentHistory->score, 2) 
+                            : null,
                         'interviewer' => $currentHistory?->reviewer ? [
                             'name' => $currentHistory->reviewer->name,
                             'email' => $currentHistory->reviewer->email,
@@ -1199,210 +1143,192 @@ class ApplicationStageController extends Controller
 
     public function reports(Request $request): Response
     {
-        // Build the base query
-        $query = Application::with([
-            'user:id,name,email',
-            'vacancyPeriod.vacancy.company',
-            'history' => function($query) {
-                $query->with(['status', 'reviewer'])
-                    ->where('is_active', true)
-                    ->latest();
-            },
-            'userAnswers' => function($query) {
-                $query->with(['question', 'choice']);
-            }
-        ]);
-
-        // Filter by company if provided
-        if ($request->has('company')) {
-            $query->whereHas('vacancyPeriod.vacancy', function($q) use ($request) {
-                $q->where('company_id', $request->company);
-            });
-        }
-
-        // Filter by period if provided
-        if ($request->has('period')) {
-            $query->whereHas('vacancyPeriod', function($q) use ($request) {
-                $q->where('period_id', $request->period);
-            });
-        }
-
-        // Handle sorting
-        $sortColumn = $request->input('sort', 'created_at');
-        $sortOrder = $request->input('order', 'desc');
-
-        switch ($sortColumn) {
-            case 'name':
-                $query->join('users', 'applications.user_id', '=', 'users.id')
-                    ->orderBy('users.name', $sortOrder)
-                    ->select('applications.*'); // Ensure we only select from applications table
-                break;
-            case 'administration_score':
-                $query->leftJoin('application_history as admin_history', function($join) {
-                    $join->on('applications.id', '=', 'admin_history.application_id')
-                        ->where('admin_history.is_active', '=', true)
-                        ->whereExists(function($query) {
-                            $query->from('statuses')
-                                ->whereRaw('admin_history.status_id = statuses.id')
-                                ->where('statuses.stage', '=', 'administrative_selection');
-                        });
-                })
-                ->orderBy('admin_history.score', $sortOrder)
-                ->select('applications.*');
-                break;
-            case 'assessment_score':
-                $query->leftJoin('application_history as assessment_history', function($join) {
-                    $join->on('applications.id', '=', 'assessment_history.application_id')
-                        ->where('assessment_history.is_active', '=', true)
-                        ->whereExists(function($query) {
-                            $query->from('statuses')
-                                ->whereRaw('assessment_history.status_id = statuses.id')
-                                ->where('statuses.stage', '=', 'psychological_test');
-                        });
-                })
-                ->orderBy('assessment_history.score', $sortOrder)
-                ->select('applications.*');
-                break;
-            case 'interview_score':
-                $query->leftJoin('application_history as interview_history', function($join) {
-                    $join->on('applications.id', '=', 'interview_history.application_id')
-                        ->where('interview_history.is_active', '=', true)
-                        ->whereExists(function($query) {
-                            $query->from('statuses')
-                                ->whereRaw('interview_history.status_id = statuses.id')
-                                ->where('statuses.stage', '=', 'interview');
-                        });
-                })
-                ->orderBy('interview_history.score', $sortOrder)
-                ->select('applications.*');
-                break;
-            case 'average_score':
-                $query->leftJoin('application_history as avg_history', function($join) {
-                    $join->on('applications.id', '=', 'avg_history.application_id')
-                        ->where('avg_history.is_active', '=', true);
-                })
-                ->groupBy('applications.id')
-                ->orderBy(DB::raw('AVG(avg_history.score)'), $sortOrder)
-                ->select('applications.*');
-                break;
-            default:
-                $query->orderBy('applications.created_at', $sortOrder);
-        }
-
-        // Get paginated results
-        $applications = $query->paginate(10)->withQueryString();
-
-        // Transform the data
-        $transformedData = $applications->through(function ($application) {
-            $administrationHistory = collect($application->history)->first(function($history) {
-                return $history->status->stage === 'administrative_selection';
+        try {
+            // Build the base query - get applications that have reports
+            $query = Application::with([
+                'user:id,name,email',
+                'vacancyPeriod.vacancy.company',
+                'status',
+                'history' => function($query) {
+                    $query->with(['status', 'reviewer'])
+                        ->where('is_active', true)
+                        ->latest();
+                },
+                'report'
+            ])
+            // Only get applications that have pending reports
+            ->whereHas('report', function($q) {
+                $q->where('final_decision', 'pending');
             });
 
-            $assessmentHistory = collect($application->history)->first(function($history) {
-                return $history->status->stage === 'psychological_test';
-            });
-
-            $interviewHistory = collect($application->history)->first(function($history) {
-                return $history->status->stage === 'interview';
-            });
-
-            // Calculate assessment score from answers if available
-            $assessmentScore = null;
-            if ($application->userAnswers->isNotEmpty()) {
-                $assessmentScore = $application->userAnswers->avg(function($answer) {
-                    return $answer->choice->is_correct ? 100 : 0;
-                });
-            }
-
-            // Calculate average score
-            $scores = array_filter([
-                $administrationHistory?->score,
-                $assessmentScore,
-                $interviewHistory?->score
-            ], function($score) {
-                return !is_null($score);
-            });
-
-            $averageScore = count($scores) > 0 ? array_sum($scores) / count($scores) : null;
-
-            return [
-                'id' => $application->id,
-                'user' => [
-                    'name' => $application->user->name,
-                    'email' => $application->user->email,
-                ],
-                'vacancy_period' => [
-                    'vacancy' => [
-                        'title' => $application->vacancyPeriod->vacancy->title
-                    ]
-                ],
-                'scores' => [
-                    'administration' => $administrationHistory?->score,
-                    'assessment' => $assessmentScore,
-                    'interview' => $interviewHistory?->score,
-                    'average' => $averageScore
-                ],
-                'status' => [
-                    'name' => $application->status->name,
-                    'code' => $application->status->code,
-                ]
-            ];
-        });
-
-        // Get period and company info if filters are provided
-        $periodInfo = null;
-        $companyInfo = null;
-
-        if ($request->has('period') || $request->has('company')) {
-            $vacancyPeriodQuery = VacancyPeriods::query()
-                ->with(['vacancy.company', 'period']);
-
-            if ($request->has('period')) {
-                $vacancyPeriodQuery->where('period_id', $request->query('period'));
-            }
-
+            // Filter by company if provided
             if ($request->has('company')) {
-                $vacancyPeriodQuery->whereHas('vacancy', function($q) use ($request) {
-                    $q->where('company_id', $request->query('company'));
+                $query->whereHas('vacancyPeriod.vacancy', function($q) use ($request) {
+                    $q->where('company_id', $request->company);
                 });
             }
 
-            $vacancyPeriod = $vacancyPeriodQuery->first();
+            // Filter by period if provided
+            if ($request->has('period')) {
+                $query->whereHas('vacancyPeriod', function($q) use ($request) {
+                    $q->where('period_id', $request->period);
+                });
+            }
 
-            if ($vacancyPeriod) {
-                if ($request->has('period')) {
-                    $periodInfo = [
-                        'name' => $vacancyPeriod->period->name,
-                        'start_date' => $vacancyPeriod->period->start_time,
-                        'end_date' => $vacancyPeriod->period->end_time,
+            // Get paginated results
+            $applications = $query->paginate(10)->withQueryString();
+
+            // Transform the data
+            $transformedData = $applications->through(function ($application) {
+                try {
+                    // Get histories with error handling
+                    $administrationHistory = collect($application->history)->first(function($history) {
+                        return $history->status->code === 'administrative_selection';
+                    });
+
+                    $assessmentHistory = collect($application->history)->first(function($history) {
+                        return $history->status->code === 'psychotest';
+                    });
+
+                    $interviewHistory = collect($application->history)->first(function($history) {
+                        return $history->status->code === 'interview';
+                    });
+
+                    // Transform scores with type casting
+                    $scores = [
+                        'administration' => $administrationHistory?->score ? (float)$administrationHistory->score : null,
+                        'assessment' => $assessmentHistory?->score ? (float)$assessmentHistory->score : null,
+                        'interview' => $interviewHistory?->score ? (float)$interviewHistory->score : null,
+                        'average' => $application->report?->overall_score ? (float)$application->report->overall_score : null
                     ];
+
+                    return [
+                        'id' => $application->id,
+                        'user' => [
+                            'name' => $application->user->name ?? 'Unknown',
+                            'email' => $application->user->email ?? 'unknown@example.com',
+                        ],
+                        'vacancy_period' => [
+                            'vacancy' => [
+                                'title' => $application->vacancyPeriod->vacancy->title ?? 'Unknown Position'
+                            ]
+                        ],
+                        'scores' => $scores,
+                        'status' => [
+                            'name' => $application->status->name ?? 'Unknown',
+                            'code' => $application->status->code ?? 'unknown',
+                        ]
+                    ];
+                } catch (\Exception $e) {
+                    \Log::error('Error transforming application data:', [
+                        'application_id' => $application->id,
+                        'error' => $e->getMessage()
+                    ]);
+
+                    // Return safe default data
+                    return [
+                        'id' => $application->id,
+                        'user' => [
+                            'name' => 'Error loading data',
+                            'email' => 'error@example.com',
+                        ],
+                        'vacancy_period' => [
+                            'vacancy' => [
+                                'title' => 'Error loading position'
+                            ]
+                        ],
+                        'scores' => [
+                            'administration' => null,
+                            'assessment' => null,
+                            'interview' => null,
+                            'average' => null
+                        ],
+                        'status' => [
+                            'name' => 'Error',
+                            'code' => 'error',
+                        ]
+                    ];
+                }
+            });
+
+            // Get period and company info if filters are provided
+            $periodInfo = null;
+            $companyInfo = null;
+
+            if ($request->has('period') || $request->has('company')) {
+                $vacancyPeriodQuery = VacancyPeriods::query()
+                    ->with(['vacancy.company', 'period']);
+
+                if ($request->has('period')) {
+                    $vacancyPeriodQuery->where('period_id', $request->query('period'));
                 }
 
                 if ($request->has('company')) {
-                    $companyInfo = [
-                        'name' => $vacancyPeriod->vacancy->company->name,
-                    ];
+                    $vacancyPeriodQuery->whereHas('vacancy', function($q) use ($request) {
+                        $q->where('company_id', $request->query('company'));
+                    });
+                }
+
+                $vacancyPeriod = $vacancyPeriodQuery->first();
+
+                if ($vacancyPeriod) {
+                    if ($request->has('period')) {
+                        $periodInfo = [
+                            'name' => $vacancyPeriod->period->name,
+                            'start_date' => $vacancyPeriod->period->start_time,
+                            'end_date' => $vacancyPeriod->period->end_time,
+                        ];
+                    }
+
+                    if ($request->has('company')) {
+                        $companyInfo = [
+                            'name' => $vacancyPeriod->vacancy->company->name,
+                        ];
+                    }
                 }
             }
-        }
 
-        return Inertia::render('admin/company/reports', [
-            'candidates' => [
-                'data' => $transformedData,
-                'current_page' => $applications->currentPage(),
-                'per_page' => $applications->perPage(),
-                'last_page' => $applications->lastPage(),
-                'total' => $applications->total(),
-            ],
-            'filters' => [
-                'company' => $request->query('company'),
-                'period' => $request->query('period'),
-                'sort' => $sortColumn,
-                'order' => $sortOrder,
-            ],
-            'periodInfo' => $periodInfo,
-            'companyInfo' => $companyInfo,
-        ]);
+            return Inertia::render('admin/company/reports', [
+                'candidates' => [
+                    'data' => $transformedData,
+                    'current_page' => $applications->currentPage(),
+                    'per_page' => $applications->perPage(),
+                    'last_page' => $applications->lastPage(),
+                    'total' => $applications->total(),
+                ],
+                'filters' => [
+                    'company' => $request->query('company'),
+                    'period' => $request->query('period'),
+                    'sort' => $sortColumn ?? 'created_at',
+                    'order' => $sortOrder ?? 'desc',
+                ],
+                'periodInfo' => $periodInfo,
+                'companyInfo' => $companyInfo,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in reports method:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return Inertia::render('admin/company/reports', [
+                'candidates' => [
+                    'data' => [],
+                    'current_page' => 1,
+                    'per_page' => 10,
+                    'last_page' => 1,
+                    'total' => 0,
+                ],
+                'filters' => [
+                    'company' => $request->query('company'),
+                    'period' => $request->query('period'),
+                    'sort' => 'created_at',
+                    'order' => 'desc',
+                ],
+                'error' => 'Failed to load reports data. Please try again.'
+            ]);
+        }
     }
 
     public function reportDetail($id): Response
@@ -1424,15 +1350,15 @@ class ApplicationStageController extends Controller
 
         // Get stage-specific histories
         $administrationHistory = collect($application->history)->first(function($history) {
-            return $history->status->stage === 'administrative_selection';
+            return $history->status->code === 'administrative_selection';
         });
 
         $assessmentHistory = collect($application->history)->first(function($history) {
-            return $history->status->stage === 'psychological_test';
+            return $history->status->code === 'psychological_test';
         });
 
         $interviewHistory = collect($application->history)->first(function($history) {
-            return $history->status->stage === 'interview';
+            return $history->status->code === 'interview';
         });
 
         // Calculate assessment score
@@ -1573,5 +1499,285 @@ class ApplicationStageController extends Controller
         ]);
 
         return back()->with('success', 'Application ' . ($action === 'accept' ? 'accepted' : 'rejected') . ' successfully');
+    }
+    
+    /**
+     * Handle stage action (accept/reject) from StageActionDialog
+     */
+    public function stageAction(Request $request, Application $application, string $stage)
+    {
+        // Validate the request
+        $validated = $request->validate([
+            'status' => 'required|in:passed,rejected',
+            'score' => 'nullable|numeric|min:10|max:99',
+            'notes' => 'nullable|string',
+            'zoom_url' => 'nullable|url',
+            'scheduled_at' => 'nullable|date',
+        ]);
+
+        // Load necessary relations
+        $application->load(['vacancyPeriod.vacancy', 'vacancyPeriod.period']);
+
+        DB::beginTransaction();
+        
+        try {
+            // Map stage names to match database
+            $stageMap = [
+                'administration' => 'administrative_selection',
+                'assessment' => 'psychological_test',
+                'interview' => 'interview',
+                'psychological_test' => 'psychological_test',
+                'administrative_selection' => 'administrative_selection',
+                'final' => 'final'
+            ];
+            
+            $mappedStage = $stageMap[$stage] ?? $stage;
+            
+            // Load necessary relations based on stage
+            if ($mappedStage === 'psychological_test') {
+                $application->load(['userAnswers.choice']);
+            }
+
+            // Handle final decision (hire/reject)
+            if ($mappedStage === 'final') {
+                // Get the appropriate final status
+                $finalStatus = Status::where('code', $validated['status'] === 'passed' ? 'hired' : 'rejected')
+                    ->first();
+                    
+                if (!$finalStatus) {
+                    throw new \Exception('Final status not found');
+                }
+
+                // Mark all previous history as inactive if needed
+                $application->history()
+                    ->where('is_active', true)
+                    ->whereHas('status', function($q) {
+                        $q->whereIn('code', ['hired', 'rejected']);
+                    })
+                    ->update(['is_active' => false]);
+
+                // Create final decision record
+                $application->history()->create([
+                    'status_id' => $finalStatus->id,
+                    'notes' => $validated['notes'] ?? null,
+                    'processed_at' => now(),
+                    'completed_at' => now(),
+                    'reviewed_by' => Auth::id(),
+                    'reviewed_at' => now(),
+                    'is_active' => true,
+                ]);
+
+                // Update application status
+                $application->update(['status_id' => $finalStatus->id]);
+
+                DB::commit();
+                return back()->with('success', $validated['status'] === 'passed' ? 'Candidate hired successfully' : 'Candidate rejected');
+            }
+
+            // For interview stage completion, we need to get the current interview status first
+            if ($mappedStage === 'interview') {
+                // Get the current interview status
+                $interviewStatus = Status::where('code', 'interview')
+                    ->where('stage', 'interview')
+                    ->first();
+                    
+                if (!$interviewStatus) {
+                    throw new \Exception('Interview status not found');
+                }
+
+                // Mark previous interview history as inactive
+                $application->history()
+                    ->where('is_active', true)
+                    ->whereHas('status', function($q) {
+                        $q->where('code', 'interview');
+                    })
+                    ->update(['is_active' => false]);
+
+                // Create new interview history
+                $application->history()->create([
+                    'status_id' => $interviewStatus->id,
+                    'notes' => $validated['notes'] ?? null,
+                    'score' => $validated['score'] ?? null,
+                    'processed_at' => now(),
+                    'completed_at' => now(),
+                    'reviewed_by' => Auth::id(),
+                    'reviewed_at' => now(),
+                    'is_active' => true,
+                ]);
+
+                // Update application status
+                $application->update(['status_id' => $interviewStatus->id]);
+
+                // Check if candidate has all scores
+                $administrationHistory = $application->history()
+                    ->whereHas('status', fn($q) => $q->where('code', 'administrative_selection'))
+                    ->where('is_active', true)
+                    ->first();
+
+                $assessmentHistory = $application->history()
+                    ->whereHas('status', fn($q) => $q->where('code', 'psychotest'))
+                    ->where('is_active', true)
+                    ->first();
+
+                $interviewHistory = $application->history()
+                    ->whereHas('status', fn($q) => $q->where('code', 'interview'))
+                    ->where('is_active', true)
+                    ->first();
+
+                // If all scores exist, create application report
+                if ($administrationHistory?->score && $assessmentHistory?->score && $interviewHistory?->score) {
+                    $overallScore = ($administrationHistory->score + $assessmentHistory->score + $interviewHistory->score) / 3;
+
+                    // Create or update application report
+                    $application->report()->updateOrCreate(
+                        ['application_id' => $application->id],
+                        [
+                            'overall_score' => $overallScore,
+                            'final_decision' => 'pending',
+                            'final_notes' => 'Candidate has completed all stages successfully.',
+                            'decision_made_by' => null,
+                            'decision_made_at' => null,
+                        ]
+                    );
+                }
+
+                DB::commit();
+                return back()->with('success', 'Interview completed successfully');
+            }
+
+            // For assessment stage passing to interview
+            if ($mappedStage === 'psychological_test' && $validated['status'] === 'passed') {
+                // Get the interview status
+                $interviewStatus = Status::where('code', 'interview')
+                    ->first();
+                    
+                if (!$interviewStatus) {
+                    throw new \Exception('Interview status not found');
+                }
+
+                // Mark previous interview history as inactive if exists
+                $application->history()
+                    ->where('is_active', true)
+                    ->whereHas('status', function($q) {
+                        $q->where('code', 'interview');
+                    })
+                    ->update(['is_active' => false]);
+
+                // Create interview history with schedule
+                $application->history()->create([
+                    'status_id' => $interviewStatus->id,
+                    'notes' => $validated['notes'] ?? null,
+                    'processed_at' => now(),
+                    'resource_url' => $validated['zoom_url'] ?? null,
+                    'scheduled_at' => $validated['scheduled_at'] ?? null,
+                    'reviewed_by' => Auth::id(),
+                    'is_active' => true,
+                ]);
+
+                // Update application status to interview
+                $application->update(['status_id' => $interviewStatus->id]);
+
+                DB::commit();
+                return back()->with('success', 'Candidate moved to interview stage successfully');
+            }
+
+            // For assessment stage rejection
+            if ($mappedStage === 'psychological_test' && $validated['status'] === 'rejected') {
+                // Get the rejected status
+                $rejectedStatus = Status::where('code', 'rejected')->first();
+                    
+                if (!$rejectedStatus) {
+                    throw new \Exception('Rejected status not found');
+                }
+
+                // Create rejection history
+                $application->history()->create([
+                    'status_id' => $rejectedStatus->id,
+                    'notes' => $validated['notes'] ?? null,
+                    'processed_at' => now(),
+                    'completed_at' => now(),
+                    'reviewed_by' => Auth::id(),
+                    'reviewed_at' => now(),
+                    'is_active' => true,
+                ]);
+
+                // Update application status to rejected
+                $application->update(['status_id' => $rejectedStatus->id]);
+
+                DB::commit();
+                return back()->with('success', 'Candidate rejected successfully');
+            }
+
+            // For administration stage passing to assessment
+            if ($mappedStage === 'administrative_selection' && $validated['status'] === 'passed') {
+                // Get the assessment status
+                $assessmentStatus = Status::where('code', 'psychotest')
+                    ->first();
+                    
+                if (!$assessmentStatus) {
+                    throw new \Exception('Assessment status not found');
+                }
+
+                // Mark previous assessment history as inactive
+                $application->history()
+                    ->where('is_active', true)
+                    ->whereHas('status', function($q) {
+                        $q->where('code', 'psychotest');
+                    })
+                    ->update(['is_active' => false]);
+
+                // Create new assessment history
+                $application->history()->create([
+                    'status_id' => $assessmentStatus->id,
+                    'notes' => $validated['notes'] ?? null,
+                    'score' => $validated['score'] ?? null,
+                    'processed_at' => now(),
+                    'reviewed_by' => Auth::id(),
+                    'is_active' => true,
+                ]);
+
+                // Update application status to assessment
+                $application->update(['status_id' => $assessmentStatus->id]);
+
+                DB::commit();
+                return back()->with('success', 'Candidate moved to assessment stage successfully');
+            }
+
+            // For administration stage rejection
+            if ($mappedStage === 'administrative_selection' && $validated['status'] === 'rejected') {
+                // Get the rejected status
+                $rejectedStatus = Status::where('code', 'rejected')->first();
+                    
+                if (!$rejectedStatus) {
+                    throw new \Exception('Rejected status not found');
+                }
+
+                // Create rejection history
+                $application->history()->create([
+                    'status_id' => $rejectedStatus->id,
+                    'notes' => $validated['notes'] ?? null,
+                    'processed_at' => now(),
+                    'completed_at' => now(),
+                    'reviewed_by' => Auth::id(),
+                    'reviewed_at' => now(),
+                    'is_active' => true,
+                ]);
+
+                // Update application status to rejected
+                $application->update(['status_id' => $rejectedStatus->id]);
+
+                DB::commit();
+                return back()->with('success', 'Candidate rejected successfully');
+            }
+
+            // If we reach here, it's an unknown stage or action
+            throw new \Exception('Unknown stage or action: ' . $mappedStage . ' - ' . $validated['status']);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Stage action error: ' . $e->getMessage());
+            
+            return back()->withErrors(['error' => 'Failed to process application: ' . $e->getMessage()]);
+        }
     }
 } 

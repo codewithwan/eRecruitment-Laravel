@@ -4,47 +4,62 @@ namespace Database\Seeders;
 
 use App\Models\Application;
 use App\Models\ApplicationReport;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class ApplicationReportSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $applications = Application::with(['history', 'user'])->get();
-        $hrUsers = User::whereIn('role', ['hr', 'super_admin', 'head_hr'])->get();
+        $this->command->info('Creating application reports...');
+
+        // Get all applications
+        $applications = Application::with(['history.status'])->get();
+
+        $reportsCreated = 0;
 
         foreach ($applications as $application) {
-            $historyScores = $application->history->pluck('score')->filter()->toArray();
-            $overallScore = !empty($historyScores) ? round(array_sum($historyScores) / count($historyScores), 2) : null;
+            // Get scores from each stage
+            $administrationScore = $application->history
+                ->first(function($history) {
+                    return $history->status->code === 'admin_selection' && 
+                           $history->is_active &&
+                           $history->score !== null;
+                })?->score;
 
-            // Pilih final_decision dari status aplikasi
-            $finalDecision = match ($application->status->code) {
-                'accepted' => 'accepted',
-                'rejected' => 'rejected',
-                default => 'pending',
-            };
+            $assessmentScore = $application->history
+                ->first(function($history) {
+                    return $history->status->code === 'psychotest' && 
+                           $history->is_active &&
+                           $history->score !== null;
+                })?->score;
 
-            ApplicationReport::create([
-                'application_id'   => $application->id,
-                'overall_score'    => $overallScore,
-                'final_notes'      => $this->getFinalNotes($finalDecision),
-                'final_decision'   => $finalDecision,
-                'decision_made_by' => $hrUsers->random()->id,
-                'decision_made_at' => now()->subDays(rand(1, 30)),
-            ]);
+            $interviewScore = $application->history
+                ->first(function($history) {
+                    return $history->status->code === 'interview' && 
+                           $history->is_active &&
+                           $history->score !== null &&
+                           $history->completed_at !== null;
+                })?->score;
+
+            // Only create report if all scores exist
+            if ($administrationScore && $assessmentScore && $interviewScore) {
+                $overallScore = ($administrationScore + $assessmentScore + $interviewScore) / 3;
+
+                ApplicationReport::create([
+                    'application_id' => $application->id,
+                    'overall_score' => $overallScore,
+                    'final_notes' => "Candidate has completed all stages with scores:\n" .
+                                   "- Administration: " . number_format($administrationScore, 2) . "\n" .
+                                   "- Assessment: " . number_format($assessmentScore, 2) . "\n" .
+                                   "- Interview: " . number_format($interviewScore, 2) . "\n" .
+                                   "Average Score: " . number_format($overallScore, 2),
+                    'final_decision' => 'pending',
+                ]);
+
+                $reportsCreated++;
+            }
         }
-    }
 
-    private function getFinalNotes($decision): string
-    {
-        return match ($decision) {
-            'accepted' => 'Kandidat diterima berdasarkan hasil seleksi dan evaluasi.',
-            'rejected' => 'Kandidat tidak memenuhi kriteria pada tahap seleksi.',
-            default    => 'Aplikasi masih dalam proses evaluasi.',
-        };
+        $this->command->info("Created {$reportsCreated} application reports for candidates with complete scores.");
     }
 } 

@@ -24,7 +24,7 @@ export interface Job {
     updated_at: string;
     status?: string;
     start_date?: string;
-    departement?: { id: number; name: string };
+    department?: { id: number; name: string };
     major?: { id: number; name: string };
     educationLevel?: { id: number; name: string };
     questionPack?: {
@@ -34,6 +34,12 @@ export interface Job {
         test_type?: string;
         duration?: number;
     };
+    vacancy_type_id?: number;
+    vacancyType?: {
+        id: number;
+        name: string;
+    };
+    description?: string;
 }
 
 interface JobTableProps {
@@ -76,6 +82,7 @@ export function JobTable({
                             <TableHead className="w-[180px] py-3">Location</TableHead>
                             <TableHead className="w-[180px] py-3">Salary</TableHead>
                             <TableHead className="w-[180px] py-3">Company</TableHead>
+                            <TableHead className="w-[180px] py-3">Vacancy Type</TableHead>
                             <TableHead className="w-[180px] py-3">Question Packs</TableHead>
                             <TableHead className="w-[140px] py-3 text-center">Action</TableHead>
                         </TableRow>
@@ -104,14 +111,17 @@ export function JobTable({
                                         <TableCell className="w-[180px]">
                                             <Skeleton className="h-4 w-full" />
                                         </TableCell>
-                                        <TableCell className="w-[140px]">
+                                        <TableCell className="w-[180px]">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                        <TableCell className="w-[180px]">
                                             <Skeleton className="h-4 w-full" />
                                         </TableCell>
                                         <TableCell className="w-[140px] text-center">
                                             <div className="flex justify-center space-x-2">
-                                                <Skeleton className="h-8 w-8 rounded-full" />
-                                                <Skeleton className="h-8 w-8 rounded-full" />
-                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                                <Skeleton key={`skeleton-action-1-${idx}`} className="h-8 w-8 rounded-full" />
+                                                <Skeleton key={`skeleton-action-2-${idx}`} className="h-8 w-8 rounded-full" />
+                                                <Skeleton key={`skeleton-action-3-${idx}`} className="h-8 w-8 rounded-full" />
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -121,11 +131,14 @@ export function JobTable({
                                 <TableRow key={job.id} className={index % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
                                     <TableCell className="whitespace-nowrap">{String(job.id).padStart(2, '0')}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.title}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{job.departement?.name || '-'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{job.department?.name || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.major?.name || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.location}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.salary || '-'}</TableCell>
                                     <TableCell className="whitespace-nowrap">{job.company?.name || '-'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {job.vacancyType?.name || '-'}
+                                    </TableCell>
                                     <TableCell className="whitespace-nowrap">
                                         {job.questionPack && job.questionPack.pack_name ? (
                                             <Badge variant="default">
@@ -161,7 +174,7 @@ export function JobTable({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={9} className="py-4 text-center">
+                                <TableCell colSpan={10} className="py-4 text-center">
                                     No jobs found.
                                 </TableCell>
                             </TableRow>

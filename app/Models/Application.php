@@ -111,7 +111,7 @@ class Application extends Model
     public function administration(): HasOne
     {
         return $this->hasOne(ApplicationHistory::class)->whereHas('status', function($query) {
-            $query->where('code', 'administration');
+            $query->where('code', 'administrative_selection');
         });
     }
     
@@ -121,7 +121,7 @@ class Application extends Model
     public function assessment(): HasOne
     {
         return $this->hasOne(ApplicationHistory::class)->whereHas('status', function($query) {
-            $query->where('code', 'assessment');
+            $query->where('code', 'psychotest');
         });
     }
     

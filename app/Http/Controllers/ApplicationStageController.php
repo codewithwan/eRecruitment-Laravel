@@ -1220,7 +1220,7 @@ class ApplicationStageController extends Controller
                         ]
                     ];
                 } catch (\Exception $e) {
-                    \Log::error('Error transforming application data:', [
+                    Log::error('Error transforming application data:', [
                         'application_id' => $application->id,
                         'error' => $e->getMessage()
                     ]);
@@ -1307,7 +1307,7 @@ class ApplicationStageController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error in reports method:', [
+            Log::error('Error in reports method:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

@@ -107,25 +107,46 @@ export default function StageActionDialog({ isOpen, onClose, applicationId, stag
 
         setIsSubmitting(true);
 
-        router.post(`/dashboard/recruitment/applications/${applicationId}/${stage}`, {
-            status: action === 'accept' ? 'passed' : 'rejected',
-            score: (action === 'accept' && (stage === 'administration' || stage === 'interview')) ? parseInt(score) : null,
-            notes: notes || null,
-            zoom_url: stage === 'psychological_test' && action === 'accept' ? zoomUrl : null,
-            scheduled_at: stage === 'psychological_test' && action === 'accept' ? scheduledAt : null,
-        }, {
-            preserveState: false,
-            preserveScroll: false,
-            onSuccess: () => {
-                setIsSubmitting(false);
-                onClose();
-            },
-            onError: (errors) => {
-                setIsSubmitting(false);
-                setError('Failed to process the application. Please try again.');
-                console.error('Stage action error:', errors);
-            }
-        });
+        // For final stage (reports), use different endpoint
+        if (stage === 'final') {
+            router.post(`/dashboard/recruitment/reports/${applicationId}/action`, {
+                status: action === 'accept' ? 'passed' : 'rejected',
+                notes: notes || null,
+            }, {
+                preserveState: false,
+                preserveScroll: false,
+                onSuccess: () => {
+                    setIsSubmitting(false);
+                    onClose();
+                },
+                onError: (errors) => {
+                    setIsSubmitting(false);
+                    setError('Failed to process the final decision. Please try again.');
+                    console.error('Final decision error:', errors);
+                }
+            });
+        } else {
+            // For other stages, use the regular stage action endpoint
+            router.post(`/dashboard/recruitment/applications/${applicationId}/${stage}`, {
+                status: action === 'accept' ? 'passed' : 'rejected',
+                score: (action === 'accept' && (stage === 'administration' || stage === 'interview')) ? parseInt(score) : null,
+                notes: notes || null,
+                zoom_url: stage === 'psychological_test' && action === 'accept' ? zoomUrl : null,
+                scheduled_at: stage === 'psychological_test' && action === 'accept' ? scheduledAt : null,
+            }, {
+                preserveState: false,
+                preserveScroll: false,
+                onSuccess: () => {
+                    setIsSubmitting(false);
+                    onClose();
+                },
+                onError: (errors) => {
+                    setIsSubmitting(false);
+                    setError('Failed to process the application. Please try again.');
+                    console.error('Stage action error:', errors);
+                }
+            });
+        }
     };
 
     return (

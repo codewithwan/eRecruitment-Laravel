@@ -85,6 +85,12 @@ interface Props {
             name: string;
             code: string;
         };
+        final_decision: {
+            status: 'pending' | 'accepted' | 'rejected';
+            notes: string | null;
+            decided_by: string | null;
+            decided_at: string | null;
+        };
         history: Array<{
             stage: string;
             status: {
@@ -139,10 +145,21 @@ export default function ReportDetail({ candidate }: Props) {
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Badge variant={candidate.status.code === 'approved' ? 'secondary' : 
-                                     candidate.status.code === 'rejected' ? 'destructive' : 'default'}>
-                            {candidate.status.name}
+                        <Badge variant={
+                            candidate.final_decision.status === 'accepted' ? 'default' :
+                            candidate.final_decision.status === 'rejected' ? 'destructive' : 
+                            'secondary'
+                        }>
+                            {candidate.final_decision.status === 'accepted' ? 'Accepted' :
+                             candidate.final_decision.status === 'rejected' ? 'Rejected' :
+                             'Pending Decision'}
                         </Badge>
+                        {candidate.final_decision.decided_at && (
+                            <span className="text-sm text-muted-foreground">
+                                Decided on {format(new Date(candidate.final_decision.decided_at), 'dd MMM yyyy')}
+                                {candidate.final_decision.decided_by && ` by ${candidate.final_decision.decided_by}`}
+                            </span>
+                        )}
                         {candidate.user.cv && (
                             <Button variant="outline" size="sm" onClick={() => window.open(candidate.user.cv?.path)}>
                                 <Download className="mr-2 h-4 w-4" />
@@ -152,24 +169,73 @@ export default function ReportDetail({ candidate }: Props) {
                     </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-4">
-                    <Button
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => setActionDialog({ isOpen: true, action: 'reject' })}
-                    >
-                        <ThumbsDown className="h-4 w-4" />
-                        Reject
-                    </Button>
-                    <Button
-                        className="gap-2"
-                        onClick={() => setActionDialog({ isOpen: true, action: 'accept' })}
-                    >
-                        <ThumbsUp className="h-4 w-4" />
-                        Accept
-                    </Button>
-                </div>
+                {/* Action Buttons - Only show if status is pending */}
+                {candidate.final_decision.status === 'pending' && (
+                    <div className="flex justify-end gap-4">
+                        <Button
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => setActionDialog({ isOpen: true, action: 'reject' })}
+                        >
+                            <ThumbsDown className="h-4 w-4" />
+                            Reject
+                        </Button>
+                        <Button
+                            className="gap-2"
+                            onClick={() => setActionDialog({ isOpen: true, action: 'accept' })}
+                        >
+                            <ThumbsUp className="h-4 w-4" />
+                            Accept
+                        </Button>
+                    </div>
+                )}
+
+                {/* Final Decision Summary - Show if decided */}
+                {candidate.final_decision.status !== 'pending' && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                {candidate.final_decision.status === 'accepted' ? (
+                                    <>
+                                        <ThumbsUp className="h-5 w-5 text-green-600" />
+                                        Candidate Accepted
+                                    </>
+                                ) : (
+                                    <>
+                                        <ThumbsDown className="h-5 w-5 text-red-600" />
+                                        Candidate Rejected
+                                    </>
+                                )}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                <div>
+                                    <p className="font-medium">Decision Made By:</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.final_decision.decided_by || 'Unknown'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="font-medium">Decision Date:</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.final_decision.decided_at 
+                                            ? format(new Date(candidate.final_decision.decided_at), 'dd MMM yyyy HH:mm')
+                                            : 'Unknown'}
+                                    </p>
+                                </div>
+                                {candidate.final_decision.notes && (
+                                    <div>
+                                        <p className="font-medium">Notes:</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {candidate.final_decision.notes}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Overall Score */}
                 <Card>

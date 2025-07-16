@@ -55,14 +55,10 @@ class DatabaseSeeder extends Seeder
             // 9. User Test Answers (Depends on: User, Question)
             UserAnswerSeeder::class,
             
-            // 10. Application System (Depends on: User, VacancyPeriods, Status)
+            // 10. Application System with Complete Testing Scenarios 
+            // (Depends on: User, VacancyPeriods, Status, Questions)
+            // This seeder creates all application data including history and reports
             ApplicationSeeder::class,
-            
-            // 11. Application History (Depends on: Applications, Status, User)
-            ApplicationHistorySeeder::class,
-            
-            // 12. Application Reports (Depends on: Applications, ApplicationHistory, User)
-            ApplicationReportSeeder::class,
         ]);
     }
 }

@@ -7,6 +7,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { ArrowUpDown, Eye, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 
 interface Props {
@@ -32,6 +33,12 @@ interface Props {
                     vacancy: {
                         title: string;
                     };
+                };
+                final_decision: {
+                    status: 'pending' | 'accepted' | 'rejected';
+                    notes: string | null;
+                    decided_by: string | null;
+                    decided_at: string | null;
                 };
             }>;
             current_page: number;
@@ -227,6 +234,7 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                                                     Average {getSortIcon('average_score')}
                                                 </button>
                                             </th>
+                                            <th className="p-4 font-medium">Status</th>
                                             <th className="p-4 font-medium">Actions</th>
                                         </tr>
                                     </thead>
@@ -245,6 +253,12 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                                                         };
                                                         status: { name: string; code: string };
                                                         vacancy_period: { vacancy: { title: string } };
+                                                        final_decision: {
+                                                            status: 'pending' | 'accepted' | 'rejected';
+                                                            notes: string | null;
+                                                            decided_by: string | null;
+                                                            decided_at: string | null;
+                                                        };
                                                     },
                                                     index: number,
                                                 ) => (
@@ -277,6 +291,31 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                                                                 : '-'}
                                                         </td>
                                                         <td className="p-4">
+                                                            <div className="flex flex-col gap-1">
+                                                                <Badge 
+                                                                    variant={
+                                                                        candidate.final_decision.status === 'accepted' ? 'default' :
+                                                                        candidate.final_decision.status === 'rejected' ? 'destructive' : 
+                                                                        'secondary'
+                                                                    }
+                                                                >
+                                                                    {candidate.final_decision.status === 'accepted' ? 'Accepted' :
+                                                                     candidate.final_decision.status === 'rejected' ? 'Rejected' :
+                                                                     'Pending'}
+                                                                </Badge>
+                                                                {candidate.final_decision.decided_at && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {format(new Date(candidate.final_decision.decided_at), 'dd MMM yyyy')}
+                                                                    </span>
+                                                                )}
+                                                                {candidate.final_decision.decided_by && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        by {candidate.final_decision.decided_by}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4">
                                                             <div className="flex gap-2">
                                                                 <Button
                                                                     variant="outline"
@@ -287,32 +326,36 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                                                                 >
                                                                     <Eye className="h-4 w-4" />
                                                                 </Button>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="icon"
-                                                                    onClick={() =>
-                                                                        setActionDialog({
-                                                                            isOpen: true,
-                                                                            action: 'reject',
-                                                                            candidateId: candidate.id,
-                                                                        })
-                                                                    }
-                                                                >
-                                                                    <ThumbsDown className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="icon"
-                                                                    onClick={() =>
-                                                                        setActionDialog({
-                                                                            isOpen: true,
-                                                                            action: 'accept',
-                                                                            candidateId: candidate.id,
-                                                                        })
-                                                                    }
-                                                                >
-                                                                    <ThumbsUp className="h-4 w-4" />
-                                                                </Button>
+                                                                {candidate.final_decision.status === 'pending' && (
+                                                                    <>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="icon"
+                                                                            onClick={() =>
+                                                                                setActionDialog({
+                                                                                    isOpen: true,
+                                                                                    action: 'reject',
+                                                                                    candidateId: candidate.id,
+                                                                                })
+                                                                            }
+                                                                        >
+                                                                            <ThumbsDown className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="icon"
+                                                                            onClick={() =>
+                                                                                setActionDialog({
+                                                                                    isOpen: true,
+                                                                                    action: 'accept',
+                                                                                    candidateId: candidate.id,
+                                                                                })
+                                                                            }
+                                                                        >
+                                                                            <ThumbsUp className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -320,7 +363,7 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                                             )
                                         ) : (
                                             <tr>
-                                                <td colSpan={9} className="text-muted-foreground p-4 text-center">
+                                                <td colSpan={10} className="text-muted-foreground p-4 text-center">
                                                     No candidates found
                                                     <br />
                                                     <small className="text-xs">

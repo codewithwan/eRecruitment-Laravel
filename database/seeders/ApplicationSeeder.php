@@ -24,43 +24,45 @@ class ApplicationSeeder extends Seeder
             return;
         }
 
-        // Get all status records
-        $statuses = Status::all();
-        $administrationStatus = $statuses->where('code', 'admin_selection')->first();
-        $assessmentStatus = $statuses->where('code', 'psychotest')->first();
-        $interviewStatus = $statuses->where('code', 'interview')->first();
+        // Get status records
+        $administrationStatus = Status::where('code', 'admin_selection')->first();
+        $assessmentStatus = Status::where('code', 'psychotest')->first();
+        $interviewStatus = Status::where('code', 'interview')->first();
 
         if (!$administrationStatus || !$assessmentStatus || !$interviewStatus) {
             $this->command->info('Required statuses not found. Skipping application seeding.');
             return;
         }
 
-        $this->command->info('Creating applications for each vacancy period...');
+        $this->command->info('Creating applications...');
 
-        // Create applications for each vacancy period
-        foreach ($vacancyPeriods as $vacancyPeriod) {
+        // Take only first 2 vacancy periods to keep it simple
+        $selectedVacancyPeriods = $vacancyPeriods->take(2);
+
+        foreach ($selectedVacancyPeriods as $vacancyPeriod) {
             // Get the period's start date
             $periodStartDate = Carbon::parse($vacancyPeriod->period->start_time);
             
-            // Randomly select 5-10 candidates for each vacancy period
-            $selectedCandidates = $candidates->random(rand(5, 10));
+            // Randomly select 3-5 candidates for each vacancy period
+            $selectedCandidates = $candidates->random(rand(3, 5));
 
-            foreach ($selectedCandidates as $candidate) {
+            foreach ($selectedCandidates as $index => $candidate) {
                 // Calculate a random application date within the period
-                $applicationDate = $periodStartDate->copy()->addDays(rand(1, 30));
+                $applicationDate = $periodStartDate->copy()->addDays(rand(1, 10));
                 
-                // Determine random status for this application with weighted probabilities
-                $statusId = $this->getRandomWeightedStatus([
-                    $administrationStatus->id => 30,  // 30% in administration
-                    $assessmentStatus->id => 30,      // 30% in assessment
-                    $interviewStatus->id => 40        // 40% in interview
-                ]);
+                // Determine status based on application index for demo purposes
+                $statusId = match($index % 3) {
+                    0 => $administrationStatus->id,    // Still in administration
+                    1 => $assessmentStatus->id,        // In assessment stage  
+                    2 => $interviewStatus->id,         // In interview stage
+                    default => $administrationStatus->id
+                };
 
                 // Create the application
                 Application::create([
                     'user_id' => $candidate->id,
                     'vacancy_period_id' => $vacancyPeriod->id,
-                    'status_id' => $statusId,
+                    'status_id' => $statusId, // Current stage of the candidate
                     'resume_path' => 'resumes/dummy-resume-' . $candidate->id . '.pdf',
                     'cover_letter_path' => 'cover-letters/dummy-cover-letter-' . $candidate->id . '.pdf',
                     'created_at' => $applicationDate,
@@ -70,20 +72,5 @@ class ApplicationSeeder extends Seeder
         }
 
         $this->command->info('Application seeding completed successfully.');
-    }
-
-    private function getRandomWeightedStatus(array $weights): int
-    {
-        $rand = rand(1, 100);
-        $total = 0;
-
-        foreach ($weights as $statusId => $weight) {
-            $total += $weight;
-            if ($rand <= $total) {
-                return $statusId;
-            }
-        }
-
-        return array_key_first($weights);
     }
 } 

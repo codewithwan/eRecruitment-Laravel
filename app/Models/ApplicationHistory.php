@@ -18,6 +18,7 @@ class ApplicationHistory extends Model
         'processed_at',
         'score',
         'notes',
+        'resource_url',
         'scheduled_at',
         'completed_at',
         'reviewed_by',

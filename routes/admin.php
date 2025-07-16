@@ -32,7 +32,7 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
             // Administration Stage
             Route::prefix('administration')->name('administration.')->group(function () {
                 Route::get('/', [ApplicationStageController::class, 'administration'])->name('index');
-                Route::get('/{id}', [ApplicationStageController::class, 'administrationDetail'])->name('detail');
+                Route::get('/{id}', [ApplicationStageController::class, 'administrationShow'])->name('detail');
                 Route::post('/{id}/approve', [ApplicationStageController::class, 'approve'])->name('approve');
                 Route::post('/{id}/reject', [ApplicationStageController::class, 'reject'])->name('reject');
             });
@@ -51,6 +51,10 @@ Route::middleware(['auth', 'verified', 'role:' . UserRole::HR->value])
                 Route::post('/{id}/approve', [ApplicationStageController::class, 'approve'])->name('approve');
                 Route::post('/{id}/reject', [ApplicationStageController::class, 'reject'])->name('reject');
             });
+
+            // Stage Action Route (for all stages)
+            Route::post('/applications/{application}/{stage}', [ApplicationStageController::class, 'stageAction'])
+                ->name('applications.stage-action');
         });
 
         // User Management

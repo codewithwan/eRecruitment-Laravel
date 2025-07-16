@@ -33,10 +33,9 @@ class ApplicationHistorySeeder extends Seeder
         }
 
         // Get all status records
-        $statuses = Status::all();
-        $administrationStatus = $statuses->where('code', 'admin_selection')->first();
-        $assessmentStatus = $statuses->where('code', 'psychotest')->first();
-        $interviewStatus = $statuses->where('code', 'interview')->first();
+        $administrationStatus = Status::where('code', 'admin_selection')->first();
+        $assessmentStatus = Status::where('code', 'psychotest')->first();
+        $interviewStatus = Status::where('code', 'interview')->first();
 
         if (!$administrationStatus || !$assessmentStatus || !$interviewStatus) {
             $this->command->info('Required statuses not found. Skipping application history seeding.');
@@ -49,66 +48,110 @@ class ApplicationHistorySeeder extends Seeder
             $baseDate = Carbon::parse($application->created_at);
             $reviewer = $adminUsers->random();
 
-            // Randomly decide how far this candidate has progressed
-            $progress = rand(1, 4); // 1: admin only, 2: +assessment, 3: +interview incomplete, 4: all complete
+            // Logic berdasarkan status_id aplikasi saat ini
+            $currentStatusId = $application->status_id;
 
-            // Create administration history for all applications with score
-            ApplicationHistory::create([
-                'application_id' => $application->id,
-                'status_id' => $administrationStatus->id,
-                'processed_at' => $baseDate,
-                'score' => rand(65, 95), // All candidates have admin score
-                'notes' => $this->getRandomAdminNotes(),
-                'scheduled_at' => null,
-                'completed_at' => $baseDate->copy()->addDays(rand(1, 3)),
-                'reviewed_by' => $reviewer->id,
-                'reviewed_at' => $baseDate->copy()->addDays(rand(1, 3)),
-                'is_active' => true,
-            ]);
+            if ($currentStatusId == $administrationStatus->id) {
+                // Kandidat masih di tahap administrasi - belum dinilai
+                ApplicationHistory::create([
+                    'application_id' => $application->id,
+                    'status_id' => $administrationStatus->id,
+                    'processed_at' => $baseDate,
+                    'score' => null, // Belum dinilai
+                    'notes' => null,
+                    'scheduled_at' => null,
+                    'completed_at' => null,
+                    'reviewed_by' => null,
+                    'reviewed_at' => null,
+                    'is_active' => true,
+                ]);
 
-            // If progressed beyond administration (progress >= 2)
-            if ($progress >= 2) {
-                $assessmentDate = $baseDate->copy()->addDays(5);
+            } elseif ($currentStatusId == $assessmentStatus->id) {
+                // Kandidat di tahap assessment - sudah lolos administrasi
+                
+                // 1. History administrasi (completed dengan score)
+                ApplicationHistory::create([
+                    'application_id' => $application->id,
+                    'status_id' => $administrationStatus->id,
+                    'processed_at' => $baseDate,
+                    'score' => rand(75, 95), // Lolos dengan score tinggi
+                    'notes' => $this->getRandomAdminNotes(),
+                    'scheduled_at' => null,
+                    'completed_at' => $baseDate->copy()->addDays(2),
+                    'reviewed_by' => $reviewer->id,
+                    'reviewed_at' => $baseDate->copy()->addDays(2),
+                    'is_active' => false, // Tidak aktif karena sudah selesai
+                ]);
+
+                // 2. History assessment (current stage - belum dinilai, tapi sudah ada UserAnswer)
+                $assessmentDate = $baseDate->copy()->addDays(3);
+                
+                // Calculate assessment score based on user answers (if any)
+                $assessmentScore = $this->calculateAssessmentScore($application);
+                
                 ApplicationHistory::create([
                     'application_id' => $application->id,
                     'status_id' => $assessmentStatus->id,
                     'processed_at' => $assessmentDate,
-                    'score' => rand(70, 95), // All who took assessment have score
-                    'notes' => $this->getRandomAssessmentNotes(),
-                    'scheduled_at' => $assessmentDate->copy()->addDays(2),
-                    'completed_at' => $assessmentDate->copy()->addDays(3),
-                    'reviewed_by' => $reviewer->id,
-                    'reviewed_at' => $assessmentDate->copy()->addDays(3),
+                    'score' => $assessmentScore > 0 ? $assessmentScore : null, // Score dari UserAnswer jika ada
+                    'notes' => $assessmentScore > 0 ? $this->getRandomAssessmentNotes() : null,
+                    'scheduled_at' => $assessmentDate->copy()->addDays(1),
+                    'completed_at' => $assessmentScore > 0 ? $assessmentDate->copy()->addDays(2) : null,
+                    'reviewed_by' => $assessmentScore > 0 ? $reviewer->id : null,
+                    'reviewed_at' => $assessmentScore > 0 ? $assessmentDate->copy()->addDays(3) : null,
                     'is_active' => true,
                 ]);
-            }
 
-            // If reached interview stage (progress >= 3)
-            if ($progress >= 3) {
-                $interviewDate = $baseDate->copy()->addDays(10);
+            } elseif ($currentStatusId == $interviewStatus->id) {
+                // Kandidat di tahap interview - sudah lolos administrasi dan assessment
+                
+                // 1. History administrasi (completed)
+                ApplicationHistory::create([
+                    'application_id' => $application->id,
+                    'status_id' => $administrationStatus->id,
+                    'processed_at' => $baseDate,
+                    'score' => rand(75, 95),
+                    'notes' => $this->getRandomAdminNotes(),
+                    'scheduled_at' => null,
+                    'completed_at' => $baseDate->copy()->addDays(2),
+                    'reviewed_by' => $reviewer->id,
+                    'reviewed_at' => $baseDate->copy()->addDays(2),
+                    'is_active' => false,
+                ]);
+
+                // 2. History assessment (completed dengan score berdasarkan jawaban)
+                $assessmentDate = $baseDate->copy()->addDays(3);
+                
+                // Calculate assessment score based on user answers
+                $assessmentScore = $this->calculateAssessmentScore($application);
+                
+                ApplicationHistory::create([
+                    'application_id' => $application->id,
+                    'status_id' => $assessmentStatus->id,
+                    'processed_at' => $assessmentDate,
+                    'score' => $assessmentScore, // Score dari UserAnswer
+                    'notes' => $this->getRandomAssessmentNotes(),
+                    'scheduled_at' => $assessmentDate->copy()->addDays(1),
+                    'completed_at' => $assessmentDate->copy()->addDays(2),
+                    'reviewed_by' => $reviewer->id,
+                    'reviewed_at' => $assessmentDate->copy()->addDays(3),
+                    'is_active' => false,
+                ]);
+
+                // 3. History interview (current stage - belum dinilai)  
+                $interviewDate = $baseDate->copy()->addDays(7);
                 ApplicationHistory::create([
                     'application_id' => $application->id,
                     'status_id' => $interviewStatus->id,
                     'processed_at' => $interviewDate,
-                    'score' => $progress === 4 ? rand(70, 95) : null, // Score only if completed (progress = 4)
-                    'notes' => $this->getRandomInterviewNotes(),
+                    'score' => null, // Belum di-interview
+                    'notes' => 'Zoom URL: https://zoom.us/j/example123456',
                     'scheduled_at' => $interviewDate->copy()->addDays(2),
-                    'completed_at' => $progress === 4 ? $interviewDate->copy()->addDays(3) : null,
-                    'reviewed_by' => $reviewer->id,
-                    'reviewed_at' => $progress === 4 ? $interviewDate->copy()->addDays(3) : null,
+                    'completed_at' => null,
+                    'reviewed_by' => null,
+                    'reviewed_at' => null,
                     'is_active' => true,
                 ]);
-
-                // Update application status to interview
-                $application->update(['status_id' => $interviewStatus->id]);
-            }
-            // If only reached assessment (progress = 2)
-            else if ($progress === 2) {
-                $application->update(['status_id' => $assessmentStatus->id]);
-            }
-            // If only at administration (progress = 1)
-            else {
-                $application->update(['status_id' => $administrationStatus->id]);
             }
         }
 
@@ -149,5 +192,27 @@ class ApplicationHistorySeeder extends Seeder
             "Technical and HR interviews completed - strong candidate overall.",
         ];
         return $notes[array_rand($notes)];
+    }
+
+    /**
+     * Calculate assessment score based on user answers
+     */
+    private function calculateAssessmentScore(Application $application): float
+    {
+        $userAnswers = \App\Models\UserAnswer::where('user_id', $application->user_id)
+            ->with('choice')
+            ->get();
+
+        if ($userAnswers->isEmpty()) {
+            return 0.0;
+        }
+
+        $correctAnswers = $userAnswers->filter(function($answer) {
+            return $answer->choice && $answer->choice->is_correct;
+        })->count();
+
+        $totalAnswers = $userAnswers->count();
+        
+        return round(($correctAnswers / $totalAnswers) * 100, 2);
     }
 } 

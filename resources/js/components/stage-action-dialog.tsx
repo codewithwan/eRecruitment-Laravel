@@ -107,7 +107,7 @@ export default function StageActionDialog({ isOpen, onClose, applicationId, stag
 
         setIsSubmitting(true);
 
-        router.post(`/dashboard/applications/${applicationId}/${stage}`, {
+        router.post(`/dashboard/recruitment/applications/${applicationId}/${stage}`, {
             status: action === 'accept' ? 'passed' : 'rejected',
             score: (action === 'accept' && (stage === 'administration' || stage === 'interview')) ? parseInt(score) : null,
             notes: notes || null,

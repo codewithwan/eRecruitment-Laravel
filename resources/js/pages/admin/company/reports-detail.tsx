@@ -25,6 +25,10 @@ interface Props {
                 birth_date: string;
                 gender: string;
             };
+            social_media?: Array<{
+                platform: string;
+                url: string;
+            }>;
             cv?: {
                 path: string;
                 uploaded_at: string;
@@ -296,12 +300,24 @@ export default function ReportDetail({ candidate }: Props) {
                                         {candidate.user.profile?.phone || '-'}
                                     </p>
                                 </div>
+                                <div>
+                                    <p className="font-medium">Address</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.user.profile?.address || '-'}
+                                    </p>
+                                </div>
                             </div>
                             <div className="space-y-4">
                                 <div>
                                     <p className="font-medium">Gender</p>
                                     <p className="text-sm text-muted-foreground">
                                         {candidate.user.profile?.gender || '-'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="font-medium">Birth Place</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.user.profile?.birth_place || '-'}
                                     </p>
                                 </div>
                                 <div>
@@ -313,10 +329,26 @@ export default function ReportDetail({ candidate }: Props) {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="font-medium">Address</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {candidate.user.profile?.address || '-'}
-                                    </p>
+                                    <p className="font-medium">Social Media</p>
+                                    <div className="space-y-1">
+                                        {candidate.user.social_media && candidate.user.social_media.length > 0 ? (
+                                            candidate.user.social_media.map((social, index) => (
+                                                <div key={index} className="text-sm text-muted-foreground">
+                                                    <span className="capitalize">{social.platform}:</span>{' '}
+                                                    <a 
+                                                        href={social.url} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline"
+                                                    >
+                                                        {social.url}
+                                                    </a>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm text-muted-foreground">-</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

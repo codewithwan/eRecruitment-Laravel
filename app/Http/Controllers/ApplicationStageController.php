@@ -576,10 +576,10 @@ class ApplicationStageController extends Controller
         $profile = $application->user->candidatesProfile;
         $profileData = $profile ? [
             'full_name' => $profile->full_name,
-            'phone' => $profile->phone,
+            'phone' => $profile->phone_number,
             'address' => $profile->address,
-            'birth_place' => $profile->birth_place,
-            'birth_date' => $profile->birth_date,
+            'birth_place' => $profile->place_of_birth,
+            'birth_date' => $profile->date_of_birth,
             'gender' => $profile->gender,
         ] : null;
 
@@ -1072,10 +1072,10 @@ class ApplicationStageController extends Controller
                     'email' => $application->user->email,
                     'profile' => $application->user->candidatesProfile ? [
                         'full_name' => $application->user->candidatesProfile->full_name,
-                        'phone' => $application->user->candidatesProfile->phone,
+                        'phone' => $application->user->candidatesProfile->phone_number,
                         'address' => $application->user->candidatesProfile->address,
-                        'birth_place' => $application->user->candidatesProfile->birth_place,
-                        'birth_date' => $application->user->candidatesProfile->birth_date,
+                        'birth_place' => $application->user->candidatesProfile->place_of_birth,
+                        'birth_date' => $application->user->candidatesProfile->date_of_birth,
                         'gender' => $application->user->candidatesProfile->gender,
                     ] : null,
                 ],
@@ -1150,10 +1150,10 @@ class ApplicationStageController extends Controller
                     'email' => $application->user->email,
                     'profile' => $application->user->candidatesProfile ? [
                         'full_name' => $application->user->candidatesProfile->full_name,
-                        'phone' => $application->user->candidatesProfile->phone,
+                        'phone' => $application->user->candidatesProfile->phone_number,
                         'address' => $application->user->candidatesProfile->address,
-                        'birth_place' => $application->user->candidatesProfile->birth_place,
-                        'birth_date' => $application->user->candidatesProfile->birth_date,
+                        'birth_place' => $application->user->candidatesProfile->place_of_birth,
+                        'birth_date' => $application->user->candidatesProfile->date_of_birth,
                         'gender' => $application->user->candidatesProfile->gender,
                     ] : null,
                 ],
@@ -1422,6 +1422,7 @@ class ApplicationStageController extends Controller
         $application = Application::with([
             'user.candidatesProfile',
             'user.candidatesCV',
+            'user.candidatesSocialMedia',
             'vacancyPeriod.vacancy.company',
             'vacancyPeriod.period',
             'status',
@@ -1470,16 +1471,20 @@ class ApplicationStageController extends Controller
                     'email' => $application->user->email,
                     'profile' => $application->user->candidatesProfile ? [
                         'full_name' => $application->user->candidatesProfile->full_name,
-                        'phone' => $application->user->candidatesProfile->phone,
+                        'phone' => $application->user->candidatesProfile->phone_number,
                         'address' => $application->user->candidatesProfile->address,
-                        'birth_place' => $application->user->candidatesProfile->birth_place,
-                        'birth_date' => $application->user->candidatesProfile->birth_date,
+                        'birth_place' => $application->user->candidatesProfile->place_of_birth,
+                        'birth_date' => $application->user->candidatesProfile->date_of_birth,
                         'gender' => $application->user->candidatesProfile->gender,
                     ] : null,
                     'cv' => $application->user->candidatesCV ? [
                         'path' => $application->user->candidatesCV->path,
                         'uploaded_at' => $application->user->candidatesCV->created_at,
                     ] : null,
+                    'social_media' => $application->user->candidatesSocialMedia->map(fn($social) => [
+                        'platform' => $social->platform_name,
+                        'url' => $social->url,
+                    ]),
                 ],
                 'vacancy' => [
                     'title' => $application->vacancyPeriod->vacancy->title,
@@ -2189,4 +2194,4 @@ class ApplicationStageController extends Controller
         // Use the existing administrationDetail method which returns the correct data structure
         return $this->administrationDetail($id);
     }
-} 
+}

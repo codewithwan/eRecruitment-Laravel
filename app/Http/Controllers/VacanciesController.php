@@ -350,7 +350,8 @@ class VacanciesController extends Controller
                 ];
             });
 
-        return Inertia::render('admin/periods/index', [
+        // Return JSON response instead of Inertia render to avoid navigation
+        return response()->json([
             'vacancies' => $vacancies
         ]);
     }

@@ -163,7 +163,7 @@ export default function ReportDetail({ candidate }: Props) {
                         {candidate.user.cv && (
                             <Button variant="outline" size="sm" onClick={() => window.open(candidate.user.cv?.path)}>
                                 <Download className="mr-2 h-4 w-4" />
-                                Download CV
+                                Download Resume
                             </Button>
                         )}
                     </div>
@@ -247,237 +247,247 @@ export default function ReportDetail({ candidate }: Props) {
                             <div className="space-y-2">
                                 <p className="text-sm text-muted-foreground">Administration</p>
                                 <p className="text-2xl font-semibold">
-                                    {candidate.stages.administration.score?.toFixed(2) || '-'}
+                                    {candidate.stages.administration.score ? Number(candidate.stages.administration.score).toFixed(1) : '-'}
                                 </p>
                             </div>
                             <div className="space-y-2">
                                 <p className="text-sm text-muted-foreground">Assessment</p>
                                 <p className="text-2xl font-semibold">
-                                    {candidate.stages.assessment.score?.toFixed(2) || '-'}
+                                    {candidate.stages.assessment.score ? Number(candidate.stages.assessment.score).toFixed(1) : '-'}
                                 </p>
                             </div>
                             <div className="space-y-2">
                                 <p className="text-sm text-muted-foreground">Interview</p>
                                 <p className="text-2xl font-semibold">
-                                    {candidate.stages.interview.score?.toFixed(2) || '-'}
+                                    {candidate.stages.interview.score ? Number(candidate.stages.interview.score).toFixed(1) : '-'}
                                 </p>
                             </div>
                             <div className="space-y-2">
                                 <p className="text-sm text-muted-foreground">Average</p>
                                 <p className="text-2xl font-semibold">
-                                    {candidate.average_score?.toFixed(2) || '-'}
+                                    {candidate.average_score ? Number(candidate.average_score).toFixed(1) : '-'}
                                 </p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Administration Stage */}
+                {/* Candidate Profile */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Administration Stage</CardTitle>
+                        <CardTitle>Candidate Profile</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-4">
                                 <div>
-                                    <p className="font-medium">Status</p>
-                                    <p className="text-sm text-muted-foreground">{candidate.stages.administration.status}</p>
-                                </div>
-                                <div>
-                                    <p className="font-medium">Score</p>
+                                    <p className="font-medium">Full Name</p>
                                     <p className="text-sm text-muted-foreground">
-                                        {candidate.stages.administration.score?.toFixed(2) || '-'}
+                                        {candidate.user.profile?.full_name || candidate.user.name}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="font-medium">Reviewed By</p>
-                                    <p className="text-sm text-muted-foreground">{candidate.stages.administration.reviewed_by}</p>
+                                    <p className="font-medium">Email</p>
+                                    <p className="text-sm text-muted-foreground">{candidate.user.email}</p>
                                 </div>
                                 <div>
-                                    <p className="font-medium">Processed At</p>
+                                    <p className="font-medium">Phone</p>
                                     <p className="text-sm text-muted-foreground">
-                                        {format(new Date(candidate.stages.administration.processed_at), 'dd MMM yyyy HH:mm')}
+                                        {candidate.user.profile?.phone || '-'}
                                     </p>
                                 </div>
                             </div>
-                            {candidate.stages.administration.notes && (
+                            <div className="space-y-4">
                                 <div>
-                                    <p className="font-medium">Notes</p>
-                                    <p className="text-sm text-muted-foreground">{candidate.stages.administration.notes}</p>
+                                    <p className="font-medium">Gender</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.user.profile?.gender || '-'}
+                                    </p>
                                 </div>
-                            )}
+                                <div>
+                                    <p className="font-medium">Birth Date</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.user.profile?.birth_date 
+                                            ? format(new Date(candidate.user.profile.birth_date), 'dd MMM yyyy')
+                                            : '-'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="font-medium">Address</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.user.profile?.address || '-'}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Assessment Stage */}
+                {/* Recruitment Process Summary */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Assessment Stage</CardTitle>
+                        <CardTitle>Recruitment Process Summary</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="font-medium">Status</p>
-                                    <p className="text-sm text-muted-foreground">{candidate.stages.assessment.status}</p>
+                            {/* Administration */}
+                            <div className="flex items-center justify-between p-4 border rounded-lg">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <span className="text-blue-600 font-semibold">1</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium">Administration Review</h3>
+                                        <p className="text-sm text-muted-foreground">Document verification & initial screening</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-medium">Score</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {candidate.stages.assessment.score?.toFixed(2) || '-'}
+                                <div className="text-right">
+                                    <p className="font-semibold">
+                                        {candidate.stages.administration.score ? Number(candidate.stages.administration.score).toFixed(1) : 'Not scored'}
                                     </p>
-                                </div>
-                                <div>
-                                    <p className="font-medium">Started At</p>
                                     <p className="text-sm text-muted-foreground">
-                                        {format(new Date(candidate.stages.assessment.started_at), 'dd MMM yyyy HH:mm')}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="font-medium">Completed At</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {format(new Date(candidate.stages.assessment.completed_at), 'dd MMM yyyy HH:mm')}
+                                        {candidate.stages.administration.processed_at 
+                                            ? format(new Date(candidate.stages.administration.processed_at), 'dd MMM yyyy')
+                                            : 'Pending'}
                                     </p>
                                 </div>
                             </div>
 
-                            <div>
-                                <h3 className="mb-4 font-medium">Test Answers</h3>
-                                <div className="space-y-4">
-                                    {candidate.stages.assessment.answers.map((answer, index) => (
-                                        <div key={index} className="rounded-lg border p-4">
-                                            <div className="mb-2 flex items-start justify-between">
-                                                <p className="font-medium">{answer.question.text}</p>
-                                                {answer.selected_answer.is_correct ? (
-                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                                ) : (
-                                                    <XCircle className="h-5 w-5 text-red-500" />
-                                                )}
-                                            </div>
-                                            <div className="space-y-2">
-                                                {answer.question.choices.map((choice, choiceIndex) => (
-                                                    <div
-                                                        key={choiceIndex}
-                                                        className={`rounded-md p-2 ${
-                                                            choice.text === answer.selected_answer.text
-                                                                ? choice.is_correct
-                                                                    ? 'bg-green-50 text-green-700'
-                                                                    : 'bg-red-50 text-red-700'
-                                                                : choice.is_correct
-                                                                ? 'bg-green-50 text-green-700'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        {choice.text}
-                                                        {choice.text === answer.selected_answer.text && ' (Selected)'}
-                                                        {choice.is_correct && ' (Correct)'}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
+                            {/* Assessment */}
+                            <div className="flex items-center justify-between p-4 border rounded-lg">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                                        <span className="text-green-600 font-semibold">2</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium">Assessment Test</h3>
+                                        <p className="text-sm text-muted-foreground">Online technical/psychological test</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-semibold">
+                                        {candidate.stages.assessment.score ? Number(candidate.stages.assessment.score).toFixed(1) : 'Not completed'}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.stages.assessment.completed_at 
+                                            ? format(new Date(candidate.stages.assessment.completed_at), 'dd MMM yyyy')
+                                            : candidate.stages.assessment.started_at 
+                                                ? 'In progress'
+                                                : 'Not started'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Interview */}
+                            <div className="flex items-center justify-between p-4 border rounded-lg">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                        <span className="text-orange-600 font-semibold">3</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium">Interview</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {candidate.stages.interview.interviewer ? 
+                                                `with ${candidate.stages.interview.interviewer.name}` : 
+                                                'Final interview session'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-semibold">
+                                        {candidate.stages.interview.score ? Number(candidate.stages.interview.score).toFixed(1) : 'Not completed'}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {candidate.stages.interview.completed_at 
+                                            ? format(new Date(candidate.stages.interview.completed_at), 'dd MMM yyyy')
+                                            : candidate.stages.interview.scheduled_at 
+                                                ? `Scheduled for ${format(new Date(candidate.stages.interview.scheduled_at), 'dd MMM yyyy')}`
+                                                : 'Not scheduled'}
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Interview Stage */}
+                {/* Key Notes & Comments */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Interview Stage</CardTitle>
+                        <CardTitle>Notes & Comments</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="font-medium">Status</p>
-                                    <p className="text-sm text-muted-foreground">{candidate.stages.interview.status}</p>
-                                </div>
-                                <div>
-                                    <p className="font-medium">Score</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {candidate.stages.interview.score?.toFixed(2) || '-'}
+                            {/* Administration Notes */}
+                            {candidate.stages.administration.notes && (
+                                <div className="p-4 bg-blue-50 rounded-lg">
+                                    <h4 className="font-medium text-blue-900">Administration Review</h4>
+                                    <p className="text-sm text-blue-700 mt-1">{candidate.stages.administration.notes}</p>
+                                    <p className="text-xs text-blue-600 mt-2">
+                                        By {candidate.stages.administration.reviewed_by}
                                     </p>
-                                </div>
-                                <div>
-                                    <p className="font-medium">Interviewer</p>
-                                    <p className="text-sm text-muted-foreground">{candidate.stages.interview.interviewer.name}</p>
-                                </div>
-                                <div>
-                                    <p className="font-medium">Scheduled At</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {format(new Date(candidate.stages.interview.scheduled_at), 'dd MMM yyyy HH:mm')}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="font-medium">Completed At</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {format(new Date(candidate.stages.interview.completed_at), 'dd MMM yyyy HH:mm')}
-                                    </p>
-                                </div>
-                            </div>
-                            {candidate.stages.interview.notes && (
-                                <div>
-                                    <p className="font-medium">Interview Notes</p>
-                                    <p className="text-sm text-muted-foreground">{candidate.stages.interview.notes}</p>
                                 </div>
                             )}
-                        </div>
-                    </CardContent>
-                </Card>
+                            
+                            {/* Interview Notes */}
+                            {candidate.stages.interview.notes && (
+                                <div className="p-4 bg-orange-50 rounded-lg">
+                                    <h4 className="font-medium text-orange-900">Interview Feedback</h4>
+                                    <p className="text-sm text-orange-700 mt-1">{candidate.stages.interview.notes}</p>
+                                    <p className="text-xs text-orange-600 mt-2">
+                                        By {candidate.stages.interview.interviewer?.name || 'Interviewer'}
+                                    </p>
+                                </div>
+                            )}
 
-                {/* History Timeline */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Application History</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {candidate.history.map((record, index) => (
-                                <div key={index} className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h4 className="font-medium">{record.stage}</h4>
-                                            <p className="text-sm text-muted-foreground">{record.status.name}</p>
-                                        </div>
-                                        <Badge variant={
-                                            record.status.code === 'approved' ? 'secondary' :
-                                            record.status.code === 'rejected' ? 'destructive' :
-                                            'default'
-                                        }>
-                                            {record.status.code}
-                                        </Badge>
-                                    </div>
-                                    {record.reviewer && (
-                                        <p className="text-sm text-muted-foreground">
-                                            Reviewed by {record.reviewer.name}
+                            {/* Final Decision Notes */}
+                            {candidate.final_decision.notes && (
+                                <div className={`p-4 rounded-lg ${
+                                    candidate.final_decision.status === 'accepted' 
+                                        ? 'bg-green-50' 
+                                        : candidate.final_decision.status === 'rejected' 
+                                            ? 'bg-red-50' 
+                                            : 'bg-gray-50'
+                                }`}>
+                                    <h4 className={`font-medium ${
+                                        candidate.final_decision.status === 'accepted' 
+                                            ? 'text-green-900' 
+                                            : candidate.final_decision.status === 'rejected' 
+                                                ? 'text-red-900' 
+                                                : 'text-gray-900'
+                                    }`}>
+                                        Final Decision
+                                    </h4>
+                                    <p className={`text-sm mt-1 ${
+                                        candidate.final_decision.status === 'accepted' 
+                                            ? 'text-green-700' 
+                                            : candidate.final_decision.status === 'rejected' 
+                                                ? 'text-red-700' 
+                                                : 'text-gray-700'
+                                    }`}>
+                                        {candidate.final_decision.notes}
+                                    </p>
+                                    {candidate.final_decision.decided_by && (
+                                        <p className={`text-xs mt-2 ${
+                                            candidate.final_decision.status === 'accepted' 
+                                                ? 'text-green-600' 
+                                                : candidate.final_decision.status === 'rejected' 
+                                                    ? 'text-red-600' 
+                                                    : 'text-gray-600'
+                                        }`}>
+                                            By {candidate.final_decision.decided_by}
                                         </p>
                                     )}
-                                    {record.notes && (
-                                        <p className="text-sm">{record.notes}</p>
-                                    )}
-                                    <div className="flex gap-4 text-sm text-muted-foreground">
-                                        {record.processed_at && (
-                                            <span>Processed: {format(new Date(record.processed_at), 'dd MMM yyyy HH:mm')}</span>
-                                        )}
-                                        {record.scheduled_at && (
-                                            <span>Scheduled: {format(new Date(record.scheduled_at), 'dd MMM yyyy HH:mm')}</span>
-                                        )}
-                                        {record.completed_at && (
-                                            <span>Completed: {format(new Date(record.completed_at), 'dd MMM yyyy HH:mm')}</span>
-                                        )}
-                                        {record.score && (
-                                            <span>Score: {record.score.toFixed(2)}</span>
-                                        )}
-                                    </div>
-                                    {index < candidate.history.length - 1 && (
-                                        <Separator className="my-4" />
-                                    )}
                                 </div>
-                            ))}
+                            )}
+
+                            {/* Show message if no notes available */}
+                            {!candidate.stages.administration.notes && 
+                             !candidate.stages.interview.notes && 
+                             !candidate.final_decision.notes && (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <p>No additional notes or comments available</p>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

@@ -132,10 +132,14 @@ class ApplicationSeeder extends Seeder
     private function createAdministrationPending(User $candidate, $vacancyPeriod, Carbon $date): void
     {
         // Baru apply, belum direview admin
+        $filePaths = $this->generateFilePaths($candidate);
+        
         $application = Application::create([
             'user_id' => $candidate->id,
             'vacancy_period_id' => $vacancyPeriod->id,
             'status_id' => $this->statuses['admin_selection']->id,
+            'resume_path' => $filePaths['resume_path'],
+            'cover_letter_path' => $filePaths['cover_letter_path'],
             'created_at' => $date,
             'updated_at' => $date,
         ]);
@@ -154,10 +158,14 @@ class ApplicationSeeder extends Seeder
     private function createAssessmentNoAnswers(User $candidate, $vacancyPeriod, Carbon $date): void
     {
         // Lolos admin, masuk assessment tapi belum mengerjakan soal
+        $filePaths = $this->generateFilePaths($candidate);
+        
         $application = Application::create([
             'user_id' => $candidate->id,
             'vacancy_period_id' => $vacancyPeriod->id,
             'status_id' => $this->statuses['psychotest']->id,
+            'resume_path' => $filePaths['resume_path'],
+            'cover_letter_path' => $filePaths['cover_letter_path'],
             'created_at' => $date,
             'updated_at' => $date->copy()->addDays(3),
         ]);
@@ -191,10 +199,14 @@ class ApplicationSeeder extends Seeder
     private function createAssessmentWithAnswers(User $candidate, $vacancyPeriod, Carbon $date): void
     {
         // Lolos admin, di assessment dan sudah mengerjakan soal
+        $filePaths = $this->generateFilePaths($candidate);
+        
         $application = Application::create([
             'user_id' => $candidate->id,
             'vacancy_period_id' => $vacancyPeriod->id,
             'status_id' => $this->statuses['psychotest']->id,
+            'resume_path' => $filePaths['resume_path'],
+            'cover_letter_path' => $filePaths['cover_letter_path'],
             'created_at' => $date,
             'updated_at' => $date->copy()->addDays(4),
         ]);
@@ -234,10 +246,14 @@ class ApplicationSeeder extends Seeder
     private function createInterviewPending(User $candidate, $vacancyPeriod, Carbon $date): void
     {
         // Di tahap interview, belum di-interview
+        $filePaths = $this->generateFilePaths($candidate);
+        
         $application = Application::create([
             'user_id' => $candidate->id,
             'vacancy_period_id' => $vacancyPeriod->id,
             'status_id' => $this->statuses['interview']->id,
+            'resume_path' => $filePaths['resume_path'],
+            'cover_letter_path' => $filePaths['cover_letter_path'],
             'created_at' => $date,
             'updated_at' => $date->copy()->addDays(6),
         ]);
@@ -287,10 +303,14 @@ class ApplicationSeeder extends Seeder
     private function createReportsPending(User $candidate, $vacancyPeriod, Carbon $date): void
     {
         // Sudah punya 3 nilai, masuk reports dengan status pending
+        $filePaths = $this->generateFilePaths($candidate);
+        
         $application = Application::create([
             'user_id' => $candidate->id,
             'vacancy_period_id' => $vacancyPeriod->id,
             'status_id' => $this->statuses['interview']->id,
+            'resume_path' => $filePaths['resume_path'],
+            'cover_letter_path' => $filePaths['cover_letter_path'],
             'created_at' => $date,
             'updated_at' => $date->copy()->addDays(10),
         ]);
@@ -367,10 +387,14 @@ class ApplicationSeeder extends Seeder
 
     private function createCompleteApplication(User $candidate, $vacancyPeriod, Carbon $date, string $decision): Application
     {
+        $filePaths = $this->generateFilePaths($candidate);
+        
         $application = Application::create([
             'user_id' => $candidate->id,
             'vacancy_period_id' => $vacancyPeriod->id,
             'status_id' => $this->statuses['interview']->id,
+            'resume_path' => $filePaths['resume_path'],
+            'cover_letter_path' => $filePaths['cover_letter_path'],
             'created_at' => $date,
             'updated_at' => $date->copy()->addDays(12),
         ]);
@@ -498,4 +522,15 @@ class ApplicationSeeder extends Seeder
         $this->command->info('   Visit: /dashboard/recruitment/interview');
         $this->command->info('   Visit: /dashboard/recruitment/reports');
     }
-} 
+
+    private function generateFilePaths(User $candidate): array
+    {
+        $timestamp = now()->format('Y_m_d_His');
+        $candidateName = str_replace(' ', '_', strtolower($candidate->name));
+        
+        return [
+            'resume_path' => "uploads/resumes/{$candidateName}_{$candidate->id}_resume_{$timestamp}.pdf",
+            'cover_letter_path' => "uploads/cover_letters/{$candidateName}_{$candidate->id}_cover_letter_{$timestamp}.pdf",
+        ];
+    }
+}

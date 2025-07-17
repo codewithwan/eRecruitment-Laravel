@@ -44,21 +44,12 @@ class DepartmentController extends Controller
 
             $department = Department::create($validated);
 
-            return response()->json([
-                'message' => 'Department created successfully',
-                'department' => $department,
-            ], 201);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Department created successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error creating department: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error creating department',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error creating department: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -76,21 +67,12 @@ class DepartmentController extends Controller
 
             $department->update($validated);
 
-            return response()->json([
-                'message' => 'Department updated successfully',
-                'department' => $department,
-            ]);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Department updated successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error updating department: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error updating department',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error updating department: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -104,22 +86,15 @@ class DepartmentController extends Controller
             
             // Check if department has any vacancies
             if ($department->vacancies()->count() > 0) {
-                return response()->json([
-                    'message' => 'Cannot delete department with existing vacancies',
-                ], 400);
+                return redirect()->back()->withErrors(['error' => 'Cannot delete department with existing vacancies']);
             }
 
             $department->delete();
 
-            return response()->json([
-                'message' => 'Department deleted successfully',
-            ]);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Department deleted successfully');
         } catch (\Exception $e) {
             Log::error('Error deleting department: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error deleting department',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error deleting department: ' . $e->getMessage()]);
         }
     }
 
@@ -139,21 +114,12 @@ class DepartmentController extends Controller
 
             $stage = Status::create($validated);
 
-            return response()->json([
-                'message' => 'Recruitment stage created successfully',
-                'stage' => $stage,
-            ], 201);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Recruitment stage created successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error creating recruitment stage: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error creating recruitment stage',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error creating recruitment stage: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -175,21 +141,12 @@ class DepartmentController extends Controller
 
             $stage->update($validated);
 
-            return response()->json([
-                'message' => 'Recruitment stage updated successfully',
-                'stage' => $stage,
-            ]);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Recruitment stage updated successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error updating recruitment stage: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error updating recruitment stage',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error updating recruitment stage: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -203,22 +160,15 @@ class DepartmentController extends Controller
             
             // Check if stage is being used in applications
             if ($stage->applications()->count() > 0) {
-                return response()->json([
-                    'message' => 'Cannot delete status that is currently in use',
-                ], 400);
+                return redirect()->back()->withErrors(['error' => 'Cannot delete status that is currently in use']);
             }
 
             $stage->delete();
 
-            return response()->json([
-                'message' => 'Recruitment stage deleted successfully',
-            ]);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Recruitment stage deleted successfully');
         } catch (\Exception $e) {
             Log::error('Error deleting recruitment stage: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error deleting recruitment stage',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error deleting recruitment stage: ' . $e->getMessage()]);
         }
     }
 
@@ -228,9 +178,7 @@ class DepartmentController extends Controller
      */
     public function updateStageOrder(Request $request)
     {
-        return response()->json([
-            'message' => 'Stage ordering is no longer supported in the current system structure',
-        ], 400);
+        return redirect()->back()->withErrors(['error' => 'Stage ordering is no longer supported in the current system structure']);
     }
 
     /**
@@ -245,21 +193,12 @@ class DepartmentController extends Controller
 
             $educationLevel = EducationLevel::create($validated);
 
-            return response()->json([
-                'message' => 'Education level created successfully',
-                'educationLevel' => $educationLevel,
-            ], 201);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Education level created successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error creating education level: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error creating education level',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error creating education level: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -277,21 +216,12 @@ class DepartmentController extends Controller
 
             $educationLevel->update($validated);
 
-            return response()->json([
-                'message' => 'Education level updated successfully',
-                'educationLevel' => $educationLevel,
-            ]);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Education level updated successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error updating education level: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error updating education level',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error updating education level: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -301,26 +231,31 @@ class DepartmentController extends Controller
     public function destroyEducationLevel($id)
     {
         try {
+            Log::info('Attempting to delete education level with ID: ' . $id);
+            
             $educationLevel = EducationLevel::findOrFail($id);
+            Log::info('Found education level: ' . $educationLevel->name);
             
             // Check if education level is being used in vacancies
-            if ($educationLevel->vacancies()->count() > 0) {
-                return response()->json([
-                    'message' => 'Cannot delete education level that is currently used in vacancies',
-                ], 400);
+            $vacanciesCount = $educationLevel->vacancies()->count();
+            Log::info('Vacancies count for education level: ' . $vacanciesCount);
+            
+            if ($vacanciesCount > 0) {
+                Log::warning('Cannot delete education level - has ' . $vacanciesCount . ' vacancies');
+                return redirect()->back()->withErrors(['error' => 'Cannot delete education level that is currently used in vacancies']);
             }
 
             $educationLevel->delete();
+            Log::info('Education level deleted successfully');
 
-            return response()->json([
-                'message' => 'Education level deleted successfully',
-            ]);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Education level deleted successfully');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Education level not found with ID: ' . $id);
+            return redirect()->back()->withErrors(['error' => 'Education level not found']);
         } catch (\Exception $e) {
             Log::error('Error deleting education level: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error deleting education level',
-                'error' => $e->getMessage(),
-            ], 500);
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return redirect()->back()->withErrors(['error' => 'Error deleting education level: ' . $e->getMessage()]);
         }
     }
 
@@ -336,21 +271,12 @@ class DepartmentController extends Controller
 
             $major = MasterMajor::create($validated);
 
-            return response()->json([
-                'message' => 'Major created successfully',
-                'major' => $major,
-            ], 201);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Major created successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error creating major: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error creating major',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error creating major: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -368,21 +294,12 @@ class DepartmentController extends Controller
 
             $major->update($validated);
 
-            return response()->json([
-                'message' => 'Major updated successfully',
-                'major' => $major,
-            ]);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Major updated successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error updating major: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error updating major',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error updating major: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -396,22 +313,15 @@ class DepartmentController extends Controller
             
             // Check if major is used in any candidate educations
             if ($major->candidatesEducations()->count() > 0) {
-                return response()->json([
-                    'message' => 'Cannot delete major that is being used by candidates',
-                ], 400);
+                return redirect()->back()->withErrors(['error' => 'Cannot delete major that is being used by candidates']);
             }
 
             $major->delete();
 
-            return response()->json([
-                'message' => 'Major deleted successfully',
-            ]);
+            return redirect()->route('admin.management.department-stage')->with('success', 'Major deleted successfully');
         } catch (\Exception $e) {
             Log::error('Error deleting major: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error deleting major',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error deleting major: ' . $e->getMessage()]);
         }
     }
 } 

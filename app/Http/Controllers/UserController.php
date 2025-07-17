@@ -187,22 +187,22 @@ class UserController extends Controller
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
 
-        $usersQuery = User::where('role', UserRole::CANDIDATE);
+        // Get all users, not just candidates
+        $usersQuery = User::query();
         $totalUsers = $usersQuery->count();
 
-        // Apply pagination
+        // Apply pagination using Laravel's paginate method for better handling
         $users = $usersQuery->orderBy('id', 'desc')
-            ->skip(($page - 1) * $perPage)
-            ->take($perPage)
-            ->get();
+            ->paginate($perPage, ['*'], 'page', $page)
+            ->withQueryString();
 
         return Inertia::render('admin/users/user-management', [
-            'users' => $users,
+            'users' => $users->items(),
             'pagination' => [
-                'total' => $totalUsers,
-                'per_page' => (int) $perPage,
-                'current_page' => (int) $page,
-                'last_page' => ceil($totalUsers / $perPage),
+                'total' => $users->total(),
+                'per_page' => $users->perPage(),
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
             ],
         ]);
     }
@@ -212,22 +212,23 @@ class UserController extends Controller
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
 
-        $usersQuery = User::where('role', UserRole::CANDIDATE);
+        // Get all users, not just candidates
+        $usersQuery = User::query();
         $totalUsers = $usersQuery->count();
 
+        // Apply pagination using Laravel's paginate method for better handling
         $users = $usersQuery->orderBy('id', 'desc')
-            ->skip(($page - 1) * $perPage)
-            ->take($perPage)
-            ->get();
+            ->paginate($perPage, ['*'], 'page', $page)
+            ->withQueryString();
 
-        // Make sure returned values are integers
-        return response()->json([
-            'users' => $users,
+        // Return Inertia response instead of JSON
+        return Inertia::render('admin/users/user-management', [
+            'users' => $users->items(),
             'pagination' => [
-                'total' => $totalUsers,
-                'per_page' => (int) $perPage,
-                'current_page' => (int) $page,
-                'last_page' => ceil($totalUsers / $perPage),
+                'total' => $users->total(),
+                'per_page' => $users->perPage(),
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
             ],
         ]);
     }
@@ -246,7 +247,7 @@ class UserController extends Controller
             ['password' => Hash::make($validatedData['password'])]
         ));
 
-        return response()->json(['message' => 'User created successfully', 'user' => $user]);
+        return redirect()->route('admin.users.info')->with('success', 'User created successfully');
     }
 
     public function update(Request $request, $id)
@@ -254,7 +255,7 @@ class UserController extends Controller
         $user = User::find($id);
 
         if (! $user) {
-            return response()->json(['message' => 'User not found'], 404);
+            return redirect()->route('admin.users.info')->withErrors(['error' => 'User not found']);
         }
 
         $validatedData = $request->validate([
@@ -265,10 +266,7 @@ class UserController extends Controller
 
         $user->update($validatedData);
 
-        return response()->json([
-            'message' => 'User updated successfully',
-            'user' => $user,
-        ]);
+        return redirect()->route('admin.users.info')->with('success', 'User updated successfully');
     }
 
     public function destroy($id)
@@ -278,6 +276,6 @@ class UserController extends Controller
             $user->delete();
         }
 
-        return response()->json(['message' => 'User deleted successfully']);
+        return redirect()->route('admin.users.info')->with('success', 'User deleted successfully');
     }
 }

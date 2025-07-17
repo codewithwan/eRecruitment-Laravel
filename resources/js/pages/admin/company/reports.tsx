@@ -1,38 +1,51 @@
-import { Head, router } from '@inertiajs/react';
+import StageActionDialog from '@/components/stage-action-dialog';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Pagination } from '@/components/ui/pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Eye, ThumbsUp, ThumbsDown, ArrowUpDown } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { Pagination } from '@/components/ui/pagination';
+import { ArrowUpDown, Eye, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import StageActionDialog from '@/components/stage-action-dialog';
 
 interface Props {
     candidates: {
-        data: Array<{
-            id: number;
-            user: {
-                name: string;
-                email: string;
-            };
-            scores: {
-                administration: number | null;
-                assessment: number | null;
-                interview: number | null;
-                average: number | null;
-            };
-            status: {
-                name: string;
-                code: string;
-            };
-            vacancy_period: {
-                vacancy: {
-                    title: string;
+        data: {
+            data: Array<{
+                id: number;
+                user: {
+                    name: string;
+                    email: string;
                 };
-            };
-        }>;
+                scores: {
+                    administration: number | null;
+                    assessment: number | null;
+                    interview: number | null;
+                    average: number | null;
+                };
+                status: {
+                    name: string;
+                    code: string;
+                };
+                vacancy_period: {
+                    vacancy: {
+                        title: string;
+                    };
+                };
+                final_decision: {
+                    status: 'pending' | 'accepted' | 'rejected';
+                    notes: string | null;
+                    decided_by: string | null;
+                    decided_at: string | null;
+                };
+            }>;
+            current_page: number;
+            per_page: number;
+            last_page: number;
+            total: number;
+        };
         current_page: number;
         per_page: number;
         last_page: number;
@@ -60,6 +73,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Reports({ candidates, filters, companyInfo, periodInfo }: Props) {
+    // Enhanced debugging
+    console.log('=== DEBUGGING CANDIDATES DATA ===');
+    console.log('Full candidates object:', candidates);
+    console.log('candidates.data:', candidates.data);
+    console.log('candidates.data.data:', candidates.data.data);
+    console.log('candidates.data.data type:', typeof candidates.data.data);
+    console.log('candidates.data.data isArray:', Array.isArray(candidates.data.data));
+    console.log('candidates.data.data length:', candidates.data.data?.length);
+    console.log('candidates.total:', candidates.total);
+    console.log('Render condition result:', Array.isArray(candidates.data.data) && candidates.data.data.length > 0);
+    console.log('================================');
+
     const [actionDialog, setActionDialog] = useState<{
         isOpen: boolean;
         action: 'accept' | 'reject';
@@ -69,10 +94,10 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
     const handleSort = (column: string) => {
         const newOrder = filters?.sort === column && filters.order === 'asc' ? 'desc' : 'asc';
         router.visit('/dashboard/recruitment/reports', {
-            data: { 
-                ...(filters || {}), 
+            data: {
+                ...(filters || {}),
                 sort: column,
-                order: newOrder
+                order: newOrder,
             },
             preserveState: true,
             preserveScroll: true,
@@ -89,9 +114,11 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
 
     const getSortIcon = (column: string) => {
         if (filters?.sort !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
-        return filters.order === 'asc' ? 
-            <ArrowUpDown className="ml-2 h-4 w-4 text-primary" /> : 
-            <ArrowUpDown className="ml-2 h-4 w-4 text-primary rotate-180" />;
+        return filters.order === 'asc' ? (
+            <ArrowUpDown className="text-primary ml-2 h-4 w-4" />
+        ) : (
+            <ArrowUpDown className="text-primary ml-2 h-4 w-4 rotate-180" />
+        );
     };
 
     return (
@@ -102,33 +129,41 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                 <div className="flex w-full border-b">
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/administration', {
-                            data: { company: filters?.company, period: filters?.period }
-                        })}
+                        onClick={() =>
+                            router.visit('/dashboard/recruitment/administration', {
+                                data: { company: filters?.company, period: filters?.period },
+                            })
+                        }
                     >
                         Administration
                     </button>
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/assessment', {
-                            data: { company: filters?.company, period: filters?.period }
-                        })}
+                        onClick={() =>
+                            router.visit('/dashboard/recruitment/assessment', {
+                                data: { company: filters?.company, period: filters?.period },
+                            })
+                        }
                     >
                         Assessment
                     </button>
                     <button
                         className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                        onClick={() => router.visit('/dashboard/recruitment/interview', {
-                            data: { company: filters?.company, period: filters?.period }
-                        })}
+                        onClick={() =>
+                            router.visit('/dashboard/recruitment/interview', {
+                                data: { company: filters?.company, period: filters?.period },
+                            })
+                        }
                     >
                         Interview
                     </button>
                     <button
-                        className="flex-1 border-b-2 border-primary px-4 py-2 text-sm font-medium text-primary"
-                        onClick={() => router.visit('/dashboard/recruitment/reports', {
-                            data: { company: filters?.company, period: filters?.period }
-                        })}
+                        className="border-primary text-primary flex-1 border-b-2 px-4 py-2 text-sm font-medium"
+                        onClick={() =>
+                            router.visit('/dashboard/recruitment/reports', {
+                                data: { company: filters?.company, period: filters?.period },
+                            })
+                        }
                     >
                         Reports
                     </button>
@@ -139,17 +174,13 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                     <Card>
                         <CardContent className="pt-6">
                             <div className="space-y-2">
-                                {companyInfo && (
-                                    <h2 className="text-2xl font-semibold text-gray-800">
-                                        {companyInfo.name}
-                                    </h2>
-                                )}
+                                {companyInfo && <h2 className="text-2xl font-semibold text-gray-800">{companyInfo.name}</h2>}
                                 {periodInfo && (
                                     <div className="text-sm text-gray-600">
                                         <p className="font-medium">{periodInfo.name}</p>
                                         <p>
-                                            Period: {format(new Date(periodInfo.start_date), 'dd MMM yyyy')} 
-                                            {' - '} 
+                                            Period: {format(new Date(periodInfo.start_date), 'dd MMM yyyy')}
+                                            {' - '}
                                             {format(new Date(periodInfo.end_date), 'dd MMM yyyy')}
                                         </p>
                                     </div>
@@ -163,150 +194,200 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
                 <div>
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-2xl font-semibold">Recruitment Reports</h2>
-                        <div className="text-sm text-muted-foreground">
-                            Total: {candidates.total} candidates
-                        </div>
+                        <div className="text-muted-foreground text-sm">Total: {candidates.total} candidates</div>
                     </div>
-                        <Card>
-                            <CardHeader>
+                    <Card>
+                        <CardHeader>
                             <CardTitle>Candidates Report</CardTitle>
                             <CardDescription>View and manage candidates final reports</CardDescription>
-                            </CardHeader>
-                            <CardContent>
+                        </CardHeader>
+                        <CardContent>
                             <div className="relative overflow-x-auto">
                                 <table className="w-full text-left text-sm">
                                     <thead className="bg-muted text-muted-foreground">
                                         <tr>
                                             <th className="p-4 font-medium">No</th>
                                             <th className="p-4 font-medium">
-                                                <button 
-                                                    className="flex items-center"
-                                                    onClick={() => handleSort('name')}
-                                                >
+                                                <button className="flex items-center" onClick={() => handleSort('name')}>
                                                     Name {getSortIcon('name')}
                                                 </button>
                                             </th>
                                             <th className="p-4 font-medium">Email</th>
                                             <th className="p-4 font-medium">Position</th>
                                             <th className="p-4 font-medium">
-                                                <button 
-                                                    className="flex items-center"
-                                                    onClick={() => handleSort('administration_score')}
-                                                >
+                                                <button className="flex items-center" onClick={() => handleSort('administration_score')}>
                                                     Administration {getSortIcon('administration_score')}
                                                 </button>
                                             </th>
                                             <th className="p-4 font-medium">
-                                                <button 
-                                                    className="flex items-center"
-                                                    onClick={() => handleSort('assessment_score')}
-                                                >
+                                                <button className="flex items-center" onClick={() => handleSort('assessment_score')}>
                                                     Assessment {getSortIcon('assessment_score')}
                                                 </button>
                                             </th>
                                             <th className="p-4 font-medium">
-                                                <button 
-                                                    className="flex items-center"
-                                                    onClick={() => handleSort('interview_score')}
-                                                >
+                                                <button className="flex items-center" onClick={() => handleSort('interview_score')}>
                                                     Interview {getSortIcon('interview_score')}
                                                 </button>
                                             </th>
                                             <th className="p-4 font-medium">
-                                                <button 
-                                                    className="flex items-center"
-                                                    onClick={() => handleSort('average_score')}
-                                                >
+                                                <button className="flex items-center" onClick={() => handleSort('average_score')}>
                                                     Average {getSortIcon('average_score')}
                                                 </button>
                                             </th>
+                                            <th className="p-4 font-medium">Status</th>
                                             <th className="p-4 font-medium">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {candidates.data.length > 0 ? (
-                                            candidates.data.map((candidate, index) => (
-                                                <tr key={candidate.id} className="border-b">
-                                                    <td className="p-4">
-                                                        {(candidates.current_page - 1) * candidates.per_page + index + 1}
-                                                    </td>
-                                                    <td className="p-4">{candidate.user.name}</td>
-                                                    <td className="p-4">{candidate.user.email}</td>
-                                                    <td className="p-4">{candidate.vacancy_period.vacancy.title}</td>
-                                                    <td className="p-4">
-                                                        {candidate.scores.administration !== null ? 
-                                                            candidate.scores.administration.toFixed(2) : '-'}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        {candidate.scores.assessment !== null ? 
-                                                            candidate.scores.assessment.toFixed(2) : '-'}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        {candidate.scores.interview !== null ? 
-                                                            candidate.scores.interview.toFixed(2) : '-'}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        {candidate.scores.average !== null ? 
-                                                            candidate.scores.average.toFixed(2) : '-'}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <div className="flex gap-2">
-                                                            <Button
-                                                                variant="outline"
-                                                                size="icon"
-                                                                onClick={() => {
-                                                                    router.get(`/dashboard/recruitment/reports/${candidate.id}`);
-                                                                }}
-                                                            >
-                                                                <Eye className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="icon"
-                                                                onClick={() => setActionDialog({
-                                                                    isOpen: true,
-                                                                    action: 'reject',
-                                                                    candidateId: candidate.id
-                                                                })}
-                                                            >
-                                                                <ThumbsDown className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="icon"
-                                                                onClick={() => setActionDialog({
-                                                                    isOpen: true,
-                                                                    action: 'accept',
-                                                                    candidateId: candidate.id
-                                                                })}
-                                                            >
-                                                                <ThumbsUp className="h-4 w-4" />
-                                                            </Button>
-                                    </div>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                        {Array.isArray(candidates.data.data) && candidates.data.data.length > 0 ? (
+                                            candidates.data.data.map(
+                                                (
+                                                    candidate: {
+                                                        id: number;
+                                                        user: { name: string; email: string };
+                                                        scores: {
+                                                            administration: number | null;
+                                                            assessment: number | null;
+                                                            interview: number | null;
+                                                            average: number | null;
+                                                        };
+                                                        status: { name: string; code: string };
+                                                        vacancy_period: { vacancy: { title: string } };
+                                                        final_decision: {
+                                                            status: 'pending' | 'accepted' | 'rejected';
+                                                            notes: string | null;
+                                                            decided_by: string | null;
+                                                            decided_at: string | null;
+                                                        };
+                                                    },
+                                                    index: number,
+                                                ) => (
+                                                    <tr key={candidate.id} className="border-b">
+                                                        <td className="p-4">
+                                                            {(candidates.data.current_page - 1) * candidates.data.per_page + index + 1}
+                                                        </td>
+                                                        <td className="p-4">{candidate.user?.name ?? '-'}</td>
+                                                        <td className="p-4">{candidate.user?.email ?? '-'}</td>
+                                                        <td className="p-4">{candidate.vacancy_period?.vacancy?.title ?? '-'}</td>
+                                                        <td className="p-4">
+                                                            {candidate.scores?.administration !== null &&
+                                                            candidate.scores?.administration !== undefined
+                                                                ? candidate.scores.administration.toFixed(2)
+                                                                : '-'}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            {candidate.scores?.assessment !== null && candidate.scores?.assessment !== undefined
+                                                                ? candidate.scores.assessment.toFixed(2)
+                                                                : '-'}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            {candidate.scores?.interview !== null && candidate.scores?.interview !== undefined
+                                                                ? candidate.scores.interview.toFixed(2)
+                                                                : '-'}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            {candidate.scores?.average !== null && candidate.scores?.average !== undefined
+                                                                ? candidate.scores.average.toFixed(2)
+                                                                : '-'}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <div className="flex flex-col gap-1">
+                                                                <Badge 
+                                                                    variant={
+                                                                        candidate.final_decision.status === 'accepted' ? 'default' :
+                                                                        candidate.final_decision.status === 'rejected' ? 'destructive' : 
+                                                                        'secondary'
+                                                                    }
+                                                                >
+                                                                    {candidate.final_decision.status === 'accepted' ? 'Accepted' :
+                                                                     candidate.final_decision.status === 'rejected' ? 'Rejected' :
+                                                                     'Pending'}
+                                                                </Badge>
+                                                                {candidate.final_decision.decided_at && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {format(new Date(candidate.final_decision.decided_at), 'dd MMM yyyy')}
+                                                                    </span>
+                                                                )}
+                                                                {candidate.final_decision.decided_by && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        by {candidate.final_decision.decided_by}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <div className="flex gap-2">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    onClick={() => {
+                                                                        router.get(`/dashboard/recruitment/reports/${candidate.id}`);
+                                                                    }}
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                </Button>
+                                                                {candidate.final_decision.status === 'pending' && (
+                                                                    <>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="icon"
+                                                                            onClick={() =>
+                                                                                setActionDialog({
+                                                                                    isOpen: true,
+                                                                                    action: 'reject',
+                                                                                    candidateId: candidate.id,
+                                                                                })
+                                                                            }
+                                                                        >
+                                                                            <ThumbsDown className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="icon"
+                                                                            onClick={() =>
+                                                                                setActionDialog({
+                                                                                    isOpen: true,
+                                                                                    action: 'accept',
+                                                                                    candidateId: candidate.id,
+                                                                                })
+                                                                            }
+                                                                        >
+                                                                            <ThumbsUp className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ),
+                                            )
                                         ) : (
                                             <tr>
-                                                <td colSpan={9} className="p-4 text-center text-muted-foreground">
+                                                <td colSpan={10} className="text-muted-foreground p-4 text-center">
                                                     No candidates found
+                                                    <br />
+                                                    <small className="text-xs">
+                                                        Debug: Data type: {typeof candidates.data.data}, IsArray:{' '}
+                                                        {Array.isArray(candidates.data.data).toString()}, Length:{' '}
+                                                        {candidates.data.data?.length ?? 'undefined'}
+                                                    </small>
                                                 </td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
-                                    </div>
-                            {candidates.last_page > 1 && (
+                            </div>
+                            {candidates.data.last_page > 1 && (
                                 <div className="mt-4 flex justify-center">
                                     <Pagination
-                                        currentPage={candidates.current_page}
-                                        totalPages={candidates.last_page}
+                                        currentPage={candidates.data.current_page}
+                                        totalPages={candidates.data.last_page}
                                         onPageChange={handlePageChange}
                                     />
-                                    </div>
+                                </div>
                             )}
-                            </CardContent>
-                        </Card>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Stage Action Dialog */}
@@ -328,4 +409,4 @@ export default function Reports({ candidates, filters, companyInfo, periodInfo }
             </div>
         </AppLayout>
     );
-} 
+}

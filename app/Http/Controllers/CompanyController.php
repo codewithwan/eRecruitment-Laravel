@@ -457,10 +457,13 @@ class CompanyController extends Controller
             ->with('success', 'Company deleted successfully.');
     }
 
-    public function periods(Company $company)
+    public function periods(Company $company, Request $request)
     {
         // Debug: Log the received company
-        Log::info('Company received: ' . $company->name . ' (ID: ' . $company->id . ')');
+        Log::info('Company periods request: ' . $company->name . ' (ID: ' . $company->id . ')');
+        
+        // For company periods, we don't use pagination parameters
+        // Always return all periods for the company
         
         // Get real periods associated with this company through vacancies
         $periodsQuery = Period::with([
@@ -473,6 +476,8 @@ class CompanyController extends Controller
         });
         
         $periods = $periodsQuery->get();
+        
+        Log::info('Found ' . $periods->count() . ' periods for company ' . $company->id);
         
         // Get current date for status checking
         $now = \Carbon\Carbon::now();
@@ -545,11 +550,13 @@ class CompanyController extends Controller
                 ];
             });
         
+        Log::info('Found ' . $vacancies->count() . ' vacancies for company ' . $company->id);
+        
         return Inertia::render('admin/periods/index', [
             'periods' => $periodsData->toArray(),
             'pagination' => [
                 'total' => $periodsData->count(),
-                'per_page' => 10,
+                'per_page' => $periodsData->count(), // Show all for company periods
                 'current_page' => 1,
                 'last_page' => 1,
             ],
@@ -557,7 +564,7 @@ class CompanyController extends Controller
                 'id' => (int) $company->id,
                 'name' => $company->name,
             ],
-            'vacancies' => $vacancies,
+            'vacancies' => $vacancies->toArray(),
             'filtering' => true,
         ]);
     }

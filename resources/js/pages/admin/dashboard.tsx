@@ -10,7 +10,8 @@ import {
     ClipboardList, 
     MessageSquare,
     AlertCircle,
-    Loader2
+    Loader2,
+    BarChart3
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useEffect, useState } from 'react';
@@ -102,13 +103,13 @@ export default function Dashboard({
                 return `Missing required statistics: ${missingStats.join(', ')}`;
             }
 
-            // Validate arrays have data
+            // Validate arrays exist (but allow empty arrays)
             if (!Array.isArray(recruitmentStageData) || recruitmentStageData.length === 0) {
                 return 'Recruitment stage data is missing';
             }
 
-            if (!Array.isArray(weeklyData) || weeklyData.length === 0) {
-                return 'Weekly data is missing';
+            if (!Array.isArray(weeklyData)) {
+                return 'Weekly data format is invalid';
             }
 
             if (!Array.isArray(recentActivities)) {
@@ -261,69 +262,79 @@ export default function Dashboard({
                         </CardHeader>
                         <CardContent>
                             <div className="h-[280px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart 
-                                        data={weeklyData.slice(-7)} 
-                                        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis 
-                                            dataKey="day" 
-                                            tick={{ fill: '#64748b', fontSize: 12 }}
-                                            tickLine={{ stroke: '#64748b' }}
-                                            axisLine={{ stroke: '#e2e8f0' }}
-                                        />
-                                        <YAxis 
-                                            tick={{ fill: '#64748b', fontSize: 12 }}
-                                            tickLine={{ stroke: '#64748b' }}
-                                            axisLine={{ stroke: '#e2e8f0' }}
-                                            tickFormatter={(value) => Math.round(value).toString()}
-                                        />
-                                        <Tooltip 
-                                            contentStyle={{ 
-                                                backgroundColor: '#fff',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '6px',
-                                                padding: '8px',
-                                                fontSize: '12px'
-                                            }}
-                                            formatter={(value, name) => [value, name === 'admin' ? 'Administration' : name === 'assessment' ? 'Assessment' : 'Interview']}
-                                            labelFormatter={(label) => `Tanggal: ${label}`}
-                                        />
-                                        <Legend 
-                                            verticalAlign="top"
-                                            height={36}
-                                            formatter={(value) => value === 'admin' ? 'Administration' : value === 'assessment' ? 'Assessment' : 'Interview'}
-                                        />
-                                        <Line 
-                                            type="monotone" 
-                                            dataKey="admin" 
-                                            name="Administration" 
-                                            stroke="#3B82F6" 
-                                            strokeWidth={2}
-                                            dot={{ fill: '#3B82F6', r: 3, strokeWidth: 2, stroke: '#fff' }}
-                                            activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
-                                        />
-                                        <Line 
-                                            type="monotone" 
-                                            dataKey="assessment" 
-                                            name="Assessment" 
-                                            stroke="#10B981" 
-                                            strokeWidth={2}
-                                            dot={{ fill: '#10B981', r: 3, strokeWidth: 2, stroke: '#fff' }}
-                                            activeDot={{ r: 6, stroke: '#10B981', strokeWidth: 2 }}
-                                        />
-                                        <Line 
-                                            type="monotone" 
-                                            dataKey="interview" 
-                                            name="Interview" 
-                                            stroke="#F59E0B" 
-                                            strokeWidth={2}
-                                            dot={{ fill: '#F59E0B', r: 3, strokeWidth: 2, stroke: '#fff' }}
-                                            activeDot={{ r: 6, stroke: '#F59E0B', strokeWidth: 2 }}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
+                                {weeklyData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart 
+                                            data={weeklyData.slice(-7)} 
+                                            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis 
+                                                dataKey="day" 
+                                                tick={{ fill: '#64748b', fontSize: 12 }}
+                                                tickLine={{ stroke: '#64748b' }}
+                                                axisLine={{ stroke: '#e2e8f0' }}
+                                            />
+                                            <YAxis 
+                                                tick={{ fill: '#64748b', fontSize: 12 }}
+                                                tickLine={{ stroke: '#64748b' }}
+                                                axisLine={{ stroke: '#e2e8f0' }}
+                                                tickFormatter={(value) => Math.round(value).toString()}
+                                            />
+                                            <Tooltip 
+                                                contentStyle={{ 
+                                                    backgroundColor: '#fff',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '6px',
+                                                    padding: '8px',
+                                                    fontSize: '12px'
+                                                }}
+                                                formatter={(value, name) => [value, name === 'admin' ? 'Administration' : name === 'assessment' ? 'Assessment' : 'Interview']}
+                                                labelFormatter={(label) => `Tanggal: ${label}`}
+                                            />
+                                            <Legend 
+                                                verticalAlign="top"
+                                                height={36}
+                                                formatter={(value) => value === 'admin' ? 'Administration' : value === 'assessment' ? 'Assessment' : 'Interview'}
+                                            />
+                                            <Line 
+                                                type="monotone" 
+                                                dataKey="admin" 
+                                                name="Administration" 
+                                                stroke="#3B82F6" 
+                                                strokeWidth={2}
+                                                dot={{ fill: '#3B82F6', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                                                activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
+                                            />
+                                            <Line 
+                                                type="monotone" 
+                                                dataKey="assessment" 
+                                                name="Assessment" 
+                                                stroke="#10B981" 
+                                                strokeWidth={2}
+                                                dot={{ fill: '#10B981', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                                                activeDot={{ r: 6, stroke: '#10B981', strokeWidth: 2 }}
+                                            />
+                                            <Line 
+                                                type="monotone" 
+                                                dataKey="interview" 
+                                                name="Interview" 
+                                                stroke="#F59E0B" 
+                                                strokeWidth={2}
+                                                dot={{ fill: '#F59E0B', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                                                activeDot={{ r: 6, stroke: '#F59E0B', strokeWidth: 2 }}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="flex items-center justify-center h-full">
+                                        <div className="text-center text-muted-foreground">
+                                            <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                            <p className="text-sm">Belum ada data aktivitas mingguan</p>
+                                            <p className="text-xs mt-1">Data akan muncul setelah ada aktivitas rekrutmen</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

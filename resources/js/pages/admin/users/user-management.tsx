@@ -82,31 +82,28 @@ export default function UserManagement(props: UserManagementProps) {
     const [verificationFilter, setVerificationFilter] = useState('all');
     const [isFilterActive, setIsFilterActive] = useState(false);
 
+    // Update local state when props change
+    useEffect(() => {
+        setUsers(props.users || []);
+        setFilteredUsers(props.users || []);
+        setPagination(props.pagination || initialPagination);
+    }, [props.users, props.pagination]);
+
     const fetchUsers = useCallback(
-        async (page = 1, perPage = pagination.per_page) => {
+        (page = 1, perPage = pagination.per_page) => {
             setIsLoading(true);
-            try {
-                updateUrlParams(page, perPage);
-                router.get('/dashboard/users/list', {
+            updateUrlParams(page, perPage);
+            router.visit('/dashboard/users/list', {
+                method: 'get',
+                data: {
                     page: page.toString(),
                     per_page: perPage.toString()
-                }, {
-                    preserveState: true,
-                    preserveScroll: true,
-                    onSuccess: (page) => {
-                        const response = page.props as UserManagementProps;
-                        if (response.users && response.pagination) {
-                            setUsers(response.users);
-                            setFilteredUsers(response.users);
-                            setPagination(response.pagination);
-                        }
-                    },
-                    onFinish: () => setIsLoading(false)
-                });
-            } catch (error) {
-                console.error('Error fetching users:', error);
-                setIsLoading(false);
-            }
+                },
+                preserveState: true,
+                preserveScroll: true,
+                onStart: () => setIsLoading(true),
+                onFinish: () => setIsLoading(false)
+            });
         },
         [pagination.per_page],
     );
@@ -119,7 +116,7 @@ export default function UserManagement(props: UserManagementProps) {
         if (page !== pagination.current_page || perPage !== pagination.per_page) {
             fetchUsers(page, perPage);
         }
-    }, [fetchUsers, pagination.current_page, pagination.per_page]);
+    }, []); // Remove dependencies to avoid infinite loop
 
     // Apply filters whenever filter states change
     useEffect(() => {
@@ -203,14 +200,12 @@ export default function UserManagement(props: UserManagementProps) {
         if (!editUser.id) return;
 
         setIsLoading(true);
-        try {
-            await router.put(`/dashboard/users/${editUser.id}`, editUser);
-            setIsEditDialogOpen(false);
-        } catch (error) {
-            console.error('Error updating user:', error);
-        } finally {
-            setIsLoading(false);
-        }
+        router.put(`/dashboard/users/${editUser.id}`, editUser, {
+            onSuccess: () => {
+                setIsEditDialogOpen(false);
+            },
+            onFinish: () => setIsLoading(false)
+        });
     };
 
     const handleDeleteUser = (userId: number) => {
@@ -221,14 +216,12 @@ export default function UserManagement(props: UserManagementProps) {
     const confirmDeleteUser = async () => {
         if (userIdToDelete === null) return;
 
-        try {
-            await router.delete(`/dashboard/users/${userIdToDelete}`);
-        } catch (error) {
-            console.error('Error deleting user:', error);
-        } finally {
-            setIsDeleteDialogOpen(false);
-            setUserIdToDelete(null);
-        }
+        router.delete(`/dashboard/users/${userIdToDelete}`, {
+            onSuccess: () => {
+                setIsDeleteDialogOpen(false);
+                setUserIdToDelete(null);
+            }
+        });
     };
 
     const handleAddUser = () => {
@@ -242,15 +235,13 @@ export default function UserManagement(props: UserManagementProps) {
 
     const handleCreateUser = async () => {
         setIsLoading(true);
-        try {
-            await router.post('/dashboard/users', newUser);
-            setIsCreateDialogOpen(false);
-            setNewUser({ name: '', email: '', password: '', role: '' });
-        } catch (error) {
-            console.error('Error creating user:', error);
-        } finally {
-            setIsLoading(false);
-        }
+        router.post('/dashboard/users', newUser, {
+            onSuccess: () => {
+                setIsCreateDialogOpen(false);
+                setNewUser({ name: '', email: '', password: '', role: '' });
+            },
+            onFinish: () => setIsLoading(false)
+        });
     };
 
     const resetFilters = () => {

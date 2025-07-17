@@ -20,7 +20,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Plus, Search } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 // Add type for the company prop
@@ -206,56 +206,58 @@ export default function PeriodsDashboard({
         }
     };
 
-    // Fix props by adding proper types
-    const initialPeriods = Array.isArray(propPeriods) ? propPeriods.map(p => {
-        // Calculate status if not provided from backend
-        let status = p.status || 'Not Set';
-        
-        if (!status && p.start_date && p.end_date) {
-            const now = new Date();
-            const startDate = new Date(p.start_date);
-            const endDate = new Date(p.end_date);
+    // Fix props by adding proper types - use useMemo to prevent recalculation
+    const initialPeriods = useMemo(() => {
+        return Array.isArray(propPeriods) ? propPeriods.map(p => {
+            // Calculate status if not provided from backend
+            let status = p.status || 'Not Set';
             
-            if (now < startDate) {
-                status = 'Upcoming';
-            } else if (now > endDate) {
-                status = 'Closed';
-            } else {
-                status = 'Open';
+            if (!status && p.start_date && p.end_date) {
+                const now = new Date();
+                const startDate = new Date(p.start_date);
+                const endDate = new Date(p.end_date);
+                
+                if (now < startDate) {
+                    status = 'Upcoming';
+                } else if (now > endDate) {
+                    status = 'Closed';
+                } else {
+                    status = 'Open';
+                }
             }
-        }
-        
-        return {
-            id: String(p.id || ''),
-            name: p.name || '',
-            startTime: p.start_date ? formatSimpleDate(p.start_date) : '',
-            endTime: p.end_date ? formatSimpleDate(p.end_date) : '',
-            description: p.description || '',
-            status: status,
-            title: p.title || '',
-            department: p.department || '',
-            questionPack: p.question_pack || '',
-            applicantsCount: p.applicants_count || 0,
-            // Include the full list of vacancies
-            vacanciesList: p.vacancies_list || [],
-            // Include companies information
-            companies: p.companies || [],
-        };
-    }) : [];
+            
+            return {
+                id: String(p.id || ''),
+                name: p.name || '',
+                startTime: p.start_date ? formatSimpleDate(p.start_date) : '',
+                endTime: p.end_date ? formatSimpleDate(p.end_date) : '',
+                description: p.description || '',
+                status: status,
+                title: p.title || '',
+                department: p.department || '',
+                questionPack: p.question_pack || '',
+                applicantsCount: p.applicants_count || 0,
+                // Include the full list of vacancies
+                vacanciesList: p.vacancies_list || [],
+                // Include companies information
+                companies: p.companies || [],
+            };
+        }) : [];
+    }, [propPeriods]);
 
-    // Initialize pagination with default values
-    const defaultPagination: PaginationData = {
+    // Initialize pagination with default values - use useMemo to prevent re-creation
+    const defaultPagination: PaginationData = useMemo(() => ({
         total: propPeriods.length,
         per_page: 10,
         current_page: 1,
         last_page: Math.ceil(propPeriods.length / 10),
-    };
+    }), [propPeriods.length]);
 
-    const [currentPage, setCurrentPage] = useState(defaultPagination.current_page);
-    const [perPage, setPerPage] = useState(defaultPagination.per_page);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
 
-    const [periods, setPeriods] = useState<Period[]>(initialPeriods);
-    const [filteredPeriods, setFilteredPeriods] = useState(initialPeriods);
+    const [periods, setPeriods] = useState<Period[]>(() => initialPeriods);
+    const [filteredPeriods, setFilteredPeriods] = useState(() => initialPeriods);
     const [selectedPeriodId, setSelectedPeriodId] = useLocalStorage<string | null>('selectedPeriodId', null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -294,11 +296,16 @@ export default function PeriodsDashboard({
     // Update the fetchPeriods function to handle data transformation
     const fetchPeriods = useCallback(
         (page = 1, itemsPerPage = perPage) => {
+            // Skip fetching for company periods - they should already be loaded via props
+            if (company?.id) {
+                console.log('Skipping fetchPeriods for company periods - using props data');
+                return;
+            }
+            
             setIsLoading(true);
-            const url = company?.id 
-                ? `/dashboard/companies/${company.id}/periods`
-                : '/dashboard/periods';
-                
+            
+            // For general periods, use pagination parameters
+            const url = '/dashboard/periods';
             router.get(url, {
                 page: page.toString(),
                 per_page: itemsPerPage.toString(),
@@ -335,15 +342,37 @@ export default function PeriodsDashboard({
 
     // Initialize URL params and fetch data if needed
     useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
-        const perPage = urlParams.get('per_page') ? parseInt(urlParams.get('per_page')!) : 10;
+        // Only process URL parameters and fetch for global periods (not company periods)
+        if (!company?.id) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const page = urlParams.get('page') ? parseInt(urlParams.get('page')!) : 1;
+            const perPageParam = urlParams.get('per_page') ? parseInt(urlParams.get('per_page')!) : 10;
 
-        // Only fetch if we don't have initial data or if URL params are different
-        if (propPeriods.length === 0 || page !== currentPage || perPage !== perPage) {
-            fetchPeriods(page, perPage);
+            // Only fetch if we don't have initial data or if URL params are different
+            if (propPeriods.length === 0 || page !== currentPage || perPageParam !== perPage) {
+                fetchPeriods(page, perPageParam);
+            }
         }
-    }, [fetchPeriods, currentPage, perPage, propPeriods.length]);
+        // For company periods, we rely on the initial data from props only
+    }, []); // Empty dependency array to run only on mount
+
+    // Sync periods when initialPeriods changes
+    useEffect(() => {
+        setPeriods(initialPeriods);
+        setFilteredPeriods(initialPeriods);
+    }, [initialPeriods]);
+
+    // Clean up URL parameters for company periods to prevent routing loops
+    useEffect(() => {
+        if (company?.id) {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('page') || urlParams.has('per_page')) {
+                // Remove pagination parameters from URL for company periods
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+        }
+    }, [company?.id]); // Only run when company.id changes
 
     // Apply search filter
     useEffect(() => {
@@ -362,19 +391,34 @@ export default function PeriodsDashboard({
 
     // Fetch vacancies with details when component mounts if none provided
     useEffect(() => {
-        if (vacancies.length === 0) {
-            router.get('/dashboard/vacancies/list', {}, {
-                preserveState: true,
-                onSuccess: (page) => {
-                    const response = page.props as unknown as VacanciesResponse;
-                    setAvailableVacancies(response.vacancies);
-                },
-                onError: (error) => {
-                    console.error('Error fetching vacancies:', error);
+        // Only fetch vacancies if we're not on a company page and no vacancies are provided
+        // For company pages, vacancies should come from props or be empty
+        if (!company?.id && vacancies.length === 0) {
+            // Use fetch API instead of router.get to avoid navigation
+            fetch('/dashboard/vacancies/list', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.vacancies) {
+                    setAvailableVacancies(data.vacancies);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching vacancies:', error);
+                // Set empty array as fallback
+                setAvailableVacancies([]);
             });
+        } else if (company?.id) {
+            // For company pages, use the vacancies from props or set empty array
+            setAvailableVacancies(vacancies);
         }
-    }, [vacancies]);
+    }, [vacancies, company?.id]);
 
     // Effect to handle editing period data
     useEffect(() => {
@@ -411,13 +455,27 @@ export default function PeriodsDashboard({
 
     // Pagination handlers
     const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-        fetchPeriods(page, perPage);
+        if (company?.id) {
+            // For company periods, pagination is handled client-side only
+            setCurrentPage(page);
+        } else {
+            // For general periods, fetch new data with pagination
+            setCurrentPage(page);
+            fetchPeriods(page, perPage);
+        }
     };
 
     const handlePerPageChange = (itemsPerPage: number) => {
-        setPerPage(itemsPerPage);
-        fetchPeriods(currentPage, itemsPerPage);
+        if (company?.id) {
+            // For company periods, pagination is handled client-side only
+            setPerPage(itemsPerPage);
+            setCurrentPage(1); // Reset to first page when changing items per page
+        } else {
+            // For general periods, fetch new data with pagination
+            setPerPage(itemsPerPage);
+            setCurrentPage(1);
+            fetchPeriods(1, itemsPerPage);
+        }
     };
 
     // Search handler
@@ -599,6 +657,14 @@ export default function PeriodsDashboard({
         router.visit(`/dashboard/company/administration?period=${periodId}${companyIdParam}`);
     };
 
+    // Memoized pagination data to prevent re-renders
+    const paginationData = useMemo(() => ({
+        total: defaultPagination.total,
+        current_page: currentPage,
+        per_page: perPage,
+        last_page: defaultPagination.last_page,
+    }), [defaultPagination.total, defaultPagination.last_page, currentPage, perPage]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={company ? `${company.name} - Periods` : "Periods Management"} />
@@ -635,6 +701,9 @@ export default function PeriodsDashboard({
 
                             <div className="flex items-center gap-4">
                                 <SearchBar
+                                    id="periods-search"
+                                    name="periods-search"
+                                    autoComplete="off"
                                     icon={<Search className="h-4 w-4" />}
                                     placeholder="Search periods..."
                                     value={searchQuery}
@@ -645,12 +714,7 @@ export default function PeriodsDashboard({
                         <CardContent>
                             <PeriodsTable
                                 periods={filteredPeriods}
-                                pagination={{
-                                    total: defaultPagination.total,
-                                    current_page: currentPage,
-                                    per_page: perPage,
-                                    last_page: defaultPagination.last_page,
-                                }}
+                                pagination={paginationData}
                                 onView={handleViewPeriod}
                                 onEdit={handleEditPeriod}
                                 onDelete={handleDeletePeriod}
@@ -666,7 +730,7 @@ export default function PeriodsDashboard({
             </div>
 
             {/* Create Period Dialog */}
-            <Dialog open={isAddPeriodDialogOpen} onOpenChange={setIsAddPeriodDialogOpen}>
+            <Dialog key="create-period-dialog" open={isAddPeriodDialogOpen} onOpenChange={setIsAddPeriodDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Create Period</DialogTitle>
@@ -677,29 +741,32 @@ export default function PeriodsDashboard({
 
                     <div className="space-y-4">
                         {/* Name Field */}
-                        <div className="relative">
-                            <label htmlFor="name" className="absolute top-2 left-3 text-sm text-blue-500">
+                        <div className="space-y-2">
+                            <label htmlFor="create-period-name" className="text-sm font-medium text-blue-500">
                                 Name
                             </label>
                             <input
-                                id="name"
-                                name="name"
+                                id="create-period-name"
+                                name="create-period-name"
                                 type="text"
+                                autoComplete="off"
                                 value={newPeriod.name}
                                 onChange={(e) => setNewPeriod({...newPeriod, name: e.target.value})}
                                 placeholder="Enter period name"
-                                className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                className="w-full rounded-md border border-blue-500 px-3 py-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                required
                             />
                         </div>
 
                         {/* Vacancies Field */}
-                        <div className="relative">
-                            <label className="text-sm text-blue-500 mb-2 block">Vacancies</label>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-blue-500">Vacancies</label>
                             <div className="space-y-2 max-h-32 overflow-y-auto border border-blue-500 rounded-md p-3">
                                 {availableVacancies.map((vacancy) => (
                                     <div key={vacancy.id} className="flex items-center gap-2">
                                         <Checkbox 
-                                            id={`vacancy-${vacancy.id}`}
+                                            id={`new-vacancy-${vacancy.id}`}
+                                            name={`new-vacancy-${vacancy.id}`}
                                             checked={newPeriod.vacancies_ids.includes(String(vacancy.id))}
                                             onCheckedChange={(checked) => {
                                                 if (checked) {
@@ -715,7 +782,7 @@ export default function PeriodsDashboard({
                                                 }
                                             }}
                                         />
-                                        <Label htmlFor={`vacancy-${vacancy.id}`} className="cursor-pointer text-xs text-gray-600">
+                                        <Label htmlFor={`new-vacancy-${vacancy.id}`} className="cursor-pointer text-xs text-gray-600">
                                             {vacancy.title} - {vacancy.department} {vacancy.company ? `(${vacancy.company})` : ''}
                                         </Label>
                                     </div>
@@ -727,48 +794,53 @@ export default function PeriodsDashboard({
                         </div>
 
                         {/* Description Field */}
-                        <div className="relative">
-                            <label htmlFor="description" className="absolute top-2 left-3 text-sm text-blue-500">
+                        <div className="space-y-2">
+                            <label htmlFor="create-period-description" className="text-sm font-medium text-blue-500">
                                 Description
                             </label>
                             <textarea
-                                id="description"
-                                name="description"
+                                id="create-period-description"
+                                name="create-period-description"
+                                autoComplete="off"
                                 value={newPeriod.description}
                                 onChange={(e) => setNewPeriod({...newPeriod, description: e.target.value})}
                                 placeholder="Enter period description"
                                 rows={3}
-                                className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none"
+                                className="w-full rounded-md border border-blue-500 px-3 py-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none"
                             />
                         </div>
 
                         {/* Start Date Field */}
-                        <div className="relative">
-                            <label htmlFor="start_time" className="absolute top-2 left-3 text-sm text-blue-500">
+                        <div className="space-y-2">
+                            <label htmlFor="create-period-start-time" className="text-sm font-medium text-blue-500">
                                 Start Date
                             </label>
                             <input
-                                id="start_time"
-                                name="start_time"
+                                id="create-period-start-time"
+                                name="create-period-start-time"
                                 type="date"
+                                autoComplete="off"
                                 value={newPeriod.start_time}
                                 onChange={(e) => setNewPeriod({...newPeriod, start_time: e.target.value})}
-                                className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                className="w-full rounded-md border border-blue-500 px-3 py-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                required
                             />
                         </div>
 
                         {/* End Date Field */}
-                        <div className="relative">
-                            <label htmlFor="end_time" className="absolute top-2 left-3 text-sm text-blue-500">
+                        <div className="space-y-2">
+                            <label htmlFor="create-period-end-time" className="text-sm font-medium text-blue-500">
                                 End Date
                             </label>
                             <input
-                                id="end_time"
-                                name="end_time"
+                                id="create-period-end-time"
+                                name="create-period-end-time"
                                 type="date"
+                                autoComplete="off"
                                 value={newPeriod.end_time}
                                 onChange={(e) => setNewPeriod({...newPeriod, end_time: e.target.value})}
-                                className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                className="w-full rounded-md border border-blue-500 px-3 py-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                required
                             />
                         </div>
                     </div>
@@ -793,7 +865,7 @@ export default function PeriodsDashboard({
             </Dialog>
 
             {/* Edit Period Dialog */}
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <Dialog key="edit-period-dialog" open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Edit Period</DialogTitle>
@@ -804,75 +876,80 @@ export default function PeriodsDashboard({
 
                     <div className="space-y-4">
                         {/* Name Field */}
-                        <div className="relative">
-                            <label htmlFor="edit-name" className="absolute top-2 left-3 text-sm text-blue-500">
+                        <div className="space-y-2">
+                            <label htmlFor="edit-name" className="text-sm font-medium text-blue-500">
                                 Name
                             </label>
                             <input
                                 id="edit-name"
                                 name="name"
                                 type="text"
+                                autoComplete="off"
                                 value={editFormData.name}
                                 onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
                                 placeholder="Enter period name"
-                                className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                className="w-full rounded-md border border-blue-500 px-3 py-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                             />
                         </div>
 
                         {/* Description Field */}
-                        <div className="relative">
-                            <label htmlFor="edit-description" className="absolute top-2 left-3 text-sm text-blue-500">
+                        <div className="space-y-2">
+                            <label htmlFor="edit-description" className="text-sm font-medium text-blue-500">
                                 Description
                             </label>
                             <textarea
                                 id="edit-description"
                                 name="description"
+                                autoComplete="off"
                                 value={editFormData.description}
                                 onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
                                 placeholder="Enter period description"
-                                className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                className="w-full rounded-md border border-blue-500 px-3 py-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none"
                                 rows={3}
                             />
                         </div>
 
                         {/* Start Time Field */}
-                        <div className="relative">
-                            <label htmlFor="edit-start-time" className="absolute top-2 left-3 text-sm text-blue-500">
+                        <div className="space-y-2">
+                            <label htmlFor="edit-start-time" className="text-sm font-medium text-blue-500">
                                 Start Time
                             </label>
                             <input
                                 id="edit-start-time"
                                 name="start_time"
                                 type="date"
+                                autoComplete="off"
                                 value={editFormData.start_time}
                                 onChange={(e) => setEditFormData({...editFormData, start_time: e.target.value})}
-                                className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                className="w-full rounded-md border border-blue-500 px-3 py-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                             />
                         </div>
 
                         {/* End Time Field */}
-                        <div className="relative">
-                            <label htmlFor="edit-end-time" className="absolute top-2 left-3 text-sm text-blue-500">
+                        <div className="space-y-2">
+                            <label htmlFor="edit-end-time" className="text-sm font-medium text-blue-500">
                                 End Time
                             </label>
                             <input
                                 id="edit-end-time"
                                 name="end_time"
                                 type="date"
+                                autoComplete="off"
                                 value={editFormData.end_time}
                                 onChange={(e) => setEditFormData({...editFormData, end_time: e.target.value})}
-                                className="w-full rounded-md border border-blue-500 px-3 pt-6 pb-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                className="w-full rounded-md border border-blue-500 px-3 py-2 text-sm text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                             />
                         </div>
 
                         {/* Vacancies Field */}
                         <div className="space-y-2">
-                            <Label className="text-sm text-blue-500">Vacancies</Label>
-                            <div className="space-y-2">
+                            <Label className="text-sm font-medium text-blue-500">Vacancies</Label>
+                            <div className="space-y-2 max-h-32 overflow-y-auto border border-blue-500 rounded-md p-3">
                                 {vacancies.map((vacancy) => (
                                     <div key={vacancy.id} className="flex items-center gap-2">
                                         <Checkbox
-                                            id={`vacancy-${vacancy.id}`}
+                                            id={`edit-vacancy-${vacancy.id}`}
+                                            name={`edit-vacancy-${vacancy.id}`}
                                             checked={editFormData.vacancies_ids.includes(String(vacancy.id))}
                                             onCheckedChange={(checked) => {
                                                 setEditFormData({
@@ -883,11 +960,14 @@ export default function PeriodsDashboard({
                                                 });
                                             }}
                                         />
-                                        <Label htmlFor={`vacancy-${vacancy.id}`} className="text-sm">
+                                        <Label htmlFor={`edit-vacancy-${vacancy.id}`} className="cursor-pointer text-xs text-gray-600">
                                             {vacancy.title} - {vacancy.department}
                                         </Label>
                                     </div>
                                 ))}
+                                {vacancies.length === 0 && (
+                                    <p className="text-xs text-gray-500">No vacancies available</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -911,7 +991,7 @@ export default function PeriodsDashboard({
             </Dialog>
 
             {/* View Period Dialog */}
-            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+            <Dialog key="view-period-dialog" open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Period Details</DialogTitle>
@@ -966,7 +1046,7 @@ export default function PeriodsDashboard({
             </Dialog>
 
             {/* Delete Period Confirmation Dialog */}
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialog key="delete-period-dialog" open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>

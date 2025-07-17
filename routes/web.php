@@ -9,7 +9,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', [VacanciesController::class, 'index'])->name('home');
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
+});
 
 // Redirect based on role
 Route::middleware(['auth', 'verified'])->get('/redirect', function () {

@@ -1,0 +1,36 @@
+{
+    frankenphp
+    order php_server before file_server
+}
+
+# For production with automatic HTTPS (uncomment and replace yourdomain.com)
+# yourdomain.com {
+#     root * public
+#     php_server
+#
+#     # Allow access to storage files through the symlink
+#     @storage {
+#         path /storage/*
+#     }
+#     handle @storage {
+#         header Cache-Control "public, max-age=3600"
+#     }
+#
+#     file_server
+# }
+
+# For development/local (current configuration)
+:8080 {
+    root * public
+    php_server
+
+    # Allow access to storage files through the symlink
+    @storage {
+        path /storage/*
+    }
+    handle @storage {
+        header Cache-Control "public, max-age=3600"
+    }
+
+    file_server
+}

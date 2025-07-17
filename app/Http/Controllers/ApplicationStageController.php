@@ -1725,7 +1725,23 @@ class ApplicationStageController extends Controller
                     ]);
                 }
 
-                // Check if candidate has all scores from all 3 stages
+                // Handle interview rejection
+                if ($validated['status'] === 'rejected') {
+                    // Get the rejected status
+                    $rejectedStatus = Status::where('code', 'rejected')->first();
+                        
+                    if (!$rejectedStatus) {
+                        throw new \Exception('Rejected status not found');
+                    }
+
+                    // Update application status to rejected
+                    $application->update(['status_id' => $rejectedStatus->id]);
+
+                    DB::commit();
+                    return back()->with('success', 'Candidate rejected successfully');
+                }
+
+                // Handle interview passing - Check if candidate has all scores from all 3 stages
                 $administrationHistory = $application->history()
                     ->whereHas('status', fn($q) => $q->where('code', 'admin_selection'))
                     ->where('is_active', false)
